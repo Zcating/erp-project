@@ -1,0 +1,17 @@
+{
+  "name": "erp-inventory-sales",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "vp check",
+    "test": "vp test",
+    "build": "pnpm -r run build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vite-plus": "1.0.0",
+    "vitest": "^5.0.5"
+  },
+  "packageManager": "pnpm@12.10.1"
+}
