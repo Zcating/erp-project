@@ -1,20 +1,35 @@
 import { randomUUID } from "node:crypto";
-import { DuplicateError, NotFoundError, ValidationError } from "../../shared/errors/index.js";
+import {
+  DuplicateError,
+  KernelError,
+  NotFoundError,
+  ValidationError,
+} from "../../shared/errors/index.js";
+import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
+import { itemBatchErrorFromDetails } from "./errors.js";
+import type { ItemBatchErrorDetail } from "./errors.js";
 import type { ItemMaster, ItemMasterInput } from "./model.js";
 import type { ItemMasterRepository } from "./ports.js";
 import { formatConversionRate, validateItemMasterInput } from "./validation.js";
 
+export type ItemBatchRow = {
+  line: number;
+  input: ItemMasterInput;
+};
+
 export type ItemMasterService = {
-  list(): Promise<ItemMaster[]>;
-  get(id: string): Promise<ItemMaster>;
-  findByBarcode(barcode: string): Promise<ItemMaster>;
-  create(input: ItemMasterInput): Promise<ItemMaster>;
-  update(id: string, input: ItemMasterInput): Promise<ItemMaster>;
-  remove(id: string): Promise<void>;
+  list(context?: TransactionContext): Promise<ItemMaster[]>;
+  get(id: string, context?: TransactionContext): Promise<ItemMaster>;
+  findByBarcode(barcode: string, context?: TransactionContext): Promise<ItemMaster>;
+  create(input: ItemMasterInput, context?: TransactionContext): Promise<ItemMaster>;
+  createMany(rows: ItemBatchRow[], context?: TransactionContext): Promise<ItemMaster[]>;
+  update(id: string, input: ItemMasterInput, context?: TransactionContext): Promise<ItemMaster>;
+  remove(id: string, context?: TransactionContext): Promise<void>;
 };
 
 export type ItemMasterServiceOptions = {
   idGenerator?: () => string;
+  runner?: TransactionRunner;
 };
 
 export function createItemMasterService(
@@ -22,6 +37,17 @@ export function createItemMasterService(
   options: ItemMasterServiceOptions = {},
 ): ItemMasterService {
   const generateId = options.idGenerator ?? randomUUID;
+  const runner = options.runner;
+
+  const inTransaction = async <T>(
+    context: TransactionContext | undefined,
+    work: (context: TransactionContext | undefined) => Promise<T>,
+  ): Promise<T> => {
+    if (context !== undefined || runner === undefined) {
+      return work(context);
+    }
+    return runner.run((outer) => work(outer));
+  };
 
   const normalize = (input: ItemMasterInput): ItemMaster => ({
     id: "",
@@ -38,13 +64,17 @@ export function createItemMasterService(
     })),
   });
 
-  const ensureUnique = async (candidate: ItemMaster, ignoredId: string | null): Promise<void> => {
-    const sameCode = await repository.findByCode(candidate.code);
+  const ensureUnique = async (
+    candidate: ItemMaster,
+    ignoredId: string | null,
+    context?: TransactionContext,
+  ): Promise<void> => {
+    const sameCode = await repository.findByCode(candidate.code, context);
     if (sameCode !== null && sameCode.id !== ignoredId) {
       throw new DuplicateError(`商品编码重复：${candidate.code}`);
     }
     if (candidate.barcode !== null) {
-      const sameBarcode = await repository.findByBarcode(candidate.barcode);
+      const sameBarcode = await repository.findByBarcode(candidate.barcode, context);
       if (sameBarcode !== null && sameBarcode.id !== ignoredId) {
         throw new DuplicateError(`商品条码重复：${candidate.barcode}`);
       }
@@ -52,57 +82,109 @@ export function createItemMasterService(
   };
 
   return {
-    async list(): Promise<ItemMaster[]> {
-      return repository.list();
+    async list(context?: TransactionContext): Promise<ItemMaster[]> {
+      return repository.list(context);
     },
 
-    async get(id: string): Promise<ItemMaster> {
-      const item = await repository.findById(id);
+    async get(id: string, context?: TransactionContext): Promise<ItemMaster> {
+      const item = await repository.findById(id, context);
       if (item === null) {
         throw new NotFoundError(`商品档案不存在：${id}`);
       }
       return item;
     },
 
-    async findByBarcode(barcode: string): Promise<ItemMaster> {
+    async findByBarcode(barcode: string, context?: TransactionContext): Promise<ItemMaster> {
       const normalized = normalizeOptionalText(barcode);
       if (normalized === null) {
         throw new ValidationError("缺少商品条码");
       }
-      const item = await repository.findByBarcode(normalized);
+      const item = await repository.findByBarcode(normalized, context);
       if (item === null) {
         throw new NotFoundError(`查不到条码对应的商品档案：${normalized}`);
       }
       return item;
     },
 
-    async create(input: ItemMasterInput): Promise<ItemMaster> {
-      validateItemMasterInput(input);
-      const candidate = normalize(input);
-      await ensureUnique(candidate, null);
-      const item: ItemMaster = { ...candidate, id: generateId() };
-      await repository.insert(item);
-      return item;
+    async create(input: ItemMasterInput, context?: TransactionContext): Promise<ItemMaster> {
+      return inTransaction(context, async (ctx) => {
+        validateItemMasterInput(input);
+        const candidate = normalize(input);
+        await ensureUnique(candidate, null, ctx);
+        const item: ItemMaster = { ...candidate, id: generateId() };
+        await repository.insert(item, ctx);
+        return item;
+      });
     },
 
-    async update(id: string, input: ItemMasterInput): Promise<ItemMaster> {
-      validateItemMasterInput(input);
-      const existing = await repository.findById(id);
+    async createMany(rows: ItemBatchRow[], context?: TransactionContext): Promise<ItemMaster[]> {
+      return inTransaction(context, async (ctx) => {
+        const details: ItemBatchErrorDetail[] = [];
+        const candidates: ItemMaster[] = [];
+        const seenCodes = new Set<string>();
+        const seenBarcodes = new Set<string>();
+
+        for (const row of rows) {
+          try {
+            validateItemMasterInput(row.input);
+            const candidate = normalize(row.input);
+            if (seenCodes.has(candidate.code)) {
+              throw new DuplicateError(`商品编码重复：${candidate.code}`);
+            }
+            if (candidate.barcode !== null && seenBarcodes.has(candidate.barcode)) {
+              throw new DuplicateError(`商品条码重复：${candidate.barcode}`);
+            }
+            await ensureUnique(candidate, null, ctx);
+            seenCodes.add(candidate.code);
+            if (candidate.barcode !== null) {
+              seenBarcodes.add(candidate.barcode);
+            }
+            candidates.push(candidate);
+          } catch (error) {
+            if (error instanceof KernelError) {
+              details.push({ line: row.line, code: error.code, message: error.message });
+              continue;
+            }
+            throw error;
+          }
+        }
+
+        if (details.length > 0) {
+          throw itemBatchErrorFromDetails(details);
+        }
+
+        const items = candidates.map((candidate) => ({ ...candidate, id: generateId() }));
+        for (const item of items) {
+          await repository.insert(item, ctx);
+        }
+        return items;
+      });
+    },
+
+    async update(
+      id: string,
+      input: ItemMasterInput,
+      context?: TransactionContext,
+    ): Promise<ItemMaster> {
+      return inTransaction(context, async (ctx) => {
+        validateItemMasterInput(input);
+        const existing = await repository.findById(id, ctx);
+        if (existing === null) {
+          throw new NotFoundError(`商品档案不存在：${id}`);
+        }
+        const candidate: ItemMaster = { ...normalize(input), id };
+        await ensureUnique(candidate, id, ctx);
+        await repository.update(candidate, ctx);
+        return candidate;
+      });
+    },
+
+    async remove(id: string, context?: TransactionContext): Promise<void> {
+      const existing = await repository.findById(id, context);
       if (existing === null) {
         throw new NotFoundError(`商品档案不存在：${id}`);
       }
-      const candidate: ItemMaster = { ...normalize(input), id };
-      await ensureUnique(candidate, id);
-      await repository.update(candidate);
-      return candidate;
-    },
-
-    async remove(id: string): Promise<void> {
-      const existing = await repository.findById(id);
-      if (existing === null) {
-        throw new NotFoundError(`商品档案不存在：${id}`);
-      }
-      await repository.remove(id);
+      await repository.remove(id, context);
     },
   };
 }

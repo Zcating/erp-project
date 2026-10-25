@@ -14,13 +14,31 @@ describe("kernel package", () => {
   it("商品档案 feature 的公开面带领域规则与仓储端口实现", () => {
     expect(Object.keys(itemMaster).sort()).toEqual([
       "CONVERSION_RATE_SCALE",
+      "ITEM_IMPORT_COLUMNS",
       "createInMemoryItemMasterRepository",
+      "createItemImportService",
       "createItemMasterService",
       "formatConversionRate",
+      "itemBatchErrorFromDetails",
+      "parseCsv",
+      "parseItemImportCsv",
       "validateConversionRate",
       "validateItemMasterInput",
     ]);
     expect(itemMaster.CONVERSION_RATE_SCALE).toBe(6);
+    expect(itemMaster.ITEM_IMPORT_COLUMNS).toEqual([
+      "code",
+      "barcode",
+      "name",
+      "spec",
+      "brand",
+      "category",
+      "baseUnit",
+      "auxUnit1",
+      "auxUnit1Rate",
+      "auxUnit2",
+      "auxUnit2Rate",
+    ]);
   });
 
   it("参与方 feature 的公开面带领域规则、仓储端口实现与服务工厂", () => {

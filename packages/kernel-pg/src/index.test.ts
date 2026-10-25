@@ -21,6 +21,7 @@ describe("kernel-pg package", () => {
       "createDatabase",
       "createItemMasterRepository",
       "createSupplierRepository",
+      "createTransactionRunner",
       "createWarehouseRepository",
     ]);
   });

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { DuplicateError, NotFoundError, ValidationError } from "../../shared/errors/index.js";
+import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
 import { createInMemoryItemMasterRepository } from "./in-memory-repository.js";
 import type { ItemMasterInput } from "./model.js";
+import type { ItemMasterRepository } from "./ports.js";
 import { createItemMasterService } from "./service.js";
 
 const baseInput = (overrides: Partial<ItemMasterInput> = {}): ItemMasterInput => ({
@@ -53,6 +55,20 @@ describe("商品档案领域规则", () => {
     await expect(
       service.create(baseInput({ auxiliaryUnits: [{ unit: "箱", conversionRate: "1.1234567" }] })),
     ).rejects.toThrow("单位换算率最多 6 位小数：1.1234567");
+    await expect(
+      service.create(baseInput({ auxiliaryUnits: [{ unit: "箱", conversionRate: "0" }] })),
+    ).rejects.toThrow("单位换算率必须为正数：0");
+    await expect(
+      service.create(baseInput({ auxiliaryUnits: [{ unit: "箱", conversionRate: "-1" }] })),
+    ).rejects.toThrow("单位换算率必须为正数：-1");
+  });
+
+  it("换算率为空时报出缺少单位换算率，与填了非正数区分开", async () => {
+    const { service } = createService();
+
+    await expect(
+      service.create(baseInput({ auxiliaryUnits: [{ unit: "箱", conversionRate: "" }] })),
+    ).rejects.toThrow("缺少单位换算率");
     await expect(
       service.create(baseInput({ auxiliaryUnits: [{ unit: "箱", conversionRate: "0" }] })),
     ).rejects.toThrow("单位换算率必须为正数：0");
@@ -162,5 +178,52 @@ describe("商品档案领域规则", () => {
     ).rejects.toThrow("商品编码重复：SKU-001");
     const unchanged = await service.get(first.id);
     expect(unchanged.code).toBe("SKU-001");
+  });
+});
+
+describe("商品档案建档的事务编排", () => {
+  const createRecordingService = () => {
+    const inner = createInMemoryItemMasterRepository();
+    const insertContexts: (TransactionContext | undefined)[] = [];
+    const repository: ItemMasterRepository = {
+      ...inner,
+      async insert(item, context) {
+        insertContexts.push(context);
+        await inner.insert(item, context);
+      },
+    };
+    const transactionIds: string[] = [];
+    const runner: TransactionRunner = {
+      async run(work) {
+        const context: TransactionContext = {
+          transactionId: `tx-${transactionIds.length + 1}`,
+          handle: `handle-${transactionIds.length + 1}`,
+        };
+        transactionIds.push(context.transactionId);
+        return work(context);
+      },
+    };
+    const service = createItemMasterService(repository, { runner, idGenerator: () => "id-1" });
+    return { service, insertContexts, transactionIds };
+  };
+
+  it("建档时自己开一个事务，事务上下文交给仓储", async () => {
+    const { service, insertContexts, transactionIds } = createRecordingService();
+
+    await service.create(baseInput());
+
+    expect(transactionIds).toEqual(["tx-1"]);
+    expect(insertContexts).toHaveLength(1);
+    expect(insertContexts[0]?.transactionId).toBe("tx-1");
+  });
+
+  it("已有外层事务上下文时复用它，不再另起事务", async () => {
+    const { service, insertContexts, transactionIds } = createRecordingService();
+    const outer: TransactionContext = { transactionId: "outer", handle: "outer-handle" };
+
+    await service.create(baseInput(), outer);
+
+    expect(transactionIds).toEqual([]);
+    expect(insertContexts[0]).toBe(outer);
   });
 });

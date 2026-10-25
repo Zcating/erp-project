@@ -2,6 +2,8 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { PoolConfig } from "pg";
 import { createDatabase } from "./db/client.js";
 import type { DatabaseConnection, KernelDatabase } from "./db/client.js";
+import { createTransactionRunner } from "./db/transactions.js";
+import type { PgTransaction } from "./db/transactions.js";
 import { createItemMasterRepository } from "./features/item-master/repository.js";
 import {
   createCustomerRepository,
@@ -9,7 +11,7 @@ import {
   createWarehouseRepository,
 } from "./features/parties/repository.js";
 
-export type { DatabaseConnection, KernelDatabase, NodePgDatabase, PoolConfig };
+export type { DatabaseConnection, KernelDatabase, NodePgDatabase, PgTransaction, PoolConfig };
 
 export {
   amountType,
@@ -32,6 +34,7 @@ export const kernelPg = {
   createCustomerRepository,
   createItemMasterRepository,
   createSupplierRepository,
+  createTransactionRunner,
   createWarehouseRepository,
 };
 
@@ -40,6 +43,7 @@ export {
   createCustomerRepository,
   createItemMasterRepository,
   createSupplierRepository,
+  createTransactionRunner,
   createWarehouseRepository,
 };
 

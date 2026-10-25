@@ -1,15 +1,32 @@
-import type { ItemMaster, ItemMasterRepository } from "@erp-inventory-sales/kernel";
+import type {
+  ItemMaster,
+  ItemMasterRepository,
+  TransactionContext,
+} from "@erp-inventory-sales/kernel";
 import { DuplicateError } from "@erp-inventory-sales/kernel";
 import { randomUUID } from "node:crypto";
 import type { InferSelectModel } from "drizzle-orm";
 import { asc, eq, inArray } from "drizzle-orm";
 import type { KernelDatabase } from "../../db/client.js";
+import type { PgTransaction } from "../../db/transactions.js";
 import { itemAuxiliaryUnits, items } from "../../schema/item-master.js";
 
 type ItemRecord = InferSelectModel<typeof items>;
 type AuxiliaryUnitRecord = InferSelectModel<typeof itemAuxiliaryUnits>;
+type ItemMasterExecutor = KernelDatabase | PgTransaction;
 
 export function createItemMasterRepository(db: KernelDatabase): ItemMasterRepository {
+  const executorOf = (context?: TransactionContext): ItemMasterExecutor => {
+    if (context === undefined) {
+      return db;
+    }
+    const handle = context.handle as PgTransaction | undefined;
+    if (handle === undefined || handle === null) {
+      throw new Error("事务上下文缺少事务句柄");
+    }
+    return handle;
+  };
+
   const toDomain = (row: ItemRecord, auxiliaryUnits: AuxiliaryUnitRecord[]): ItemMaster => ({
     id: row.id,
     code: row.code,
@@ -26,13 +43,14 @@ export function createItemMasterRepository(db: KernelDatabase): ItemMasterReposi
   });
 
   const auxiliaryUnitsOf = async (
+    executor: ItemMasterExecutor,
     itemIds: string[],
   ): Promise<Map<string, AuxiliaryUnitRecord[]>> => {
     const grouped = new Map<string, AuxiliaryUnitRecord[]>();
     if (itemIds.length === 0) {
       return grouped;
     }
-    const rows = await db
+    const rows = await executor
       .select()
       .from(itemAuxiliaryUnits)
       .where(inArray(itemAuxiliaryUnits.itemId, itemIds));
@@ -44,97 +62,120 @@ export function createItemMasterRepository(db: KernelDatabase): ItemMasterReposi
     return grouped;
   };
 
-  const findOneBy = async (row: ItemRecord | undefined): Promise<ItemMaster | null> => {
+  const findOneBy = async (
+    executor: ItemMasterExecutor,
+    row: ItemRecord | undefined,
+  ): Promise<ItemMaster | null> => {
     if (row === undefined) {
       return null;
     }
-    const grouped = await auxiliaryUnitsOf([row.id]);
+    const grouped = await auxiliaryUnitsOf(executor, [row.id]);
     return toDomain(row, grouped.get(row.id) ?? []);
   };
 
+  const auxiliaryUnitValues = (item: ItemMaster) =>
+    item.auxiliaryUnits.map((auxiliaryUnit) => ({
+      id: randomUUID(),
+      itemId: item.id,
+      unit: auxiliaryUnit.unit,
+      conversionRate: auxiliaryUnit.conversionRate,
+    }));
+
+  const applyInsert = async (executor: ItemMasterExecutor, item: ItemMaster): Promise<void> => {
+    await executor.insert(items).values({
+      id: item.id,
+      code: item.code,
+      barcode: item.barcode,
+      name: item.name,
+      specification: item.specification,
+      brand: item.brand,
+      category: item.category,
+      baseUnit: item.baseUnit,
+    });
+    if (item.auxiliaryUnits.length > 0) {
+      await executor.insert(itemAuxiliaryUnits).values(auxiliaryUnitValues(item));
+    }
+  };
+
+  const applyUpdate = async (executor: ItemMasterExecutor, item: ItemMaster): Promise<void> => {
+    await executor
+      .update(items)
+      .set({
+        code: item.code,
+        barcode: item.barcode,
+        name: item.name,
+        specification: item.specification,
+        brand: item.brand,
+        category: item.category,
+        baseUnit: item.baseUnit,
+      })
+      .where(eq(items.id, item.id));
+    await executor.delete(itemAuxiliaryUnits).where(eq(itemAuxiliaryUnits.itemId, item.id));
+    if (item.auxiliaryUnits.length > 0) {
+      await executor.insert(itemAuxiliaryUnits).values(auxiliaryUnitValues(item));
+    }
+  };
+
   return {
-    async list(): Promise<ItemMaster[]> {
-      const itemRows = await db.select().from(items).orderBy(asc(items.code));
-      const grouped = await auxiliaryUnitsOf(itemRows.map((row) => row.id));
+    async list(context?: TransactionContext): Promise<ItemMaster[]> {
+      const executor = executorOf(context);
+      const itemRows = await executor.select().from(items).orderBy(asc(items.code));
+      const grouped = await auxiliaryUnitsOf(
+        executor,
+        itemRows.map((row) => row.id),
+      );
       return itemRows.map((row) => toDomain(row, grouped.get(row.id) ?? []));
     },
 
-    async findById(id: string): Promise<ItemMaster | null> {
-      const rows = await db.select().from(items).where(eq(items.id, id)).limit(1);
-      return findOneBy(rows[0]);
+    async findById(id: string, context?: TransactionContext): Promise<ItemMaster | null> {
+      const executor = executorOf(context);
+      const rows = await executor.select().from(items).where(eq(items.id, id)).limit(1);
+      return findOneBy(executor, rows[0]);
     },
 
-    async findByCode(code: string): Promise<ItemMaster | null> {
-      const rows = await db.select().from(items).where(eq(items.code, code)).limit(1);
-      return findOneBy(rows[0]);
+    async findByCode(code: string, context?: TransactionContext): Promise<ItemMaster | null> {
+      const executor = executorOf(context);
+      const rows = await executor.select().from(items).where(eq(items.code, code)).limit(1);
+      return findOneBy(executor, rows[0]);
     },
 
-    async findByBarcode(barcode: string): Promise<ItemMaster | null> {
-      const rows = await db.select().from(items).where(eq(items.barcode, barcode)).limit(1);
-      return findOneBy(rows[0]);
+    async findByBarcode(barcode: string, context?: TransactionContext): Promise<ItemMaster | null> {
+      const executor = executorOf(context);
+      const rows = await executor.select().from(items).where(eq(items.barcode, barcode)).limit(1);
+      return findOneBy(executor, rows[0]);
     },
 
-    async insert(item: ItemMaster): Promise<void> {
+    async insert(item: ItemMaster, context?: TransactionContext): Promise<void> {
       try {
-        await db.insert(items).values({
-          id: item.id,
-          code: item.code,
-          barcode: item.barcode,
-          name: item.name,
-          specification: item.specification,
-          brand: item.brand,
-          category: item.category,
-          baseUnit: item.baseUnit,
-        });
-        if (item.auxiliaryUnits.length > 0) {
-          await db.insert(itemAuxiliaryUnits).values(
-            item.auxiliaryUnits.map((auxiliaryUnit) => ({
-              id: randomUUID(),
-              itemId: item.id,
-              unit: auxiliaryUnit.unit,
-              conversionRate: auxiliaryUnit.conversionRate,
-            })),
-          );
+        if (context === undefined) {
+          await db.transaction(async (tx) => applyInsert(tx, item));
+        } else {
+          await applyInsert(executorOf(context), item);
         }
       } catch (error) {
         throw translateWriteError(error, item);
       }
     },
 
-    async update(item: ItemMaster): Promise<void> {
+    async update(item: ItemMaster, context?: TransactionContext): Promise<void> {
+      const executor = executorOf(context);
       try {
-        await db.transaction(async (tx) => {
-          await tx
-            .update(items)
-            .set({
-              code: item.code,
-              barcode: item.barcode,
-              name: item.name,
-              specification: item.specification,
-              brand: item.brand,
-              category: item.category,
-              baseUnit: item.baseUnit,
-            })
-            .where(eq(items.id, item.id));
-          await tx.delete(itemAuxiliaryUnits).where(eq(itemAuxiliaryUnits.itemId, item.id));
-          if (item.auxiliaryUnits.length > 0) {
-            await tx.insert(itemAuxiliaryUnits).values(
-              item.auxiliaryUnits.map((auxiliaryUnit) => ({
-                id: randomUUID(),
-                itemId: item.id,
-                unit: auxiliaryUnit.unit,
-                conversionRate: auxiliaryUnit.conversionRate,
-              })),
-            );
-          }
-        });
+        if (context === undefined) {
+          await db.transaction(async (tx) => applyUpdate(tx, item));
+        } else {
+          await applyUpdate(executor, item);
+        }
       } catch (error) {
         throw translateWriteError(error, item);
       }
     },
 
-    async remove(id: string): Promise<boolean> {
-      const deleted = await db.delete(items).where(eq(items.id, id)).returning({ id: items.id });
+    async remove(id: string, context?: TransactionContext): Promise<boolean> {
+      const executor = executorOf(context);
+      const deleted = await executor
+        .delete(items)
+        .where(eq(items.id, id))
+        .returning({ id: items.id });
       return deleted.length > 0;
     },
   };

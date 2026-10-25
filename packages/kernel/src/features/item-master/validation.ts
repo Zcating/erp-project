@@ -23,6 +23,9 @@ export function validateItemMasterInput(input: ItemMasterInput): void {
 }
 
 export function validateConversionRate(raw: string): void {
+  if (raw.trim() === "") {
+    throw new ValidationError("缺少单位换算率");
+  }
   if (!POSITIVE_DECIMAL_PATTERN.test(raw) || ZERO_DECIMAL_PATTERN.test(raw)) {
     throw new ValidationError(`单位换算率必须为正数：${raw}`);
   }

@@ -2,10 +2,13 @@ import type {
   CustomerRepository,
   ItemMasterRepository,
   SupplierRepository,
+  TransactionRunner,
   WarehouseRepository,
 } from "@erp-inventory-sales/kernel";
 import {
   createCustomerService,
+  createInMemoryTransactionRunner,
+  createItemImportService,
   createItemMasterService,
   createSupplierService,
   createWarehouseService,
@@ -15,6 +18,7 @@ import {
   createDatabase,
   createItemMasterRepository,
   createSupplierRepository,
+  createTransactionRunner,
   createWarehouseRepository,
   databaseUrl,
 } from "@erp-inventory-sales/kernel-pg";
@@ -50,6 +54,7 @@ export type BuildAppOptions = {
   supplierRepository?: SupplierRepository;
   customerRepository?: CustomerRepository;
   warehouseRepository?: WarehouseRepository;
+  transactionRunner?: TransactionRunner;
 };
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
@@ -82,10 +87,21 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   };
   const itemMasterRepository =
     options.itemMasterRepository ?? createItemMasterRepository(database());
+  const transactionRunner =
+    options.transactionRunner ??
+    (options.itemMasterRepository === undefined
+      ? createTransactionRunner(database())
+      : createInMemoryTransactionRunner());
+  const itemMasterService = createItemMasterService(itemMasterRepository, {
+    runner: transactionRunner,
+  });
   const supplierRepository = options.supplierRepository ?? createSupplierRepository(database());
   const customerRepository = options.customerRepository ?? createCustomerRepository(database());
   const warehouseRepository = options.warehouseRepository ?? createWarehouseRepository(database());
-  registerItemMasterRoutes(app, { service: createItemMasterService(itemMasterRepository) });
+  registerItemMasterRoutes(app, {
+    service: itemMasterService,
+    importService: createItemImportService({ items: itemMasterService, runner: transactionRunner }),
+  });
   registerSupplierRoutes(app, { service: createSupplierService(supplierRepository) });
   registerCustomerRoutes(app, { service: createCustomerService(customerRepository) });
   registerWarehouseRoutes(app, { service: createWarehouseService(warehouseRepository) });

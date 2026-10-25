@@ -1,5 +1,7 @@
+import { ItemBatchError } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
 import { failure } from "./envelope.js";
+import type { ErrorDetail } from "./envelope.js";
 import { httpStatusForErrorCode, INTERNAL_ERROR_CODE, isKnownErrorCode } from "./error-status.js";
 
 export function registerErrorHandling(app: FastifyInstance): void {
@@ -11,7 +13,9 @@ export function registerErrorHandling(app: FastifyInstance): void {
 
   app.setErrorHandler((error, _request, reply) => {
     const code = resolveErrorCode(error);
-    reply.code(httpStatusForErrorCode(code)).send(failure(code, resolveMessage(error)));
+    reply
+      .code(httpStatusForErrorCode(code))
+      .send(failure(code, resolveMessage(error), resolveDetails(error)));
   });
 }
 
@@ -40,4 +44,15 @@ function resolveMessage(error: unknown): string {
     return error.message;
   }
   return "内部错误";
+}
+
+function resolveDetails(error: unknown): ErrorDetail[] | undefined {
+  if (error instanceof ItemBatchError) {
+    return error.details.map((detail) => ({
+      line: detail.line,
+      code: detail.code,
+      message: detail.message,
+    }));
+  }
+  return undefined;
 }

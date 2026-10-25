@@ -1,4 +1,5 @@
 import { DuplicateError } from "../../shared/errors/index.js";
+import type { TransactionContext } from "../../shared/transactions/index.js";
 import type { ItemMaster } from "./model.js";
 import type { ItemMasterRepository } from "./ports.js";
 
@@ -34,34 +35,37 @@ export function createInMemoryItemMasterRepository(): ItemMasterRepository {
   };
 
   return {
-    async list(): Promise<ItemMaster[]> {
+    async list(_context?: TransactionContext): Promise<ItemMaster[]> {
       return [...stored.values()].map(copy);
     },
 
-    async findById(id: string): Promise<ItemMaster | null> {
+    async findById(id: string, _context?: TransactionContext): Promise<ItemMaster | null> {
       const item = stored.get(id);
       return item === undefined ? null : copy(item);
     },
 
-    async findByCode(code: string): Promise<ItemMaster | null> {
+    async findByCode(code: string, _context?: TransactionContext): Promise<ItemMaster | null> {
       return find((item) => item.code === code);
     },
 
-    async findByBarcode(barcode: string): Promise<ItemMaster | null> {
+    async findByBarcode(
+      barcode: string,
+      _context?: TransactionContext,
+    ): Promise<ItemMaster | null> {
       return find((item) => item.barcode === barcode);
     },
 
-    async insert(item: ItemMaster): Promise<void> {
+    async insert(item: ItemMaster, _context?: TransactionContext): Promise<void> {
       assertUnique(item);
       stored.set(item.id, copy(item));
     },
 
-    async update(item: ItemMaster): Promise<void> {
+    async update(item: ItemMaster, _context?: TransactionContext): Promise<void> {
       assertUnique(item);
       stored.set(item.id, copy(item));
     },
 
-    async remove(id: string): Promise<boolean> {
+    async remove(id: string, _context?: TransactionContext): Promise<boolean> {
       return stored.delete(id);
     },
   };

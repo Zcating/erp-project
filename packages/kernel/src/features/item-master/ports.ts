@@ -1,11 +1,12 @@
+import type { TransactionContext } from "../../shared/transactions/index.js";
 import type { ItemMaster } from "./model.js";
 
 export type ItemMasterRepository = {
-  list(): Promise<ItemMaster[]>;
-  findById(id: string): Promise<ItemMaster | null>;
-  findByCode(code: string): Promise<ItemMaster | null>;
-  findByBarcode(barcode: string): Promise<ItemMaster | null>;
-  insert(item: ItemMaster): Promise<void>;
-  update(item: ItemMaster): Promise<void>;
-  remove(id: string): Promise<boolean>;
+  list(context?: TransactionContext): Promise<ItemMaster[]>;
+  findById(id: string, context?: TransactionContext): Promise<ItemMaster | null>;
+  findByCode(code: string, context?: TransactionContext): Promise<ItemMaster | null>;
+  findByBarcode(barcode: string, context?: TransactionContext): Promise<ItemMaster | null>;
+  insert(item: ItemMaster, context?: TransactionContext): Promise<void>;
+  update(item: ItemMaster, context?: TransactionContext): Promise<void>;
+  remove(id: string, context?: TransactionContext): Promise<boolean>;
 };
