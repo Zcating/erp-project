@@ -4,16 +4,25 @@ import { describe, expect, it } from "vitest";
 import {
   amountType,
   conversionRateType,
+  customers,
   itemAuxiliaryUnits,
   items,
   kernelPg,
   quantityType,
+  suppliers,
   unitPriceType,
+  warehouses,
 } from "./index.js";
 
 describe("kernel-pg package", () => {
   it("exposes its public surface", () => {
-    expect(Object.keys(kernelPg).sort()).toEqual(["createDatabase", "createItemMasterRepository"]);
+    expect(Object.keys(kernelPg).sort()).toEqual([
+      "createCustomerRepository",
+      "createDatabase",
+      "createItemMasterRepository",
+      "createSupplierRepository",
+      "createWarehouseRepository",
+    ]);
   });
 
   it("把三种精度列映射到迁移产出的 domain", () => {
@@ -39,5 +48,21 @@ describe("kernel-pg package", () => {
       conversionRate: conversionRateType("conversion_rate"),
     });
     expect(probe.conversionRate.getSQLType()).toBe("erp.conversion_rate");
+  });
+
+  it("供应商、客户与仓库三张表落在 erp schema，各自带编码唯一索引", () => {
+    expect(getTableConfig(suppliers).schema).toBe("erp");
+    expect(getTableConfig(suppliers).name).toBe("suppliers");
+    expect(getTableConfig(customers).schema).toBe("erp");
+    expect(getTableConfig(customers).name).toBe("customers");
+    expect(getTableConfig(warehouses).schema).toBe("erp");
+    expect(getTableConfig(warehouses).name).toBe("warehouses");
+
+    const indexNamesOf = (table: ReturnType<typeof getTableConfig>): string[] =>
+      table.indexes.map((index) => index.config.name ?? "");
+
+    expect(indexNamesOf(getTableConfig(suppliers))).toEqual(["suppliers_code_key"]);
+    expect(indexNamesOf(getTableConfig(customers))).toEqual(["customers_code_key"]);
+    expect(indexNamesOf(getTableConfig(warehouses))).toEqual(["warehouses_code_key"]);
   });
 });

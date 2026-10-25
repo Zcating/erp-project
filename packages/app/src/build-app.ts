@@ -1,14 +1,33 @@
-import type { ItemMasterRepository } from "@erp-inventory-sales/kernel";
-import { createItemMasterService } from "@erp-inventory-sales/kernel";
+import type {
+  CustomerRepository,
+  ItemMasterRepository,
+  SupplierRepository,
+  WarehouseRepository,
+} from "@erp-inventory-sales/kernel";
 import {
+  createCustomerService,
+  createItemMasterService,
+  createSupplierService,
+  createWarehouseService,
+} from "@erp-inventory-sales/kernel";
+import {
+  createCustomerRepository,
   createDatabase,
   createItemMasterRepository,
+  createSupplierRepository,
+  createWarehouseRepository,
   databaseUrl,
 } from "@erp-inventory-sales/kernel-pg";
+import type { DatabaseConnection, KernelDatabase } from "@erp-inventory-sales/kernel-pg";
 import Fastify, { type FastifyInstance } from "fastify";
 import { registerDecimalRoutes } from "./features/decimals/index.js";
 import { registerHealthRoutes } from "./features/health/index.js";
 import { registerItemMasterRoutes } from "./features/item-master/index.js";
+import {
+  registerCustomerRoutes,
+  registerSupplierRoutes,
+  registerWarehouseRoutes,
+} from "./features/parties/index.js";
 import {
   createSessionResolver,
   createSessionStore,
@@ -28,6 +47,9 @@ export type BuildAppOptions = {
   sessionTtlMs?: number;
   databaseUrl?: string;
   itemMasterRepository?: ItemMasterRepository;
+  supplierRepository?: SupplierRepository;
+  customerRepository?: CustomerRepository;
+  warehouseRepository?: WarehouseRepository;
 };
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
@@ -46,14 +68,26 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerSessionRoutes(app, { resolveSession, store, credentials, sessionTtlMs });
   registerDecimalRoutes(app);
   registerSystemRoutes(app, routeRegistry);
-  let itemMasterRepository = options.itemMasterRepository;
-  if (itemMasterRepository === undefined) {
-    const connection = createDatabase(options.databaseUrl ?? databaseUrl());
-    itemMasterRepository = createItemMasterRepository(connection.db);
-    app.addHook("onClose", async () => {
+  let connection: DatabaseConnection | undefined;
+  app.addHook("onClose", async () => {
+    if (connection !== undefined) {
       await connection.pool.end();
-    });
-  }
+    }
+  });
+  const database = (): KernelDatabase => {
+    if (connection === undefined) {
+      connection = createDatabase(options.databaseUrl ?? databaseUrl());
+    }
+    return connection.db;
+  };
+  const itemMasterRepository =
+    options.itemMasterRepository ?? createItemMasterRepository(database());
+  const supplierRepository = options.supplierRepository ?? createSupplierRepository(database());
+  const customerRepository = options.customerRepository ?? createCustomerRepository(database());
+  const warehouseRepository = options.warehouseRepository ?? createWarehouseRepository(database());
   registerItemMasterRoutes(app, { service: createItemMasterService(itemMasterRepository) });
+  registerSupplierRoutes(app, { service: createSupplierService(supplierRepository) });
+  registerCustomerRoutes(app, { service: createCustomerService(customerRepository) });
+  registerWarehouseRoutes(app, { service: createWarehouseService(warehouseRepository) });
   return app;
 }

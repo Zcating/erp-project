@@ -42,8 +42,11 @@ describe("数据库迁移", () => {
          where table_schema = 'erp' order by table_name`,
       );
       expect(tables.rows).toEqual([
+        { table_schema: "erp", table_name: "customers" },
         { table_schema: "erp", table_name: "item_auxiliary_units" },
         { table_schema: "erp", table_name: "items" },
+        { table_schema: "erp", table_name: "suppliers" },
+        { table_schema: "erp", table_name: "warehouses" },
       ]);
 
       const columns = await client.query(
@@ -73,6 +76,50 @@ describe("数据库迁移", () => {
       expect(indexes.rows.find((row) => row.indexname === "items_barcode_key")?.indexdef).toContain(
         "WHERE",
       );
+    } finally {
+      await client.end();
+    }
+  });
+
+  it("供应商、客户与仓库三张表落在 erp schema，各自带编码唯一索引", async () => {
+    const client = await connectToTestDatabase();
+    try {
+      const columns = await client.query(
+        `select c.relname as table_name, a.attname as column_name, format_type(a.atttypid, a.atttypmod) as column_type
+         from pg_attribute a
+         join pg_class c on c.oid = a.attrelid
+         join pg_namespace n on n.oid = c.relnamespace
+         where n.nspname = 'erp' and c.relname in ('suppliers', 'customers', 'warehouses') and a.attnum > 0
+         order by c.relname, a.attname`,
+      );
+      expect(columns.rows).toEqual([
+        { table_name: "customers", column_name: "code", column_type: "text" },
+        { table_name: "customers", column_name: "contact", column_type: "text" },
+        { table_name: "customers", column_name: "id", column_type: "uuid" },
+        { table_name: "customers", column_name: "name", column_type: "text" },
+        { table_name: "suppliers", column_name: "code", column_type: "text" },
+        { table_name: "suppliers", column_name: "contact", column_type: "text" },
+        { table_name: "suppliers", column_name: "id", column_type: "uuid" },
+        { table_name: "suppliers", column_name: "name", column_type: "text" },
+        { table_name: "warehouses", column_name: "code", column_type: "text" },
+        { table_name: "warehouses", column_name: "id", column_type: "uuid" },
+        { table_name: "warehouses", column_name: "name", column_type: "text" },
+        { table_name: "warehouses", column_name: "purpose", column_type: "text" },
+      ]);
+
+      const indexes = await client.query(
+        `select indexname from pg_indexes
+         where schemaname = 'erp' and tablename in ('suppliers', 'customers', 'warehouses')
+         order by indexname`,
+      );
+      expect(indexes.rows.map((row) => row.indexname)).toEqual([
+        "customers_code_key",
+        "customers_pkey",
+        "suppliers_code_key",
+        "suppliers_pkey",
+        "warehouses_code_key",
+        "warehouses_pkey",
+      ]);
     } finally {
       await client.end();
     }

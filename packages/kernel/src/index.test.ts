@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inventory, itemMaster, ports, purchasing, selling } from "./index.js";
+import { inventory, itemMaster, parties, ports, purchasing, selling } from "./index.js";
 
 describe("kernel package", () => {
   it("exposes its public surface", () => {
@@ -21,5 +21,19 @@ describe("kernel package", () => {
       "validateItemMasterInput",
     ]);
     expect(itemMaster.CONVERSION_RATE_SCALE).toBe(6);
+  });
+
+  it("参与方 feature 的公开面带领域规则、仓储端口实现与服务工厂", () => {
+    expect(Object.keys(parties).sort()).toEqual([
+      "createCustomerService",
+      "createInMemoryCustomerRepository",
+      "createInMemorySupplierRepository",
+      "createInMemoryWarehouseRepository",
+      "createSupplierService",
+      "createWarehouseService",
+      "validateCustomerInput",
+      "validateSupplierInput",
+      "validateWarehouseInput",
+    ]);
   });
 });
