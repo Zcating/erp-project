@@ -9,13 +9,16 @@
     }
   },
   "scripts": {
-    "build": "vp pack"
+    "build": "vp pack",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
     "pg": "^8.23.1"
   },
   "devDependencies": {
-    "@types/pg": "^8.23.1"
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "0.31.11"
   }
 }

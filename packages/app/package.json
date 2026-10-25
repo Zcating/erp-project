@@ -9,12 +9,16 @@
     }
   },
   "scripts": {
-    "build": "vp pack"
+    "build": "vp pack",
+    "start": "tsx src/server.ts"
   },
   "dependencies": {
     "@erp-inventory-sales/kernel": "workspace:*",
     "@erp-inventory-sales/kernel-pg": "workspace:*",
     "@erp-inventory-sales/shared": "workspace:*",
     "fastify": "^5.12.7"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
   }
 }

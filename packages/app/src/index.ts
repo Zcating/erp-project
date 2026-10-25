@@ -7,4 +7,4 @@ export type { FastifyInstance };
 
 export { kernelPg, ports, shared };
 
-export const app = {};
+export { buildApp, type BuildAppOptions } from "./build-app.js";

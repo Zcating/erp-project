@@ -5,7 +5,8 @@
   "scripts": {
     "check": "vp check",
     "test": "vp test",
-    "build": "pnpm -r run build"
+    "build": "pnpm -r run build",
+    "db:migrate": "pnpm --filter @erp-inventory-sales/kernel-pg db:migrate"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
