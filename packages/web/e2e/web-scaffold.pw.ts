@@ -1,34 +1,7 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-
-type DebugQueryEntry = {
-  queryKey: readonly unknown[];
-  status: string;
-  data: unknown;
-};
-
-type UiStateSnapshot = {
-  routeFilter: string;
-  selectedRoute: string | null;
-  detailPanelOpen: boolean;
-};
-
-type DebugHandles = {
-  readUiState: () => UiStateSnapshot;
-  readQueryCache: () => Array<DebugQueryEntry>;
-};
-
-declare global {
-  interface Window {
-    __erpDebug?: DebugHandles;
-  }
-}
-
-const SERVER_FN_PATH = "/_serverFn/";
-
-async function waitForDebugHandles(page: Page): Promise<void> {
-  await page.waitForFunction(() => window.__erpDebug !== undefined);
-}
+import { loginAsAdmin, waitForDebugHandles } from "./fixtures";
+import type { DebugQueryEntry, UiStateSnapshot } from "./fixtures";
 
 async function readUiState(page: Page): Promise<UiStateSnapshot> {
   await waitForDebugHandles(page);
@@ -40,11 +13,15 @@ async function readQueryCache(page: Page): Promise<Array<DebugQueryEntry>> {
   return page.evaluate(() => window.__erpDebug!.readQueryCache());
 }
 
+const SERVER_FN_PATH = "/_serverFn/";
+
 async function readClientRouteUrls(page: Page): Promise<Array<string>> {
   return page.locator('[data-testid="route-row"] td:nth-of-type(2)').allInnerTexts();
 }
 
 test("根路径返回 200 并渲染管理后台骨架", async ({ page }) => {
+  await loginAsAdmin(page);
+
   const response = await page.goto("/");
 
   expect(response?.status()).toBe(200);
@@ -54,6 +31,7 @@ test("根路径返回 200 并渲染管理后台骨架", async ({ page }) => {
 });
 
 test("Tailwind 工具类在计算样式上生效", async ({ page }) => {
+  await loginAsAdmin(page);
   await page.goto("/");
 
   const mainPadding = await page
@@ -82,6 +60,8 @@ test("Tailwind 工具类在计算样式上生效", async ({ page }) => {
 });
 
 test("列表页能打开并渲染列表骨架，不出现报错页", async ({ page }) => {
+  await loginAsAdmin(page);
+
   const response = await page.goto("/system/routes");
 
   expect(response?.status()).toBe(200);
@@ -92,6 +72,8 @@ test("列表页能打开并渲染列表骨架，不出现报错页", async ({ pa
 });
 
 test("浏览器发出的业务请求只指向前端自身地址", async ({ page }) => {
+  await loginAsAdmin(page);
+
   const requests: Array<string> = [];
   page.on("request", (request) => {
     requests.push(request.url());
@@ -109,8 +91,10 @@ test("浏览器发出的业务请求只指向前端自身地址", async ({ page 
   expect(requests.filter((url) => url.includes(":3000") || url.includes(":5432"))).toEqual([]);
 });
 
-test("SSR 阶段取数走同一个 Fastify API，输出内容与浏览器端一致", async ({ page, request }) => {
-  const ssrResponse = await request.get("/system/routes");
+test("SSR 阶段取数走同一个 Fastify API，输出内容与浏览器端一致", async ({ page }) => {
+  await loginAsAdmin(page);
+
+  const ssrResponse = await page.request.get("/system/routes");
   expect(ssrResponse.status()).toBe(200);
   const ssrHtml = await ssrResponse.text();
   const ssrUrls = [...ssrHtml.matchAll(/<button[^>]*>(\/api\/[^<]*)<\/button>/g)].map(
@@ -143,6 +127,7 @@ test("SSR 阶段取数走同一个 Fastify API，输出内容与浏览器端一�
 });
 
 test("前端状态容器里只有界面状态，不含服务端数据", async ({ page }) => {
+  await loginAsAdmin(page);
   await page.goto("/system/routes");
   await expect(page.getByTestId("route-row").first()).toBeVisible();
 
@@ -157,6 +142,8 @@ test("前端状态容器里只有界面状态，不含服务端数据", async ({
 });
 
 test("列表只由查询缓存层持有一份，切换筛选由缓存层重新请求", async ({ page }) => {
+  await loginAsAdmin(page);
+
   const serverFnRequests: Array<string> = [];
   page.on("request", (request) => {
     if (request.url().includes(SERVER_FN_PATH)) {

@@ -1,14 +1,58 @@
+import { timingSafeEqual } from "node:crypto";
+import { z } from "@erp-inventory-sales/shared";
 import type { FastifyInstance } from "fastify";
 import { success } from "../../shared/envelope.js";
 import { UnauthenticatedError } from "../../shared/errors.js";
+import { buildSessionCookieHeader } from "./cookie.js";
+import type { AdminCredentials } from "./credentials.js";
 import type { SessionResolver } from "./session-resolver.js";
+import type { SessionStore } from "./session-store.js";
 
-export function registerSessionRoutes(app: FastifyInstance, resolveSession: SessionResolver): void {
+export const LOGIN_FAILED_MESSAGE = "账号或密码不正确";
+
+const loginBodySchema = z.object({
+  username: z.string(),
+  password: z.string(),
+});
+
+export type SessionRouteDeps = {
+  resolveSession: SessionResolver;
+  store: SessionStore;
+  credentials: AdminCredentials;
+  sessionTtlMs: number;
+};
+
+export function registerSessionRoutes(app: FastifyInstance, deps: SessionRouteDeps): void {
+  app.post("/api/login", async (request, reply) => {
+    const body = loginBodySchema.safeParse(request.body);
+    const usernameMatches = body.success && body.data.username === deps.credentials.username;
+    const passwordMatches =
+      body.success && secretsMatch(body.data.password, deps.credentials.password);
+    if (!usernameMatches || !passwordMatches) {
+      throw new UnauthenticatedError(LOGIN_FAILED_MESSAGE);
+    }
+    const sessionId = deps.store.create(deps.credentials.username);
+    reply.header(
+      "set-cookie",
+      buildSessionCookieHeader(sessionId, Math.floor(deps.sessionTtlMs / 1000)),
+    );
+    return success({ adminId: deps.credentials.username });
+  });
+
   app.get("/api/session", async (request) => {
-    const session = await resolveSession(request);
+    const session = await deps.resolveSession(request);
     if (session === null) {
       throw new UnauthenticatedError();
     }
     return success({ adminId: session.adminId });
   });
+}
+
+function secretsMatch(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left, "utf8");
+  const rightBuffer = Buffer.from(right, "utf8");
+  if (leftBuffer.length !== rightBuffer.length) {
+    return false;
+  }
+  return timingSafeEqual(leftBuffer, rightBuffer);
 }

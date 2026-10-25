@@ -97,16 +97,56 @@ curl http://localhost:3000/api/health
 # {"data":{"status":"ok"}}
 ```
 
+### 管理员账号
+
+管理员账号只有一份，由环境变量提供；系统不开放注册接口，也没有管理员表。
+
+```bash
+# PowerShell
+$env:ADMIN_USERNAME = "admin"
+$env:ADMIN_PASSWORD = "换成你自己的口令"
+
+# bash
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="换成你自己的口令"
+```
+
+**两个变量都没有设置时，实例会退回到内置的种子数据管理员 `admin`（口令 `admin-dev-password`）**，
+启动日志里会明确打印这条警告：
+
+```
+警告：未配置 ADMIN_USERNAME 与 ADMIN_PASSWORD，正在使用开发默认管理员 admin（仅供本地开发，部署方必须用 ADMIN_USERNAME 与 ADMIN_PASSWORD 覆盖）
+```
+
+这个默认账号**只用于本地开发**：它写在代码里、口令公开，谁拿到源码都能登录。
+**部署方必须用 `ADMIN_USERNAME` 与 `ADMIN_PASSWORD` 覆盖它**，否则等于没有登录。
+
 ## HTTP 表面
 
 所有响应走同一套信封：成功是 `{"data": ...}`，失败是 `{"error":{"code":...,"message":...}}`。
 
-| 路径                        | 说明                                                             |
-| --------------------------- | ---------------------------------------------------------------- |
-| `GET /api/health`           | 健康检查，返回 200 与成功信封                                    |
-| `GET /api/session`          | 受保护路由，未带会话凭据返回 401 与错误信封                      |
-| `POST /api/decimals/amount` | 精度校验探针：金额超过 2 位小数返回 400 与 `VALIDATION` 错误信封 |
-| `GET /api/system/routes`    | 诊断端点：返回已注册的路由清单（前端脚手架演示用）               |
+| 路径                        | 说明                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------- |
+| `GET /api/health`           | 免会话：健康检查，返回 200 与成功信封                                        |
+| `POST /api/login`           | 免会话：用账号密码换会话，200 与 HttpOnly 会话 cookie                        |
+| `GET /api/session`          | 受保护路由：返回当前管理员账号标识，未带会话凭据返回 401                     |
+| `POST /api/decimals/amount` | 受保护路由：精度校验探针，金额超过 2 位小数返回 400 与 `VALIDATION` 错误信封 |
+| `GET /api/system/routes`    | 受保护路由：诊断端点，返回已注册的路由清单（前端脚手架演示用）               |
+
+免会话路由只有 `POST /api/login` 与 `GET /api/health` 两条，其余已注册路由在无会话时一律返回 401。
+
+登录：
+
+```bash
+curl -i -X POST http://localhost:3000/api/login \
+  -H "content-type: application/json" \
+  -d '{"username":"admin","password":"admin-dev-password"}'
+# HTTP/1.1 200 OK
+# set-cookie: erp_session=...; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800
+# {"data":{"adminId":"admin"}}
+```
+
+会话 cookie 是 HttpOnly，凭据不出现在响应体里；账号不存在与密码错误返回完全相同的响应体与状态码。
 
 错误码到状态码的映射：`VALIDATION` → 400、`NOT_FOUND` → 404、`CONFLICT` / `DUPLICATE` / `STATE_CONFLICT` / `STOCK_NEGATIVE` → 409、`UNAUTHENTICATED` → 401。
 
@@ -123,6 +163,19 @@ vp dev packages/web --port 5173
 
 打开 `http://localhost:5173/`。`vp dev` / `vp build` 必须带 `packages/web` 作为项目根（或在
 `packages/web` 目录内执行），在 workspace 根裸跑会 404。
+
+### 登录与会话
+
+浏览器只与前端同源交互，会话也走同一条链路：
+
+1. 打开任一后台页面，未登录会被送到 `/login?next=<原本想去的地址>`；
+2. 在登录页提交账号密码，前端的 server function 把凭据转给 Fastify 的 `POST /api/login`；
+3. Fastify 校验通过后下发 HttpOnly 会话 cookie，server function 把它种在**浏览器当前的 web origin** 上
+   （cookie 不出现在响应体里，前端代码不接触密码、不自行签发凭据）；
+4. 登录成功后回到 `next` 指向的目标页，之后每次取数都由 server function 把会话 cookie 透传给 Fastify 校验；
+5. 会话失效时，下一次取数会清掉查询缓存并跳回登录页，页面不残留任何业务数据。
+
+登录用的账号密码就是第 5 节里的 `ADMIN_USERNAME` / `ADMIN_PASSWORD`（未配置时是种子数据管理员 `admin`）。
 
 Fastify 地址由服务端环境变量 `API_BASE_URL` 指定，默认 `http://localhost:3000`（与
 `packages/app/src/server.ts` 的默认端口一致）：

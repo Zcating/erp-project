@@ -63,15 +63,22 @@ export async function prepareE2eDatabase(options: { recreate: boolean }): Promis
   return url;
 }
 
-export function spawnApi(databaseUrl: string, port: number): ChildProcess {
+export function spawnApi(
+  databaseUrl: string,
+  port: number,
+  extraEnv: NodeJS.ProcessEnv = {},
+): ChildProcess {
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    DATABASE_URL: databaseUrl,
+    E2E_DATABASE_URL: databaseUrl,
+    PORT: String(port),
+  };
+  delete env.ADMIN_USERNAME;
+  delete env.ADMIN_PASSWORD;
   return startProcess("pnpm", ["--filter", "@erp-inventory-sales/app", "start"], {
     cwd: repoRoot,
-    env: {
-      ...process.env,
-      DATABASE_URL: databaseUrl,
-      E2E_DATABASE_URL: databaseUrl,
-      PORT: String(port),
-    },
+    env: { ...env, ...extraEnv },
   });
 }
 

@@ -1,13 +1,29 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Outlet,
+  Scripts,
+  redirect,
+} from "@tanstack/react-router";
 import { createStore, Provider } from "jotai";
 import { useEffect, useState } from "react";
+import { LOGIN_PATH, sessionQueryOptions } from "@/features/session";
 import { uiStateAtoms } from "@/features/system/stores";
 import { installDebugHandles, readAtomValues, readQueryCache } from "@/lib/debug-handles";
 import type { WebRouterContext } from "@/router-context";
 import "../styles.css";
 
 export const Route = createRootRouteWithContext<WebRouterContext>()({
+  beforeLoad: async ({ context, location }) => {
+    if (location.pathname === LOGIN_PATH) {
+      return;
+    }
+    const session = await context.queryClient.ensureQueryData(sessionQueryOptions());
+    if (!session.authenticated) {
+      throw redirect({ to: LOGIN_PATH, search: { next: location.href } });
+    }
+  },
   component: RootLayout,
 });
 

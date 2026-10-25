@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { fetchApi } from "@/lib/api-client";
+import { UnauthenticatedError } from "@/features/session/lib/errors";
 
 export type SystemRouteEntry = {
   method: string;
@@ -12,8 +14,11 @@ export type SystemRouteList = {
 export const listSystemRoutes = createServerFn({ method: "GET" })
   .validator((data: { filter: string }) => ({ filter: data.filter }))
   .handler(async ({ data }) => {
-    const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:3000";
-    const response = await fetch(`${apiBaseUrl}/api/system/routes`);
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    const response = await fetchApi("/api/system/routes", getRequestHeader("cookie"));
+    if (response.status === 401) {
+      throw new UnauthenticatedError();
+    }
     if (!response.ok) {
       throw new Error(`Fastify API /api/system/routes 返回 ${response.status}`);
     }

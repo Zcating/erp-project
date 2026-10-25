@@ -1,6 +1,8 @@
-import { expect, test } from "./fixtures";
+import { expect, loginAsAdmin, test } from "./fixtures";
 
 test("浏览器打开前端根路径渲染出管理后台布局", async ({ page }) => {
+  await loginAsAdmin(page);
+
   const response = await page.goto("/");
 
   expect(response?.status()).toBe(200);
