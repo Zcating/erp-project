@@ -39,7 +39,16 @@ export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/erp"
 ```
 
 `postgres/postgres` 是 `docker-compose.yml` 里的本地默认值，共享环境用 `DATABASE_URL` 覆盖即可。
-测试跑在同一个实例上的独立库 `erp_test`，需要时用 `TEST_DATABASE_URL` 覆盖。
+
+同一个实例上分三个库，互不干扰，各自的连接串都有环境变量可覆盖：
+
+| 库         | 用途            | 环境变量            | 缺省库名   |
+| ---------- | --------------- | ------------------- | ---------- |
+| `erp`      | 开发库          | `DATABASE_URL`      | `erp`      |
+| `erp_test` | 单元/迁移测试库 | `TEST_DATABASE_URL` | `erp_test` |
+| `erp_e2e`  | 端到端测试库    | `E2E_DATABASE_URL`  | `erp_e2e`  |
+
+`vp test` 只碰 `erp_test`，端到端只碰 `erp_e2e`，两者可以并发跑；开发库 `erp` 只被读取做隔离比对。
 
 ## 3. 跑迁移
 
@@ -72,6 +81,8 @@ pnpm db:migrate
 pnpm check
 pnpm test
 ```
+
+这两条是日常门禁。端到端用例不在门禁里，用第 7 节的一条命令单独跑。
 
 ## 5. 起参考应用
 
@@ -130,16 +141,58 @@ export API_BASE_URL="http://localhost:3000"
 vp build packages/web
 ```
 
-## 7. 跑前端端到端用例
+## 7. 跑端到端测试（数据库、API、前端全自动）
 
-Playwright 用例在 `packages/web/e2e/`（命名 `*.pw.ts`，避免被 vitest 收走）：
+```bash
+pnpm test:e2e
+```
+
+一条命令把环境拉起来并把两套用例都跑一遍，**用例运行前不需要人工先启动其中任何一个**：
+
+1. `docker compose up -d postgres` —— 起仓库根的编排（镜像固定为 `postgres:16.13-alpine@sha256:20edbde…`，不用 `latest`），等健康检查通过；
+2. 重建端到端数据库 `erp_e2e` 并跑迁移（`drizzle-kit migrate`）；
+3. 起 Fastify（`DATABASE_URL` 指向**端到端数据库 `erp_e2e`**，端口 3000），等 `GET /api/health` 返回 200；
+4. 起前端开发服务器（`vp dev`，端口 5173），等根路径返回 200；
+5. 跑 vitest 端到端用例（`packages/*/e2e/**/*.e2e.ts`，API 侧断言）；
+6. 跑 Playwright 端到端用例（`packages/web/e2e/*.pw.ts`，UI 侧断言）；
+7. 对**开发库**做跑前/跑后快照并比对，证明开发库既没有本次写入的数据，也没有本次创建的结构。
+
+同一次运行里 vitest 与 Playwright 两套用例都会执行。任一环节失败，进程退出码非 0，stderr 里同时给出
+**失败用例名、API 启动日志、浏览器控制台错误**。
+
+**命令形式**：vite-plus 1.0.0 的 CLI 不接受 `vp test:e2e`（报 `error: Command 'test:e2e' not found`，
+退出码 2），所以实际用的是 `pnpm test:e2e`；`vp run test:e2e` 与它等价（`vp run` 执行根 `package.json`
+里的同名脚本）。
+
+### 三个库互不干扰
+
+| 库         | 用途            | 谁在用                                       |
+| ---------- | --------------- | -------------------------------------------- |
+| `erp`      | 开发库          | 人与开发脚本；端到端只读它做隔离比对         |
+| `erp_test` | 单元/迁移测试库 | `vp test`（迁移用例重建它）                  |
+| `erp_e2e`  | 端到端测试库    | `pnpm test:e2e` 与单独跑的 web 包 Playwright |
+
+端到端期间：API 连的是 `erp_e2e`；迁移、写入、建结构都发生在 `erp_e2e`；`erp` 只被读取做快照比对。
+判定证据就是编排脚本打印的跑前/跑后两份开发库快照——两份完全一致即证明隔离成立。
+
+因为 `vp test` 用 `erp_test`、端到端用 `erp_e2e`，两者各自 drop/recreate 的是不同的库，
+**并发跑 `vp test` 与 `pnpm test:e2e` 不会互相冲掉**，跑完 e2e 再跑 `vp test` 也不会冲掉 e2e 写入的数据。
+
+### CI
+
+CI 上要预装 Playwright 浏览器（二进制约百兆级，本地首次运行也需要）：
+
+```bash
+pnpm --filter @erp-inventory-sales/web exec playwright install --with-deps chromium
+```
+
+只跑 Playwright 的旧命令仍然可用。配置里的 `webServer` 会拉起 Fastify 与前端开发服务器，
+Fastify 由 `scripts/e2e/start-api.ts` 启动，连接的同样是端到端数据库 `erp_e2e`（既不是开发库 `erp`，
+也不是 `vp test` 用的 `erp_test`）；该库不存在时会被创建并迁移：
 
 ```bash
 pnpm --filter @erp-inventory-sales/web test:e2e
 ```
-
-配置里的 `webServer` 会自动拉起 Fastify（3000）与前端开发服务器（5173）；
-SSR 取数需要 Fastify 活着，否则列表页用例会失败。
 
 ## 单一 vite 副本
 

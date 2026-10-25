@@ -5,6 +5,7 @@
   "scripts": {
     "check": "vp check",
     "test": "vp test",
+    "test:e2e": "node scripts/e2e/run-e2e.ts",
     "build": "pnpm -r run build",
     "db:migrate": "pnpm --filter @erp-inventory-sales/kernel-pg db:migrate"
   },
