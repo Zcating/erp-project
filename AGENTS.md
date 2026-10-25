@@ -1,5 +1,7 @@
 # Agent instructions
 
+请先阅读 `docs/AGENTS.md` 获取编码指南。
+
 ## Agent skills
 
 ### Issue tracker
