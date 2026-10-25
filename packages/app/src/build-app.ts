@@ -1,6 +1,14 @@
+import type { ItemMasterRepository } from "@erp-inventory-sales/kernel";
+import { createItemMasterService } from "@erp-inventory-sales/kernel";
+import {
+  createDatabase,
+  createItemMasterRepository,
+  databaseUrl,
+} from "@erp-inventory-sales/kernel-pg";
 import Fastify, { type FastifyInstance } from "fastify";
 import { registerDecimalRoutes } from "./features/decimals/index.js";
 import { registerHealthRoutes } from "./features/health/index.js";
+import { registerItemMasterRoutes } from "./features/item-master/index.js";
 import {
   createSessionResolver,
   createSessionStore,
@@ -18,6 +26,8 @@ export type BuildAppOptions = {
   resolveSession?: SessionResolver;
   adminCredentials?: AdminCredentials;
   sessionTtlMs?: number;
+  databaseUrl?: string;
+  itemMasterRepository?: ItemMasterRepository;
 };
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
@@ -36,5 +46,14 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerSessionRoutes(app, { resolveSession, store, credentials, sessionTtlMs });
   registerDecimalRoutes(app);
   registerSystemRoutes(app, routeRegistry);
+  let itemMasterRepository = options.itemMasterRepository;
+  if (itemMasterRepository === undefined) {
+    const connection = createDatabase(options.databaseUrl ?? databaseUrl());
+    itemMasterRepository = createItemMasterRepository(connection.db);
+    app.addHook("onClose", async () => {
+      await connection.pool.end();
+    });
+  }
+  registerItemMasterRoutes(app, { service: createItemMasterService(itemMasterRepository) });
   return app;
 }

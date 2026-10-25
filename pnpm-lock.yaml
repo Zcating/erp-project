@@ -204,10 +204,17 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
-  packages/kernel: {}
+  packages/kernel:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
 
   packages/kernel-pg:
     dependencies:
+      '@erp-inventory-sales/kernel':
+        specifier: workspace:*
+        version: link:../kernel
       drizzle-orm:
         specifier: ^0.45.4
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)

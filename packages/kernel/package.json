@@ -10,5 +10,8 @@
   },
   "scripts": {
     "build": "vp pack"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5"
   }
 }

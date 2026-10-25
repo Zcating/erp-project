@@ -11,7 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ItemsIndexRouteImport } from './routes/items/index'
+import { Route as ItemsNewRouteImport } from './routes/items/new'
 import { Route as SystemRoutesRouteImport } from './routes/system/routes'
+import { Route as ItemsItemIdEditRouteImport } from './routes/items/$itemId/edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,40 +26,86 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ItemsIndexRoute = ItemsIndexRouteImport.update({
+  id: '/items/',
+  path: '/items/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ItemsNewRoute = ItemsNewRouteImport.update({
+  id: '/items/new',
+  path: '/items/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SystemRoutesRoute = SystemRoutesRouteImport.update({
   id: '/system/routes',
   path: '/system/routes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ItemsItemIdEditRoute = ItemsItemIdEditRouteImport.update({
+  id: '/items/$itemId/edit',
+  path: '/items/$itemId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/items/new': typeof ItemsNewRoute
   '/system/routes': typeof SystemRoutesRoute
+  '/items/': typeof ItemsIndexRoute
+  '/items/$itemId/edit': typeof ItemsItemIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/items/new': typeof ItemsNewRoute
   '/system/routes': typeof SystemRoutesRoute
+  '/items': typeof ItemsIndexRoute
+  '/items/$itemId/edit': typeof ItemsItemIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/items/new': typeof ItemsNewRoute
   '/system/routes': typeof SystemRoutesRoute
+  '/items/': typeof ItemsIndexRoute
+  '/items/$itemId/edit': typeof ItemsItemIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/system/routes'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/items/new'
+    | '/system/routes'
+    | '/items/'
+    | '/items/$itemId/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/system/routes'
-  id: '__root__' | '/' | '/login' | '/system/routes'
+  to:
+    | '/'
+    | '/login'
+    | '/items/new'
+    | '/system/routes'
+    | '/items'
+    | '/items/$itemId/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/items/new'
+    | '/system/routes'
+    | '/items/'
+    | '/items/$itemId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  ItemsNewRoute: typeof ItemsNewRoute
   SystemRoutesRoute: typeof SystemRoutesRoute
+  ItemsIndexRoute: typeof ItemsIndexRoute
+  ItemsItemIdEditRoute: typeof ItemsItemIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,11 +124,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/items/': {
+      id: '/items/'
+      path: '/items'
+      fullPath: '/items/'
+      preLoaderRoute: typeof ItemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/items/new': {
+      id: '/items/new'
+      path: '/items/new'
+      fullPath: '/items/new'
+      preLoaderRoute: typeof ItemsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/system/routes': {
       id: '/system/routes'
       path: '/system/routes'
       fullPath: '/system/routes'
       preLoaderRoute: typeof SystemRoutesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/items/$itemId/edit': {
+      id: '/items/$itemId/edit'
+      path: '/items/$itemId/edit'
+      fullPath: '/items/$itemId/edit'
+      preLoaderRoute: typeof ItemsItemIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,7 +158,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  ItemsNewRoute: ItemsNewRoute,
   SystemRoutesRoute: SystemRoutesRoute,
+  ItemsIndexRoute: ItemsIndexRoute,
+  ItemsItemIdEditRoute: ItemsItemIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
