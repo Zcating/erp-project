@@ -1,5 +1,10 @@
 import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { StockBalance, StockLedgerEntry } from "./model.js";
+import type {
+  StockBalance,
+  StockLedgerEntry,
+  StockMovement,
+  StockMovementFilter,
+} from "./model.js";
 
 export type StockBalanceKey = {
   warehouseId: string;
@@ -13,7 +18,7 @@ export type StockLedgerRepository = {
     context?: TransactionContext,
   ): Promise<StockBalance | null>;
   listBalances(
-    warehouseId: string,
+    warehouseId: string | null,
     itemId: string | null,
     context?: TransactionContext,
   ): Promise<StockBalance[]>;
@@ -21,6 +26,7 @@ export type StockLedgerRepository = {
     keys: StockBalanceKey[],
     context?: TransactionContext,
   ): Promise<StockBalance[]>;
+  ensureBalances(keys: StockBalanceKey[], context?: TransactionContext): Promise<void>;
   saveBalance(balance: StockBalance, context?: TransactionContext): Promise<void>;
   appendEntries(entries: StockLedgerEntry[], context?: TransactionContext): Promise<void>;
   listEntriesByDocument(
@@ -31,4 +37,8 @@ export type StockLedgerRepository = {
     documentNo: string,
     context?: TransactionContext,
   ): Promise<StockLedgerEntry[]>;
+  listMovements(
+    filter: StockMovementFilter,
+    context?: TransactionContext,
+  ): Promise<StockMovement[]>;
 };

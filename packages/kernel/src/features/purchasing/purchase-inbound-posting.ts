@@ -61,6 +61,7 @@ export function createPurchaseInboundPostingHandler(
   ): Promise<InventoryMovement[]> => {
     const warehouseId = document.targetWarehouseId as string;
     const keys = uniqueKeys(document.lines.map((line) => ({ warehouseId, itemId: line.itemId })));
+    await ledger.ensureBalances(keys, transaction);
     const locked = await ledger.findBalancesForUpdate(keys, transaction);
     const balances = new Map<string, StockBalance>();
     for (const key of keys) {

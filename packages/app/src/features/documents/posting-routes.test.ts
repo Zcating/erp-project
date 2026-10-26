@@ -125,7 +125,9 @@ const balancesOf = async (fixture: PostingApp) => {
   return response.json().data.balances as Array<{
     warehouseId: string;
     itemId: string;
-    quantity: string;
+    onHand: string;
+    available: string;
+    inTransit: string;
     unitCost: string;
   }>;
 };
@@ -157,7 +159,9 @@ describe("过账与作废的 HTTP 表面", () => {
       {
         warehouseId: fixture.warehouseId,
         itemId: fixture.itemId,
-        quantity: "12.000",
+        onHand: "12.000",
+        available: "12.000",
+        inTransit: "0.000",
         unitCost: "1.115000",
       },
     ]);
@@ -187,7 +191,9 @@ describe("过账与作废的 HTTP 表面", () => {
       {
         warehouseId: fixture.warehouseId,
         itemId: fixture.itemId,
-        quantity: "12.000",
+        onHand: "12.000",
+        available: "12.000",
+        inTransit: "0.000",
         unitCost: "1.115000",
       },
     ]);
@@ -217,7 +223,9 @@ describe("过账与作废的 HTTP 表面", () => {
       {
         warehouseId: fixture.warehouseId,
         itemId: fixture.itemId,
-        quantity: "0.000",
+        onHand: "0.000",
+        available: "0.000",
+        inTransit: "0.000",
         unitCost: "0.000000",
       },
     ]);
@@ -323,7 +331,9 @@ describe("过账与作废的 HTTP 表面", () => {
       {
         warehouseId: fixture.warehouseId,
         itemId: fixture.itemId,
-        quantity: "12.000",
+        onHand: "12.000",
+        available: "12.000",
+        inTransit: "0.000",
         unitCost: "1.115000",
       },
     ]);

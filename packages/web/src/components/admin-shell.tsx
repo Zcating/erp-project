@@ -37,6 +37,24 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </li>
           <li>
             <Link
+              to="/inventory"
+              className="block rounded-md px-2 py-1 hover:bg-muted"
+              activeProps={{ className: "bg-muted font-medium" }}
+            >
+              库存查询
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/inventory/movements"
+              className="block rounded-md px-2 py-1 hover:bg-muted"
+              activeProps={{ className: "bg-muted font-medium" }}
+            >
+              库存流水
+            </Link>
+          </li>
+          <li>
+            <Link
               to="/system/routes"
               className="block rounded-md px-2 py-1 hover:bg-muted"
               activeProps={{ className: "bg-muted font-medium" }}

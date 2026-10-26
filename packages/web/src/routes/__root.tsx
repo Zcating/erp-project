@@ -9,6 +9,7 @@ import {
 import { createStore, Provider } from "jotai";
 import { useEffect, useState } from "react";
 import { LOGIN_PATH, sessionQueryOptions } from "@/features/session";
+import { inventoryUiStateAtoms } from "@/features/inventory/stores";
 import { itemUiStateAtoms } from "@/features/items/stores";
 import { documentUiStateAtoms } from "@/features/documents/stores";
 import { uiStateAtoms } from "@/features/system/stores";
@@ -36,7 +37,13 @@ function RootLayout() {
   useEffect(() => {
     installDebugHandles({
       readUiState: () =>
-        readAtomValues(store, uiStateAtoms, itemUiStateAtoms, documentUiStateAtoms),
+        readAtomValues(
+          store,
+          uiStateAtoms,
+          itemUiStateAtoms,
+          documentUiStateAtoms,
+          inventoryUiStateAtoms,
+        ),
       readQueryCache: () => readQueryCache(queryClient),
     });
   }, [store, queryClient]);

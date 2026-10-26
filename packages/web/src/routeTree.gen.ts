@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DocumentsIndexRouteImport } from './routes/documents/index'
 import { Route as DocumentsNewRouteImport } from './routes/documents/new'
+import { Route as InventoryIndexRouteImport } from './routes/inventory/index'
+import { Route as InventoryMovementsRouteImport } from './routes/inventory/movements'
 import { Route as ItemsIndexRouteImport } from './routes/items/index'
 import { Route as ItemsNewRouteImport } from './routes/items/new'
 import { Route as SystemRoutesRouteImport } from './routes/system/routes'
@@ -37,6 +39,16 @@ const DocumentsIndexRoute = DocumentsIndexRouteImport.update({
 const DocumentsNewRoute = DocumentsNewRouteImport.update({
   id: '/documents/new',
   path: '/documents/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryIndexRoute = InventoryIndexRouteImport.update({
+  id: '/inventory/',
+  path: '/inventory/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryMovementsRoute = InventoryMovementsRouteImport.update({
+  id: '/inventory/movements',
+  path: '/inventory/movements',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ItemsIndexRoute = ItemsIndexRouteImport.update({
@@ -69,9 +81,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/documents/new': typeof DocumentsNewRoute
+  '/inventory/movements': typeof InventoryMovementsRoute
   '/items/new': typeof ItemsNewRoute
   '/system/routes': typeof SystemRoutesRoute
   '/documents/': typeof DocumentsIndexRoute
+  '/inventory/': typeof InventoryIndexRoute
   '/items/': typeof ItemsIndexRoute
   '/documents/$documentId/edit': typeof DocumentsDocumentIdEditRoute
   '/items/$itemId/edit': typeof ItemsItemIdEditRoute
@@ -80,9 +94,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/documents/new': typeof DocumentsNewRoute
+  '/inventory/movements': typeof InventoryMovementsRoute
   '/items/new': typeof ItemsNewRoute
   '/system/routes': typeof SystemRoutesRoute
   '/documents': typeof DocumentsIndexRoute
+  '/inventory': typeof InventoryIndexRoute
   '/items': typeof ItemsIndexRoute
   '/documents/$documentId/edit': typeof DocumentsDocumentIdEditRoute
   '/items/$itemId/edit': typeof ItemsItemIdEditRoute
@@ -92,9 +108,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/documents/new': typeof DocumentsNewRoute
+  '/inventory/movements': typeof InventoryMovementsRoute
   '/items/new': typeof ItemsNewRoute
   '/system/routes': typeof SystemRoutesRoute
   '/documents/': typeof DocumentsIndexRoute
+  '/inventory/': typeof InventoryIndexRoute
   '/items/': typeof ItemsIndexRoute
   '/documents/$documentId/edit': typeof DocumentsDocumentIdEditRoute
   '/items/$itemId/edit': typeof ItemsItemIdEditRoute
@@ -105,9 +123,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/documents/new'
+    | '/inventory/movements'
     | '/items/new'
     | '/system/routes'
     | '/documents/'
+    | '/inventory/'
     | '/items/'
     | '/documents/$documentId/edit'
     | '/items/$itemId/edit'
@@ -116,9 +136,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/documents/new'
+    | '/inventory/movements'
     | '/items/new'
     | '/system/routes'
     | '/documents'
+    | '/inventory'
     | '/items'
     | '/documents/$documentId/edit'
     | '/items/$itemId/edit'
@@ -127,9 +149,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/documents/new'
+    | '/inventory/movements'
     | '/items/new'
     | '/system/routes'
     | '/documents/'
+    | '/inventory/'
     | '/items/'
     | '/documents/$documentId/edit'
     | '/items/$itemId/edit'
@@ -139,9 +163,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   DocumentsNewRoute: typeof DocumentsNewRoute
+  InventoryMovementsRoute: typeof InventoryMovementsRoute
   ItemsNewRoute: typeof ItemsNewRoute
   SystemRoutesRoute: typeof SystemRoutesRoute
   DocumentsIndexRoute: typeof DocumentsIndexRoute
+  InventoryIndexRoute: typeof InventoryIndexRoute
   ItemsIndexRoute: typeof ItemsIndexRoute
   DocumentsDocumentIdEditRoute: typeof DocumentsDocumentIdEditRoute
   ItemsItemIdEditRoute: typeof ItemsItemIdEditRoute
@@ -175,6 +201,20 @@ declare module '@tanstack/react-router' {
       path: '/documents/new'
       fullPath: '/documents/new'
       preLoaderRoute: typeof DocumentsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory/': {
+      id: '/inventory/'
+      path: '/inventory'
+      fullPath: '/inventory/'
+      preLoaderRoute: typeof InventoryIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory/movements': {
+      id: '/inventory/movements'
+      path: '/inventory/movements'
+      fullPath: '/inventory/movements'
+      preLoaderRoute: typeof InventoryMovementsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/items/': {
@@ -219,9 +259,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   DocumentsNewRoute: DocumentsNewRoute,
+  InventoryMovementsRoute: InventoryMovementsRoute,
   ItemsNewRoute: ItemsNewRoute,
   SystemRoutesRoute: SystemRoutesRoute,
   DocumentsIndexRoute: DocumentsIndexRoute,
+  InventoryIndexRoute: InventoryIndexRoute,
   ItemsIndexRoute: ItemsIndexRoute,
   DocumentsDocumentIdEditRoute: DocumentsDocumentIdEditRoute,
   ItemsItemIdEditRoute: ItemsItemIdEditRoute,

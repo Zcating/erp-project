@@ -136,7 +136,9 @@ const balancesOf = async (fixture: SaleOutboundApp) => {
   return response.json().data.balances as Array<{
     warehouseId: string;
     itemId: string;
-    quantity: string;
+    onHand: string;
+    available: string;
+    inTransit: string;
     unitCost: string;
   }>;
 };
@@ -168,7 +170,9 @@ describe("销售出库过账与作废的 HTTP 表面", () => {
       {
         warehouseId: fixture.warehouseId,
         itemId: fixture.itemId,
-        quantity: "7.000",
+        onHand: "7.000",
+        available: "7.000",
+        inTransit: "0.000",
         unitCost: "2.000000",
       },
     ]);
@@ -209,7 +213,9 @@ describe("销售出库过账与作废的 HTTP 表面", () => {
       {
         warehouseId: fixture.warehouseId,
         itemId: fixture.itemId,
-        quantity: "12.000",
+        onHand: "12.000",
+        available: "12.000",
+        inTransit: "0.000",
         unitCost: "2.000000",
       },
     ]);
@@ -245,7 +251,9 @@ describe("销售出库过账与作废的 HTTP 表面", () => {
       {
         warehouseId: fixture.warehouseId,
         itemId: fixture.itemId,
-        quantity: "12.000",
+        onHand: "12.000",
+        available: "12.000",
+        inTransit: "0.000",
         unitCost: "2.000000",
       },
     ]);

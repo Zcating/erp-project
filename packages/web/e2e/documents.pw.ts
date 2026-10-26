@@ -143,7 +143,7 @@ test("新建采购入库单草稿后列表页出现单号与草稿状态", async
   await page.getByTestId("document-submit").click();
 
   await expect(page).toHaveURL(/\/documents$/);
-  const row = rowOf(page, "采购入库单").last();
+  const row = rowOf(page, "采购入库单").first();
   await expect(row).toBeVisible();
   await expect(row.getByTestId("document-no")).toHaveText(/^PIN-\d{8}-\d{3}$/);
   await expect(row.getByTestId("document-status")).toHaveText("草稿");
@@ -164,7 +164,7 @@ test("新建销售出库单草稿时能选到客户与来源仓库", async ({ pa
   await page.getByTestId("document-submit").click();
 
   await expect(page).toHaveURL(/\/documents$/);
-  const row = rowOf(page, "销售出库单").last();
+  const row = rowOf(page, "销售出库单").first();
   await expect(row).toBeVisible();
   await expect(row.getByTestId("document-no")).toHaveText(/^SOUT-\d{8}-\d{3}$/);
 });
@@ -183,7 +183,7 @@ test("新建盘点单草稿时能选到仓库并只录商品与实盘数量", as
   await page.getByTestId("document-submit").click();
 
   await expect(page).toHaveURL(/\/documents$/);
-  const row = rowOf(page, "盘点单").last();
+  const row = rowOf(page, "盘点单").first();
   await expect(row).toBeVisible();
   await expect(row.getByTestId("document-no")).toHaveText(/^STK-\d{8}-\d{3}$/);
 });
@@ -201,7 +201,7 @@ test("新建调拨单草稿时能选到源仓与目标仓", async ({ page }) => 
   await page.getByTestId("document-submit").click();
 
   await expect(page).toHaveURL(/\/documents$/);
-  const row = rowOf(page, "调拨单").last();
+  const row = rowOf(page, "调拨单").first();
   await expect(row).toBeVisible();
   await expect(row.getByTestId("document-no")).toHaveText(/^TRF-\d{8}-\d{3}$/);
 });
@@ -222,7 +222,7 @@ test("单据行金额按金额精度回显：单价 1.115、数量 3 得 3.35，
   await page.getByTestId("document-submit").click();
 
   await expect(page).toHaveURL(/\/documents$/);
-  const row = rowOf(page, "采购入库单").last();
+  const row = rowOf(page, "采购入库单").first();
   await expect(row.getByTestId("document-amounts")).toHaveText("3.35");
 
   await row.getByTestId("document-edit").click();
@@ -234,7 +234,9 @@ test("单据行金额按金额精度回显：单价 1.115、数量 3 得 3.35，
   await page.getByTestId("document-submit").click();
 
   await expect(page).toHaveURL(/\/documents$/);
-  await expect(rowOf(page, "采购入库单").last().getByTestId("document-amounts")).toHaveText("4.46");
+  await expect(rowOf(page, "采购入库单").first().getByTestId("document-amounts")).toHaveText(
+    "4.46",
+  );
 });
 
 test("缺少供应商时表单显示后端给出的错误消息", async ({ page }) => {
@@ -279,7 +281,7 @@ test("删除草稿后单据列表里不再显示该条草稿", async ({ page }) 
   await page.getByTestId("document-submit").click();
 
   await expect(page).toHaveURL(/\/documents$/);
-  const row = rowOf(page, "采购入库单").last();
+  const row = rowOf(page, "采购入库单").first();
   const documentNo = await row.getByTestId("document-no").textContent();
 
   await row.getByTestId("document-delete").click();
@@ -327,7 +329,7 @@ test("单据列表只由查询缓存持有，界面状态里没有服务端数�
   await expect(page).toHaveURL(/\/documents$/);
 
   const documentNo = await rowOf(page, "采购入库单")
-    .last()
+    .first()
     .getByTestId("document-no")
     .textContent();
 

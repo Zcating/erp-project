@@ -23,3 +23,33 @@ export type StockLedgerEntry = {
   unitPrice: string;
   amount: string;
 };
+
+export type StockBalanceSummary = {
+  warehouseId: string;
+  itemId: string;
+  onHand: string;
+  available: string;
+  inTransit: string;
+  unitCost: string;
+};
+
+export type StockMovement = StockLedgerEntry & {
+  occurredAt: string;
+};
+
+export type StockBalanceFilter = {
+  warehouseId: string | null;
+  itemId: string | null;
+};
+
+export type StockMovementOrder = "asc" | "desc";
+
+export type StockMovementFilter = {
+  documentNo: string | null;
+  warehouseId: string | null;
+  itemId: string | null;
+  lineNo: number | null;
+  occurredFrom: string | null;
+  occurredTo: string | null;
+  order: StockMovementOrder;
+};

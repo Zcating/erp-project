@@ -88,8 +88,8 @@ const balanceOf = async (master: MasterData): Promise<string | null> => {
     "GET",
     `/api/inventory/balances?warehouseId=${master.warehouseId}&itemId=${master.itemId}`,
   );
-  const balances = response.payload.data.balances as Array<{ quantity: string }>;
-  return balances[0]?.quantity ?? null;
+  const balances = response.payload.data.balances as Array<{ onHand: string }>;
+  return balances[0]?.onHand ?? null;
 };
 
 test("草稿态过账可用、作废禁用，已过账态过账禁用、作废可用，已作废态两者都禁用", async ({

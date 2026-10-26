@@ -17,6 +17,15 @@ export type UiStateSnapshot = {
   routeFilter: string;
   selectedRoute: string | null;
   detailPanelOpen: boolean;
+  stockWarehouseFilter: string;
+  stockItemFilter: string;
+  movementDocumentNoFilter: string;
+  movementWarehouseFilter: string;
+  movementItemFilter: string;
+  movementLineNoFilter: string;
+  movementFromFilter: string;
+  movementToFilter: string;
+  movementOrder: string;
 };
 
 export type DebugHandles = {

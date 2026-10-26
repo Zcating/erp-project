@@ -111,8 +111,8 @@ const balanceOf = async (master: MasterData): Promise<string | null> => {
     "GET",
     `/api/inventory/balances?warehouseId=${master.warehouseId}&itemId=${master.itemId}`,
   );
-  const balances = response.payload.data.balances as Array<{ quantity: string }>;
-  return balances[0]?.quantity ?? null;
+  const balances = response.payload.data.balances as Array<{ onHand: string }>;
+  return balances[0]?.onHand ?? null;
 };
 
 const createSaleOutbound = async (
