@@ -18,6 +18,7 @@ import {
   createItemMasterService,
   createPostingService,
   createPurchaseInboundPostingHandler,
+  createSaleOutboundPostingHandler,
   createSupplierService,
   createWarehouseService,
 } from "@erp-inventory-sales/kernel";
@@ -132,7 +133,10 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const postingService = createPostingService({
     documents: documentRepository,
     ledger: stockLedgerRepository,
-    handlers: [createPurchaseInboundPostingHandler(stockLedgerRepository)],
+    handlers: [
+      createPurchaseInboundPostingHandler(stockLedgerRepository),
+      createSaleOutboundPostingHandler(stockLedgerRepository),
+    ],
     runner: transactionRunner,
   });
   registerItemMasterRoutes(app, {

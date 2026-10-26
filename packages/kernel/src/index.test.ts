@@ -3,10 +3,7 @@ import { inventory, itemMaster, parties, ports, posting, purchasing, selling } f
 
 describe("kernel package", () => {
   it("exposes its public surface", () => {
-    expect({ ports, selling }).toEqual({
-      ports: {},
-      selling: {},
-    });
+    expect(ports).toEqual({});
   });
 
   it("商品档案 feature 的公开面带领域规则与仓储端口实现", () => {
@@ -72,5 +69,9 @@ describe("kernel package", () => {
 
   it("采购 feature 的公开面带采购入库的过账类型实现", () => {
     expect(Object.keys(purchasing).sort()).toEqual(["createPurchaseInboundPostingHandler"]);
+  });
+
+  it("销售 feature 的公开面带销售出库的过账类型实现", () => {
+    expect(Object.keys(selling).sort()).toEqual(["createSaleOutboundPostingHandler"]);
   });
 });
