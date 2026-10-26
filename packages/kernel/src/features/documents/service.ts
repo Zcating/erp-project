@@ -173,6 +173,38 @@ export function createDocumentService(
     };
   };
 
+  const itemLabelOf = async (
+    itemId: string,
+    context: TransactionContext | undefined,
+  ): Promise<string> => {
+    const lookup = options.itemLookup;
+    if (lookup === undefined) {
+      return itemId;
+    }
+    const item = await lookup.findById(itemId, context);
+    return item === null ? itemId : `${item.code} ${item.name}`;
+  };
+
+  const assertUniqueItems = async (
+    input: DocumentInput & { type: DraftDocumentType },
+    context: TransactionContext | undefined,
+  ): Promise<void> => {
+    if (!DOCUMENT_TYPE_RULES[input.type].uniqueItems) {
+      return;
+    }
+    const firstLineOfItem = new Map<string, number>();
+    for (const [index, line] of input.lines.entries()) {
+      const itemId = line.itemId.trim();
+      const firstLine = firstLineOfItem.get(itemId);
+      if (firstLine !== undefined) {
+        throw new ValidationError(
+          `${DOCUMENT_TYPE_LABELS[input.type]}内同一商品不能重复出现：${await itemLabelOf(itemId, context)}（第 ${firstLine} 行与第 ${index + 1} 行）`,
+        );
+      }
+      firstLineOfItem.set(itemId, index + 1);
+    }
+  };
+
   const normalize = (
     input: DocumentInput & { type: DraftDocumentType },
     id: string,
@@ -212,6 +244,7 @@ export function createDocumentService(
         assertDraftDocumentType(converted);
         const resolved = await resolveOriginalLines(converted, ctx);
         const validated = validateDocumentInput(resolved);
+        await assertUniqueItems(validated, ctx);
         const dateKey = formatDocumentDate(clock(), timeZone);
         const sequence = await repository.nextSequence(validated.type, dateKey, ctx);
         const documentNo = formatDocumentNumber(validated.type, dateKey, sequence);
@@ -239,6 +272,7 @@ export function createDocumentService(
         assertDraftDocumentType(converted);
         const resolved = await resolveOriginalLines(converted, ctx);
         const validated = validateDocumentInput(resolved);
+        await assertUniqueItems(validated, ctx);
         const updated: Document = {
           ...normalize(validated, existing.id, existing.documentNo),
           status: existing.status,

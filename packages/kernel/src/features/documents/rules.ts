@@ -9,6 +9,7 @@ export type DocumentTypeRule = {
   warehouses: readonly DocumentWarehouseRole[];
   priced: boolean;
   positiveQuantity: boolean;
+  uniqueItems: boolean;
   originalType: DocumentType | null;
   originalWarehouseRole: DocumentWarehouseRole | null;
 };
@@ -19,6 +20,7 @@ export const DOCUMENT_TYPE_RULES: Record<DraftDocumentType, DocumentTypeRule> = 
     warehouses: ["TARGET"],
     priced: true,
     positiveQuantity: true,
+    uniqueItems: false,
     originalType: null,
     originalWarehouseRole: null,
   },
@@ -27,6 +29,7 @@ export const DOCUMENT_TYPE_RULES: Record<DraftDocumentType, DocumentTypeRule> = 
     warehouses: ["SOURCE"],
     priced: true,
     positiveQuantity: true,
+    uniqueItems: false,
     originalType: null,
     originalWarehouseRole: null,
   },
@@ -35,6 +38,7 @@ export const DOCUMENT_TYPE_RULES: Record<DraftDocumentType, DocumentTypeRule> = 
     warehouses: ["SOURCE"],
     priced: false,
     positiveQuantity: true,
+    uniqueItems: false,
     originalType: "SALE_OUTBOUND",
     originalWarehouseRole: "SOURCE",
   },
@@ -43,6 +47,7 @@ export const DOCUMENT_TYPE_RULES: Record<DraftDocumentType, DocumentTypeRule> = 
     warehouses: ["SOURCE"],
     priced: false,
     positiveQuantity: true,
+    uniqueItems: false,
     originalType: "PURCHASE_INBOUND",
     originalWarehouseRole: "TARGET",
   },
@@ -51,6 +56,7 @@ export const DOCUMENT_TYPE_RULES: Record<DraftDocumentType, DocumentTypeRule> = 
     warehouses: ["COUNT"],
     priced: false,
     positiveQuantity: false,
+    uniqueItems: true,
     originalType: null,
     originalWarehouseRole: null,
   },
@@ -59,6 +65,7 @@ export const DOCUMENT_TYPE_RULES: Record<DraftDocumentType, DocumentTypeRule> = 
     warehouses: ["SOURCE", "TARGET"],
     priced: true,
     positiveQuantity: true,
+    uniqueItems: false,
     originalType: null,
     originalWarehouseRole: null,
   },

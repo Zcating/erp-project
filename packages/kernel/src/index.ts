@@ -7,6 +7,7 @@ export * from "./features/purchase-return/index.js";
 export * from "./features/purchasing/index.js";
 export * from "./features/sales-return/index.js";
 export * from "./features/selling/index.js";
+export * from "./features/stocktake/index.js";
 export * from "./shared/errors/index.js";
 export * from "./shared/ports/index.js";
 export * from "./shared/transactions/index.js";

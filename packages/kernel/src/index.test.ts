@@ -9,6 +9,7 @@ import {
   purchasing,
   salesReturn,
   selling,
+  stocktake,
 } from "./index.js";
 
 describe("kernel package", () => {
@@ -91,5 +92,9 @@ describe("kernel package", () => {
 
   it("采购退货 feature 的公开面带采购退货的过账类型实现", () => {
     expect(Object.keys(purchaseReturn).sort()).toEqual(["createPurchaseReturnPostingHandler"]);
+  });
+
+  it("盘点 feature 的公开面带盘点的过账类型实现", () => {
+    expect(Object.keys(stocktake).sort()).toEqual(["createStocktakePostingHandler"]);
   });
 });

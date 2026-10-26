@@ -253,6 +253,36 @@ describe("单据行校验", () => {
     ).rejects.toThrow("第 1 行盘点行不含单价与金额");
   });
 
+  it("盘点单内同一商品重复出现时保存失败，错误消息指出重复的商品", async () => {
+    const { service } = createService();
+
+    await expect(
+      service.create(
+        stocktakeInput({
+          lines: [
+            { itemId: "item-1", quantity: "1", unitPrice: null, amount: null },
+            { itemId: "item-1", quantity: "2", unitPrice: null, amount: null },
+          ],
+        }),
+      ),
+    ).rejects.toThrow("盘点单内同一商品不能重复出现：item-1（第 1 行与第 2 行）");
+  });
+
+  it("其他单据类型允许同一商品出现多行，重复检查只作用在盘点单上", async () => {
+    const { service } = createService();
+
+    const document = await service.create(
+      saleOutboundInput({
+        lines: [
+          { itemId: "item-1", quantity: "1", unitPrice: "2", amount: null },
+          { itemId: "item-1", quantity: "2", unitPrice: "2", amount: null },
+        ],
+      }),
+    );
+
+    expect(document.lines).toHaveLength(2);
+  });
+
   it("行缺少商品时保存失败，错误消息指出缺少商品", async () => {
     const { service } = createService();
 

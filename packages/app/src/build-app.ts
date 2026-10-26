@@ -21,6 +21,7 @@ import {
   createPurchaseReturnPostingHandler,
   createSaleOutboundPostingHandler,
   createSaleReturnPostingHandler,
+  createStocktakePostingHandler,
   createSupplierService,
   createWarehouseService,
 } from "@erp-inventory-sales/kernel";
@@ -140,6 +141,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       createSaleOutboundPostingHandler(stockLedgerRepository),
       createSaleReturnPostingHandler(stockLedgerRepository, documentRepository),
       createPurchaseReturnPostingHandler(stockLedgerRepository, documentRepository),
+      createStocktakePostingHandler(stockLedgerRepository),
     ],
     runner: transactionRunner,
   });
