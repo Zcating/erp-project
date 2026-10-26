@@ -1,5 +1,5 @@
 import { appendFileSync } from "node:fs";
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { test as base, expect } from "@playwright/test";
 
 const browserConsoleLogPath = process.env.E2E_BROWSER_CONSOLE_LOG;
@@ -80,4 +80,41 @@ function reportBrowserConsoleError(message: string): void {
   if (browserConsoleLogPath !== undefined) {
     appendFileSync(browserConsoleLogPath, `${message}\n`, "utf8");
   }
+}
+
+const PICK_OPTION_TIMEOUT_MS = 5_000;
+
+export async function pickOption(target: Locator, value: string): Promise<void> {
+  const tagName = await target.evaluate((element) => element.tagName.toLowerCase());
+
+  if (tagName === "select") {
+    await target.selectOption(value);
+    return;
+  }
+
+  if (tagName !== "button") {
+    throw new Error(`目标不是可选控件：${tagName}`);
+  }
+
+  if (await target.isDisabled()) {
+    throw new Error(`目标已禁用：无法选中 ${value}`);
+  }
+
+  await target.click();
+
+  const option = target
+    .page()
+    .locator(`[role="option"][data-value=${JSON.stringify(value)}]`)
+    .first();
+  try {
+    await option.waitFor({ state: "visible", timeout: PICK_OPTION_TIMEOUT_MS });
+  } catch {
+    throw new Error(`选项不存在：${value}`);
+  }
+
+  if ((await option.getAttribute("aria-disabled")) !== null) {
+    throw new Error(`目标已禁用：无法选中 ${value}`);
+  }
+
+  await option.click();
 }
