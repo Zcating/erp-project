@@ -3,7 +3,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import { useState } from "react";
 import { AdminShell } from "@/components/admin-shell";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   deleteItem,
   displayConversionRate,
@@ -89,29 +91,33 @@ function ItemListPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-end gap-4">
-        <label className="block text-sm" htmlFor="item-filter">
-          筛选
-          <input
+        <div>
+          <Label htmlFor="item-filter" className="block text-sm">
+            筛选
+          </Label>
+          <Input
             id="item-filter"
             data-testid="item-filter"
-            className="mt-1 block w-64 rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-64"
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             placeholder="按编码、名称或条码筛选"
           />
-        </label>
+        </div>
 
-        <label className="block text-sm" htmlFor="item-barcode-search">
-          按商品条码查询
-          <input
+        <div>
+          <Label htmlFor="item-barcode-search" className="block text-sm">
+            按商品条码查询
+          </Label>
+          <Input
             id="item-barcode-search"
             data-testid="item-barcode-search"
-            className="mt-1 block w-64 rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-64"
             value={barcode}
             onChange={(event) => setBarcode(event.target.value)}
             placeholder="输入商品条码"
           />
-        </label>
+        </div>
         <Button
           type="button"
           variant="outline"
@@ -191,9 +197,10 @@ function ItemListPage() {
               </td>
               <td className="py-2">
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     type="button"
-                    className="rounded-md px-2 py-1 text-left hover:bg-muted"
+                    variant="ghost"
+                    size="sm"
                     data-testid="item-select"
                     onClick={() => {
                       setSelectedItemId(item.id);
@@ -201,23 +208,24 @@ function ItemListPage() {
                     }}
                   >
                     选中
-                  </button>
+                  </Button>
                   <Link
                     to="/items/$itemId/edit"
                     params={{ itemId: item.id }}
                     data-testid="item-edit"
-                    className="rounded-md px-2 py-1 hover:bg-muted"
+                    className={buttonVariants({ variant: "ghost", size: "sm" })}
                   >
                     编辑
                   </Link>
-                  <button
+                  <Button
                     type="button"
-                    className="rounded-md px-2 py-1 text-destructive hover:bg-muted"
+                    variant="destructive"
+                    size="sm"
                     data-testid="item-delete"
                     onClick={() => removeMutation.mutate(item.id)}
                   >
                     删除
-                  </button>
+                  </Button>
                 </div>
               </td>
             </tr>

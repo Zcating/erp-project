@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import { AdminShell } from "@/components/admin-shell";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { systemRoutesQueryOptions } from "@/features/system/lib/queries";
 import { detailPanelOpenAtom, routeFilterAtom, selectedRouteAtom } from "@/features/system/stores";
 
@@ -29,17 +31,19 @@ function SystemRoutesPage() {
         </Button>
       </div>
 
-      <label className="mb-4 block text-sm" htmlFor="route-filter">
-        筛选
-        <input
+      <div className="mb-4">
+        <Label htmlFor="route-filter" className="block text-sm">
+          筛选
+        </Label>
+        <Input
           id="route-filter"
           data-testid="route-filter"
-          className="mt-1 block w-64 rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="mt-1 w-64"
           value={filter}
           onChange={(event) => setFilter(event.target.value)}
           placeholder="按路径或方法筛选"
         />
-      </label>
+      </div>
 
       <table className="w-full border-collapse text-sm" data-testid="route-table">
         <thead>
@@ -57,13 +61,16 @@ function SystemRoutesPage() {
             >
               <td className="py-2 pr-4 font-mono">{route.method}</td>
               <td className="py-2 font-mono">
-                <button
+                <Button
                   type="button"
-                  className="rounded-md px-2 py-1 text-left hover:bg-muted"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="route-select"
+                  className="text-sm"
                   onClick={() => setSelectedRoute(route.url)}
                 >
                   {route.url}
-                </button>
+                </Button>
               </td>
             </tr>
           ))}
