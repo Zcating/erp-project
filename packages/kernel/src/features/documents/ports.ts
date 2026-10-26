@@ -2,7 +2,7 @@ import type {
   MasterDataReferenceChecker,
   PostedItemReferenceChecker,
 } from "../../shared/ports/index.js";
-import type { ItemMaster } from "../item-master/model.js";
+import type { ItemMaster } from "../item-master/index.js";
 import type { TransactionContext } from "../../shared/transactions/index.js";
 import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model.js";
 
@@ -17,6 +17,10 @@ export type DocumentRepository = MasterDataReferenceChecker &
       originalLineId: string,
       context?: TransactionContext,
     ): Promise<string>;
+    listReturnLineReferences(
+      originalLineId: string,
+      context?: TransactionContext,
+    ): Promise<Array<{ documentId: string; lineNo: number }>>;
     insert(document: Document, context?: TransactionContext): Promise<void>;
     update(document: Document, context?: TransactionContext): Promise<void>;
     updateStatus(

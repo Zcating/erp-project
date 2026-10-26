@@ -7,6 +7,7 @@ import { createItemMasterService } from "../item-master/service.js";
 import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository.js";
 import { createPostingService } from "../posting/service.js";
 import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting.js";
+import { createSaleOutboundPostingHandler } from "../selling/sale-outbound-posting.js";
 import { StockNegativeError } from "../../shared/errors/index.js";
 import { createStocktakePostingHandler } from "./stocktake-posting.js";
 
@@ -27,7 +28,11 @@ const createFixture = async () => {
   const postingService = createPostingService({
     documents,
     ledger,
-    handlers: [createPurchaseInboundPostingHandler(ledger), createStocktakePostingHandler(ledger)],
+    handlers: [
+      createPurchaseInboundPostingHandler(ledger),
+      createSaleOutboundPostingHandler(ledger),
+      createStocktakePostingHandler(ledger),
+    ],
   });
   const item = await itemService.create({
     code: "SKU-001",
@@ -354,5 +359,34 @@ describe("盘点过账的库存影响", () => {
     const balance = await fixture.ledger.findBalance("warehouse-1", fixture.item.id);
     expect(balance?.quantity).toBe("12.000");
     expect(await fixture.ledger.listEntriesByDocumentNo(document.documentNo)).toEqual([]);
+  });
+
+  it("盘点盘盈后货物被出库，作废盘点单会致负库存时整单作废失败，库存与流水都不变", async () => {
+    const fixture = await createFixture();
+    await seedStock(fixture);
+    const stocktake = await fixture.documentService.create(stocktakeInput(fixture.item.id, "15"));
+    await fixture.postingService.post(stocktake.id);
+    const outbound = await fixture.documentService.create({
+      type: "SALE_OUTBOUND",
+      supplierId: null,
+      customerId: "customer-1",
+      sourceWarehouseId: "warehouse-1",
+      targetWarehouseId: null,
+      warehouseId: null,
+      lines: [{ itemId: fixture.item.id, quantity: "15", unitPrice: "3.5", amount: null }],
+    });
+    await fixture.postingService.post(outbound.id);
+
+    const failure = await fixture.postingService.void(stocktake.id).then(
+      () => undefined,
+      (caught: unknown) => caught,
+    );
+
+    expect(failure).toBeInstanceOf(StockNegativeError);
+    expect((failure as StockNegativeError).message).toContain("禁止负库存");
+    const balance = await fixture.ledger.findBalance("warehouse-1", fixture.item.id);
+    expect(balance?.quantity).toBe("0.000");
+    expect(await fixture.ledger.listEntriesByDocumentNo(stocktake.documentNo)).toHaveLength(1);
+    expect((await fixture.documentService.get(stocktake.id)).status).toBe("POSTED");
   });
 });

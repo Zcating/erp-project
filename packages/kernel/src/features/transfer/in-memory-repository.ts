@@ -1,4 +1,4 @@
-import type { InTransitQuantity } from "../inventory/ports.js";
+import type { InTransitQuantity } from "../inventory/index.js";
 import type { TransferInTransitRecord } from "./model.js";
 import type { TransferInTransitRepository } from "./ports.js";
 

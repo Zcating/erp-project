@@ -71,6 +71,7 @@ describe("kernel package", () => {
       "STOCK_LEDGER_DIRECTIONS",
       "createInMemoryStockLedgerRepository",
       "createInventoryQueryService",
+      "revaluedUnitCost",
       "weightedAverageUnitCost",
     ]);
   });
@@ -80,6 +81,7 @@ describe("kernel package", () => {
       "DEFAULT_POSTING_PHASE",
       "POSTING_DIRECTIONS",
       "createPostingService",
+      "reverseDocumentPostings",
     ]);
   });
 

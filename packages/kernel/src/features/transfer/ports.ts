@@ -1,5 +1,5 @@
 import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { InTransitQuantity } from "../inventory/ports.js";
+import type { InTransitQuantity } from "../inventory/index.js";
 import type { TransferInTransitRecord } from "./model.js";
 
 export type TransferInTransitRepository = {

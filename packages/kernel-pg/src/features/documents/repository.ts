@@ -283,6 +283,21 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
       return rows[0]?.total ?? "0";
     },
 
+    async listReturnLineReferences(
+      originalLineId: string,
+      context?: TransactionContext,
+    ): Promise<Array<{ documentId: string; lineNo: number }>> {
+      const executor = executorOf(context);
+      const rows = await executor
+        .select({
+          documentId: documentLines.documentId,
+          lineNo: documentLines.lineNo,
+        })
+        .from(documentLines)
+        .where(eq(documentLines.originalLineId, originalLineId));
+      return rows.map((row) => ({ documentId: row.documentId, lineNo: row.lineNo }));
+    },
+
     async insert(document: Document, context?: TransactionContext): Promise<void> {
       try {
         if (context === undefined) {

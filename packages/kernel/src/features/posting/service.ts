@@ -6,11 +6,9 @@ import {
   ValidationError,
 } from "../../shared/errors/index.js";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
-import type { Document } from "../documents/model.js";
-import type { DocumentRepository } from "../documents/ports.js";
-import { assertDocumentStatusTransition } from "../documents/state-machine.js";
-import type { StockLedgerEntry } from "../inventory/model.js";
-import type { StockLedgerRepository } from "../inventory/ports.js";
+import { assertDocumentStatusTransition } from "../documents/index.js";
+import type { Document, DocumentRepository } from "../documents/index.js";
+import type { StockLedgerEntry, StockLedgerRepository } from "../inventory/index.js";
 import type {
   InventoryMovement,
   PostingDirection,

@@ -282,4 +282,30 @@ describe("销售出库过账的库存影响", () => {
     expect(await fixture.ledger.listEntriesByDocumentNo(document.documentNo)).toHaveLength(2);
     expect(await fixture.documentService.get(document.id)).toBeDefined();
   });
+
+  it("作废按原结转额回冲，不按当前均价重算：入库 12@2 → 出库 5 → 入库 12@4 → 作废后账面 24、均价 3.00、反向流水 -10.00", async () => {
+    const fixture = await createFixture();
+    await seedStock(fixture);
+    const document = await fixture.documentService.create(saleOutboundInput(fixture.item.id));
+    await fixture.postingService.post(document.id);
+    const repriced = await fixture.documentService.create(
+      purchaseInboundInput(fixture.item.id, {
+        lines: [{ itemId: fixture.item.id, quantity: "12", unitPrice: "4", amount: null }],
+      }),
+    );
+    await fixture.postingService.post(repriced.id);
+
+    await fixture.postingService.void(document.id);
+
+    const balance = await fixture.ledger.findBalance("warehouse-1", fixture.item.id);
+    expect(balance?.quantity).toBe("24.000");
+    expect(balance?.unitCost).toBe("3.000000");
+    const entries = await fixture.ledger.listEntriesByDocumentNo(document.documentNo);
+    expect(entries).toHaveLength(2);
+    expect(entries[1]).toMatchObject({
+      direction: "REVERSAL",
+      unitPrice: "2.000000",
+      amount: "-10.00",
+    });
+  });
 });

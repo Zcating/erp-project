@@ -17,3 +17,21 @@ export function weightedAverageUnitCost(
   const totalValue = before.times(cost).plus(incoming.times(price));
   return toFixedString(totalValue.dividedBy(totalQuantity), UNIT_PRICE_SCALE);
 }
+
+export function revaluedUnitCost(
+  quantityBefore: string,
+  costBefore: string,
+  quantityAfter: string,
+  signedQuantityDelta: string,
+  unitPriceOfMovement: string,
+): string {
+  if (quantity(quantityAfter).isZero()) {
+    return toFixedString(unitPrice("0"), UNIT_PRICE_SCALE);
+  }
+  return weightedAverageUnitCost(
+    quantityBefore,
+    costBefore,
+    signedQuantityDelta,
+    unitPriceOfMovement,
+  );
+}

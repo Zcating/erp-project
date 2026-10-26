@@ -256,6 +256,40 @@ describe("销售退货过账的库存与成本回冲", () => {
     expect(total).toBe("10.00");
   });
 
+  it("中途作废退货后，后续退货按净已分摊额分摊：作废后重退仍得 3.33，净额合计收敛到 10.00", async () => {
+    const fixture = await createFixture();
+    const outbound = await seedOutbound(fixture, "3", "3.333333", "3");
+    const originalLineId = originalLineIdOf(outbound);
+
+    const voided = await fixture.documentService.create(saleReturnInput(originalLineId, "1"));
+    await fixture.postingService.post(voided.id);
+    await fixture.postingService.void(voided.id);
+
+    const second = await fixture.documentService.create(saleReturnInput(originalLineId, "1"));
+    await fixture.postingService.post(second.id);
+    const secondEntries = await fixture.ledger.listEntriesByDocumentNo(second.documentNo);
+    expect(secondEntries[0]?.amount).toBe("3.33");
+
+    const third = await fixture.documentService.create(saleReturnInput(originalLineId, "1"));
+    await fixture.postingService.post(third.id);
+    const fourth = await fixture.documentService.create(saleReturnInput(originalLineId, "1"));
+    await fixture.postingService.post(fourth.id);
+
+    let netTotal = "0.000";
+    for (const documentNo of [
+      voided.documentNo,
+      second.documentNo,
+      third.documentNo,
+      fourth.documentNo,
+    ]) {
+      const entries = await fixture.ledger.listEntriesByDocumentNo(documentNo);
+      for (const entry of entries) {
+        netTotal = toFixedString(quantity(netTotal).plus(quantity(entry.amount)), AMOUNT_SCALE);
+      }
+    }
+    expect(netTotal).toBe("10.00");
+  });
+
   it("同一原单行的累计退货数量正好等于该行已过账数量时过账成功", async () => {
     const fixture = await createFixture();
     const outbound = await seedOutbound(fixture);

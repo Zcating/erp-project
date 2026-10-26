@@ -1,5 +1,5 @@
 import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { Document } from "../documents/model.js";
+import type { Document } from "../documents/index.js";
 import { TRANSFER_POSTING_PHASES } from "./model.js";
 import type { TransferInTransitRecord } from "./model.js";
 import type { TransferInTransitRepository } from "./ports.js";

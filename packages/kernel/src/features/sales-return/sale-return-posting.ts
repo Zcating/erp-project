@@ -10,11 +10,15 @@ import {
 import type { Amount, Quantity } from "@erp-inventory-sales/shared";
 import { ValidationError } from "../../shared/errors/index.js";
 import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { Document } from "../documents/model.js";
-import type { DocumentRepository } from "../documents/ports.js";
-import type { StockBalance, StockLedgerEntry } from "../inventory/model.js";
-import type { StockBalanceKey, StockLedgerRepository } from "../inventory/ports.js";
-import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting/model.js";
+import type { Document, DocumentRepository } from "../documents/index.js";
+import type {
+  StockBalance,
+  StockBalanceKey,
+  StockLedgerEntry,
+  StockLedgerRepository,
+} from "../inventory/index.js";
+import { reverseDocumentPostings } from "../posting/index.js";
+import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting/index.js";
 
 const EMPTY_QUANTITY = "0.000";
 const EMPTY_UNIT_COST = "0.000000";
@@ -105,13 +109,26 @@ export function createSaleReturnPostingHandler(
     };
   };
 
-  const allocatedOf = (basis: OriginalCostBasis, cumulativeText: string): Amount =>
-    amount(
-      toFixedString(
-        basis.cost.times(quantity(cumulativeText)).dividedBy(basis.quantity),
-        AMOUNT_SCALE,
-      ),
-    );
+  const netReturnedSummaryOf = async (
+    originalLineId: string,
+    context: TransactionContext | undefined,
+  ): Promise<{ quantity: Quantity; amount: Amount }> => {
+    const references = await documents.listReturnLineReferences(originalLineId, context);
+    let netQuantity = quantity("0.000");
+    let netAmount = amount("0");
+    for (const reference of references) {
+      const entries = await ledger.listEntriesByDocument(reference.documentId, context);
+      for (const entry of entries) {
+        if (entry.lineNo !== reference.lineNo) {
+          continue;
+        }
+        const delta = quantity(entry.quantityAfter).minus(quantity(entry.quantityBefore));
+        netQuantity = quantity(toFixedString(netQuantity.plus(delta), QUANTITY_SCALE));
+        netAmount = amount(toFixedString(netAmount.plus(amount(entry.amount)), AMOUNT_SCALE));
+      }
+    }
+    return { quantity: netQuantity, amount: netAmount };
+  };
 
   const applyForward = async (
     document: Document,
@@ -130,7 +147,8 @@ export function createSaleReturnPostingHandler(
     }
 
     const bases = new Map<string, OriginalCostBasis>();
-    const cumulatives = new Map<string, string>();
+    const netQuantities = new Map<string, Quantity>();
+    const netAllocated = new Map<string, Amount>();
     const movements: InventoryMovement[] = [];
 
     for (const line of document.lines) {
@@ -139,15 +157,14 @@ export function createSaleReturnPostingHandler(
       if (basis === undefined) {
         basis = await costBasisOf(originalLineId, transaction);
         bases.set(originalLineId, basis);
-        cumulatives.set(
-          originalLineId,
-          await documents.sumPostedReturnedQuantity(originalLineId, transaction),
-        );
+        const prior = await netReturnedSummaryOf(originalLineId, transaction);
+        netQuantities.set(originalLineId, prior.quantity);
+        netAllocated.set(originalLineId, prior.amount);
       }
-      const previousText = cumulatives.get(originalLineId) as string;
-      const previous = quantity(previousText);
+      const previousQuantity = netQuantities.get(originalLineId) as Quantity;
+      const previousAllocated = netAllocated.get(originalLineId) as Amount;
       const returned = quantity(line.quantity);
-      const cumulative = previous.plus(returned);
+      const cumulative = quantity(toFixedString(previousQuantity.plus(returned), QUANTITY_SCALE));
       if (cumulative.greaterThan(basis.quantity)) {
         const excess = cumulative.minus(basis.quantity);
         throw new ValidationError(
@@ -155,10 +172,12 @@ export function createSaleReturnPostingHandler(
             `累计退货 ${toFixedString(cumulative, QUANTITY_SCALE)} 超过原单据 ${basis.documentNo} 第 ${basis.lineNo} 行已过账数量 ${toFixedString(basis.quantity, QUANTITY_SCALE)}`,
         );
       }
-      const cumulativeText = toFixedString(cumulative, QUANTITY_SCALE);
-      cumulatives.set(originalLineId, cumulativeText);
-
-      const allocation = allocatedOf(basis, cumulativeText).minus(allocatedOf(basis, previousText));
+      const target = amount(
+        toFixedString(basis.cost.times(cumulative).dividedBy(basis.quantity), AMOUNT_SCALE),
+      );
+      netQuantities.set(originalLineId, cumulative);
+      netAllocated.set(originalLineId, target);
+      const allocation = target.minus(previousAllocated);
       const allocationText = toFixedString(allocation, AMOUNT_SCALE);
       const allocationValue = amount(allocationText);
       const unitPriceText = toFixedString(allocationValue.dividedBy(returned), UNIT_PRICE_SCALE);
@@ -201,38 +220,7 @@ export function createSaleReturnPostingHandler(
     document: Document,
     transaction?: TransactionContext,
   ): Promise<InventoryMovement[]> => {
-    const entries = await ledger.listEntriesByDocument(document.id, transaction);
-    const original = entries.filter((entry) => entry.direction === "POST");
-    const movements: InventoryMovement[] = [];
-    for (const entry of [...original].reverse()) {
-      const key = { warehouseId: entry.warehouseId, itemId: entry.itemId };
-      const locked = await ledger.findBalancesForUpdate([key], transaction);
-      const before = locked[0] ?? emptyBalance(key);
-      const delta = quantity(entry.quantityAfter).minus(quantity(entry.quantityBefore));
-      const afterQuantity = toFixedString(quantity(before.quantity).minus(delta), QUANTITY_SCALE);
-      const afterCost = reversedUnitCost(before, afterQuantity, entry.amount);
-      await ledger.saveBalance(
-        {
-          warehouseId: key.warehouseId,
-          itemId: key.itemId,
-          quantity: afterQuantity,
-          unitCost: afterCost,
-        },
-        transaction,
-      );
-      movements.push({
-        lineNo: entry.lineNo,
-        warehouseId: key.warehouseId,
-        itemId: key.itemId,
-        quantityDelta: toFixedString(delta.negated(), QUANTITY_SCALE),
-        quantityBefore: before.quantity,
-        quantityAfter: afterQuantity,
-        costBefore: before.unitCost,
-        costAfter: afterCost,
-        unitPrice: entry.unitPrice,
-        amount: toFixedString(amount(entry.amount).negated(), AMOUNT_SCALE),
-      });
-    }
+    const movements = await reverseDocumentPostings(document.id, ledger, transaction);
     return movements.sort((left, right) => left.lineNo - right.lineNo);
   };
 
@@ -266,19 +254,4 @@ export function createSaleReturnPostingHandler(
     buildLedger: async (document, movements, direction) =>
       buildLedger(document, movements, direction),
   };
-}
-
-function reversedUnitCost(
-  before: StockBalance,
-  afterQuantityText: string,
-  removedAmountText: string,
-): string {
-  const afterQuantity = quantity(afterQuantityText);
-  if (afterQuantity.isZero()) {
-    return toFixedString(unitPrice("0"), UNIT_PRICE_SCALE);
-  }
-  const remainingValue = quantity(before.quantity)
-    .times(unitPrice(before.unitCost))
-    .minus(amount(removedAmountText));
-  return toFixedString(remainingValue.dividedBy(afterQuantity), UNIT_PRICE_SCALE);
 }

@@ -2,7 +2,6 @@ import {
   AMOUNT_SCALE,
   QUANTITY_SCALE,
   UNIT_PRICE_SCALE,
-  amount,
   amountOf,
   quantity,
   toFixedString,
@@ -11,11 +10,15 @@ import {
 import type { Quantity } from "@erp-inventory-sales/shared";
 import { StockNegativeError, ValidationError } from "../../shared/errors/index.js";
 import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { Document } from "../documents/model.js";
-import type { DocumentRepository } from "../documents/ports.js";
-import type { StockBalance, StockLedgerEntry } from "../inventory/model.js";
-import type { StockBalanceKey, StockLedgerRepository } from "../inventory/ports.js";
-import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting/model.js";
+import type { Document, DocumentRepository } from "../documents/index.js";
+import type {
+  StockBalance,
+  StockBalanceKey,
+  StockLedgerEntry,
+  StockLedgerRepository,
+} from "../inventory/index.js";
+import { reverseDocumentPostings } from "../posting/index.js";
+import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting/index.js";
 
 const EMPTY_QUANTITY = "0.000";
 const EMPTY_UNIT_COST = "0.000000";
@@ -178,38 +181,7 @@ export function createPurchaseReturnPostingHandler(
     document: Document,
     transaction?: TransactionContext,
   ): Promise<InventoryMovement[]> => {
-    const entries = await ledger.listEntriesByDocument(document.id, transaction);
-    const original = entries.filter((entry) => entry.direction === "POST");
-    const movements: InventoryMovement[] = [];
-    for (const entry of [...original].reverse()) {
-      const key = { warehouseId: entry.warehouseId, itemId: entry.itemId };
-      const locked = await ledger.findBalancesForUpdate([key], transaction);
-      const before = locked[0] ?? emptyBalance(key);
-      const delta = quantity(entry.quantityAfter).minus(quantity(entry.quantityBefore));
-      const afterQuantity = toFixedString(quantity(before.quantity).minus(delta), QUANTITY_SCALE);
-      const afterCost = restoredUnitCost(before, afterQuantity, entry.amount);
-      await ledger.saveBalance(
-        {
-          warehouseId: key.warehouseId,
-          itemId: key.itemId,
-          quantity: afterQuantity,
-          unitCost: afterCost,
-        },
-        transaction,
-      );
-      movements.push({
-        lineNo: entry.lineNo,
-        warehouseId: key.warehouseId,
-        itemId: key.itemId,
-        quantityDelta: toFixedString(delta.negated(), QUANTITY_SCALE),
-        quantityBefore: before.quantity,
-        quantityAfter: afterQuantity,
-        costBefore: before.unitCost,
-        costAfter: afterCost,
-        unitPrice: entry.unitPrice,
-        amount: toFixedString(amount(entry.amount).negated(), AMOUNT_SCALE),
-      });
-    }
+    const movements = await reverseDocumentPostings(document.id, ledger, transaction);
     return movements.sort((left, right) => left.lineNo - right.lineNo);
   };
 
@@ -243,19 +215,4 @@ export function createPurchaseReturnPostingHandler(
     buildLedger: async (document, movements, direction) =>
       buildLedger(document, movements, direction),
   };
-}
-
-function restoredUnitCost(
-  before: StockBalance,
-  afterQuantityText: string,
-  carriedAmountText: string,
-): string {
-  const afterQuantity = quantity(afterQuantityText);
-  if (afterQuantity.isZero()) {
-    return toFixedString(unitPrice("0"), UNIT_PRICE_SCALE);
-  }
-  const restoredValue = quantity(before.quantity)
-    .times(unitPrice(before.unitCost))
-    .plus(amount(carriedAmountText));
-  return toFixedString(restoredValue.dividedBy(afterQuantity), UNIT_PRICE_SCALE);
 }

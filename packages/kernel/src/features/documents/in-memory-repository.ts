@@ -84,6 +84,20 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
       return total;
     },
 
+    async listReturnLineReferences(
+      originalLineId: string,
+    ): Promise<Array<{ documentId: string; lineNo: number }>> {
+      const references: Array<{ documentId: string; lineNo: number }> = [];
+      for (const document of stored.values()) {
+        for (const line of document.lines) {
+          if (line.originalLineId === originalLineId) {
+            references.push({ documentId: document.id, lineNo: line.lineNo });
+          }
+        }
+      }
+      return references;
+    },
+
     async insert(document: Document): Promise<void> {
       if (findByDocumentNo(document.documentNo) !== null) {
         throw new DuplicateError(`单据号重复：${document.documentNo}`);

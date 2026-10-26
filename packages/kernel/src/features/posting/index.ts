@@ -8,14 +8,16 @@ import type {
 } from "./model.js";
 import { createPostingService } from "./service.js";
 import type { PostingService, PostingServiceOptions } from "./service.js";
+import { reverseDocumentPostings } from "./reversal.js";
 
 export const posting = {
   DEFAULT_POSTING_PHASE,
   POSTING_DIRECTIONS,
   createPostingService,
+  reverseDocumentPostings,
 };
 
-export { DEFAULT_POSTING_PHASE, POSTING_DIRECTIONS, createPostingService };
+export { DEFAULT_POSTING_PHASE, POSTING_DIRECTIONS, createPostingService, reverseDocumentPostings };
 
 export type {
   InventoryMovement,

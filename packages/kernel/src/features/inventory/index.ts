@@ -1,4 +1,4 @@
-import { weightedAverageUnitCost } from "./costing.js";
+import { revaluedUnitCost, weightedAverageUnitCost } from "./costing.js";
 import { createInMemoryStockLedgerRepository } from "./in-memory-repository.js";
 import { STOCK_LEDGER_DIRECTIONS } from "./model.js";
 import type {
@@ -24,6 +24,7 @@ export const inventory = {
   STOCK_LEDGER_DIRECTIONS,
   createInMemoryStockLedgerRepository,
   createInventoryQueryService,
+  revaluedUnitCost,
   weightedAverageUnitCost,
 };
 
@@ -31,6 +32,7 @@ export {
   STOCK_LEDGER_DIRECTIONS,
   createInMemoryStockLedgerRepository,
   createInventoryQueryService,
+  revaluedUnitCost,
   weightedAverageUnitCost,
 };
 

@@ -3,7 +3,7 @@ import { NotFoundError, ValidationError } from "../../shared/errors/index.js";
 import type { MasterDataReference, MasterDataReferenceChecker } from "../../shared/ports/index.js";
 import type { PostedItemReferenceChecker } from "../../shared/ports/index.js";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
-import { baseQuantityOf } from "../item-master/units.js";
+import { baseQuantityOf } from "../item-master/index.js";
 import { buildDocumentLines } from "./lines.js";
 import type {
   Document,
