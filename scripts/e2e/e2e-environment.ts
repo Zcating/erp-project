@@ -4,6 +4,10 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { e2eDatabaseUrl } from "../../packages/kernel-pg/src/db/config.ts";
+import {
+  DEFAULT_ADMIN_PASSWORD,
+  DEFAULT_ADMIN_USERNAME,
+} from "../../packages/app/src/features/session/credentials.ts";
 
 export type QueryRows<Row> = { rows: Row[] };
 
@@ -74,8 +78,8 @@ export function spawnApi(
     E2E_DATABASE_URL: databaseUrl,
     PORT: String(port),
   };
-  delete env.ADMIN_USERNAME;
-  delete env.ADMIN_PASSWORD;
+  env.ADMIN_USERNAME = DEFAULT_ADMIN_USERNAME;
+  env.ADMIN_PASSWORD = DEFAULT_ADMIN_PASSWORD;
   return startProcess("pnpm", ["--filter", "@erp-inventory-sales/app", "start"], {
     cwd: repoRoot,
     env: { ...env, ...extraEnv },

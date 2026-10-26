@@ -96,11 +96,25 @@ pnpm test
 
 ## 5. 起参考应用
 
+一条命令并行拉起 API 与管理后台：
+
 ```bash
-pnpm --filter @erp-inventory-sales/app start
+vp run dev
 ```
 
-默认监听 `http://localhost:3000`，端口用 `PORT` 覆盖。
+输出按包名前缀分开，Ctrl-C 一起停：
+
+```
+packages/app dev: 进销存参考 API 已启动：http://127.0.0.1:3000
+packages/web dev:   Local:   http://localhost:5173/
+```
+
+也可以只起其中一个：
+
+```bash
+pnpm --filter @erp-inventory-sales/app start   # API，默认 http://localhost:3000，端口用 PORT 覆盖
+pnpm --filter @erp-inventory-sales/web dev      # 管理后台，默认 http://localhost:5173
+```
 
 启动命令会自动加载仓库根目录的 `.env`（文件不存在时忽略，不影响 CI 与生产环境）：
 

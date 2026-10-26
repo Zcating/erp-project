@@ -10,7 +10,8 @@
   },
   "scripts": {
     "build": "vp pack",
-    "start": "node --env-file-if-exists=../../.env --import tsx src/server.ts"
+    "start": "node --env-file-if-exists=../../.env --import tsx src/server.ts",
+    "dev": "pnpm start"
   },
   "dependencies": {
     "@erp-inventory-sales/kernel": "workspace:*",
