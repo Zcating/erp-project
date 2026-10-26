@@ -4,7 +4,7 @@ import type {
   ItemMasterService,
 } from "@erp-inventory-sales/kernel";
 import { ValidationError } from "@erp-inventory-sales/kernel";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { success } from "../../shared/envelope.js";
 import { itemMasterBodySchema, type ItemMasterBody } from "./schema.js";
 
@@ -18,12 +18,28 @@ export function registerItemMasterRoutes(app: FastifyInstance, deps: ItemMasterR
     done(null, body);
   });
 
-  app.post("/api/items/import", async (request) => {
-    if (typeof request.body !== "string") {
-      throw new ValidationError("请求体必须是 CSV 正文");
-    }
-    const result = await deps.importService.importCsv(request.body);
-    return success(result);
+  app.register(async (scope) => {
+    scope.addContentTypeParser(
+      "application/json",
+      { parseAs: "string" },
+      (_request, body, done) => {
+        done(null, body);
+      },
+    );
+
+    scope.post("/api/items/import", async (request) => {
+      if (isJsonContentType(request)) {
+        return success(await deps.importService.importJson(requireJsonBody(request)));
+      }
+      if (typeof request.body !== "string") {
+        throw new ValidationError("请求体必须是 CSV 正文");
+      }
+      return success(await deps.importService.importCsv(request.body));
+    });
+
+    scope.post("/api/items/import/json", async (request) => {
+      return success(await deps.importService.importJson(requireJsonBody(request)));
+    });
   });
 
   app.post("/api/items", async (request) => {
@@ -67,6 +83,20 @@ export function registerItemMasterRoutes(app: FastifyInstance, deps: ItemMasterR
     await deps.service.remove(params.id);
     return success({ id: params.id });
   });
+}
+
+function isJsonContentType(request: FastifyRequest): boolean {
+  const contentType = request.headers["content-type"];
+  return (
+    typeof contentType === "string" && contentType.toLowerCase().startsWith("application/json")
+  );
+}
+
+function requireJsonBody(request: FastifyRequest): string {
+  if (typeof request.body !== "string") {
+    throw new ValidationError("请求体必须是 JSON 正文");
+  }
+  return request.body;
 }
 
 function toItemMasterInput(body: ItemMasterBody): ItemMasterInput {

@@ -140,7 +140,7 @@ describe("商品批量导入的 HTTP 表面", () => {
     await app.close();
   });
 
-  it("请求体不是 CSV 文本时返回 400 与 VALIDATION", async () => {
+  it("请求体不是可导入的文档时返回 400 与 VALIDATION", async () => {
     const { app, cookie } = await buildItemApp();
 
     const response = await app.inject({
@@ -152,7 +152,7 @@ describe("商品批量导入的 HTTP 表面", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json().error.code).toBe("VALIDATION");
-    expect(response.json().error.message).toContain("CSV");
+    expect(response.json().error.message).toContain("JSON");
 
     await app.close();
   });

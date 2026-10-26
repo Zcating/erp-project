@@ -9,6 +9,7 @@ import type {
   ItemImportService,
   ItemImportServiceDeps,
 } from "./import-service.js";
+import { ITEM_IMPORT_JSON_FIELDS, parseItemImportJson } from "./json.js";
 import {
   CONVERSION_RATE_SCALE,
   type ItemAuxiliaryUnit,
@@ -31,6 +32,7 @@ import {
 export const itemMaster = {
   CONVERSION_RATE_SCALE,
   ITEM_IMPORT_COLUMNS,
+  ITEM_IMPORT_JSON_FIELDS,
   createInMemoryItemMasterRepository,
   createItemImportService,
   createItemMasterService,
@@ -38,6 +40,7 @@ export const itemMaster = {
   itemBatchErrorFromDetails,
   parseCsv,
   parseItemImportCsv,
+  parseItemImportJson,
   validateConversionRate,
   validateItemMasterInput,
 };
@@ -45,6 +48,7 @@ export const itemMaster = {
 export {
   CONVERSION_RATE_SCALE,
   ITEM_IMPORT_COLUMNS,
+  ITEM_IMPORT_JSON_FIELDS,
   ItemBatchError,
   createInMemoryItemMasterRepository,
   createItemImportService,
@@ -53,6 +57,7 @@ export {
   itemBatchErrorFromDetails,
   parseCsv,
   parseItemImportCsv,
+  parseItemImportJson,
   validateConversionRate,
   validateItemMasterInput,
 };

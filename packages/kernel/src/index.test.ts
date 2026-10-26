@@ -15,6 +15,7 @@ describe("kernel package", () => {
     expect(Object.keys(itemMaster).sort()).toEqual([
       "CONVERSION_RATE_SCALE",
       "ITEM_IMPORT_COLUMNS",
+      "ITEM_IMPORT_JSON_FIELDS",
       "createInMemoryItemMasterRepository",
       "createItemImportService",
       "createItemMasterService",
@@ -22,6 +23,7 @@ describe("kernel package", () => {
       "itemBatchErrorFromDetails",
       "parseCsv",
       "parseItemImportCsv",
+      "parseItemImportJson",
       "validateConversionRate",
       "validateItemMasterInput",
     ]);
@@ -39,6 +41,7 @@ describe("kernel package", () => {
       "auxUnit2",
       "auxUnit2Rate",
     ]);
+    expect(itemMaster.ITEM_IMPORT_JSON_FIELDS).toEqual(itemMaster.ITEM_IMPORT_COLUMNS);
   });
 
   it("参与方 feature 的公开面带领域规则、仓储端口实现与服务工厂", () => {
