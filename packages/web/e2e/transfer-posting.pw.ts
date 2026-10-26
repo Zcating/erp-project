@@ -175,7 +175,10 @@ test("调入过账后这批数量不再计入在途，两个过账按钮都不�
   await expect(row.getByTestId("document-void")).toBeEnabled();
 
   await page.goto("/inventory");
-  const stockRow = page.getByTestId("stock-row").filter({ hasText: master.itemCode }).first();
+  await waitForDebugHandles(page);
+  await page.getByTestId("stock-warehouse-filter").selectOption(master.sourceWarehouseId);
+  const stockRow = page.getByTestId("stock-row").filter({ hasText: master.itemCode });
+  await expect(stockRow).toHaveCount(1);
   await expect(stockRow.getByTestId("stock-on-hand")).toHaveText("6.000");
   await expect(stockRow.getByTestId("stock-in-transit")).toHaveText("0.000");
 });

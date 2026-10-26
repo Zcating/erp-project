@@ -189,6 +189,42 @@ describe("端到端：调拨与在途", () => {
     expect(await movementsOf(document.documentNo)).toHaveLength(2);
   });
 
+  it("调入过账时成本随货并入目标仓：目标仓原有库存按加权规则重算成本", async () => {
+    const master = await createMasterData();
+    await seedSourceStock(master);
+    const targetInbound = await api("POST", "/api/documents", {
+      type: "PURCHASE_INBOUND",
+      supplierId: master.supplierId,
+      customerId: null,
+      sourceWarehouseId: null,
+      targetWarehouseId: master.targetWarehouseId,
+      warehouseId: null,
+      lines: [{ itemId: master.itemId, quantity: "10", unitPrice: "4", amount: null }],
+    });
+    expect(targetInbound.status).toBe(200);
+    const targetPosted = await api("POST", `/api/documents/${targetInbound.payload.data.id}/post`);
+    expect(targetPosted.status).toBe(200);
+    const document = await createTransfer(master);
+    await api("POST", `/api/documents/${document.id}/post`, { phase: "OUT" });
+
+    const into = await api("POST", `/api/documents/${document.id}/post`, { phase: "IN" });
+
+    expect(into.status).toBe(200);
+    expect(await balanceOf(master, master.targetWarehouseId)).toMatchObject({
+      onHand: "14.000",
+      inTransit: "0.000",
+      unitCost: "3.571429",
+    });
+    const movements = await movementsOf(document.documentNo);
+    expect(movements).toHaveLength(2);
+    expect(movements[1]).toMatchObject({
+      quantityBefore: "10.000",
+      quantityAfter: "14.000",
+      unitPrice: "2.500000",
+      amount: "10.00",
+    });
+  });
+
   it("未调出过账就发起调入过账的请求被拒绝，错误消息指出该调拨单尚未调出", async () => {
     const master = await createMasterData();
     await seedSourceStock(master);
