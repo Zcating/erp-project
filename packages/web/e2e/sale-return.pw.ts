@@ -185,11 +185,17 @@ test("销售退货单能在新建页选择原销售出库行，过账后库存�
   expect(afterVoid.payload.data.movements[1].amount).toBe("-4.00");
 });
 
-test("销售退货单不选原销售出库行时保存失败，界面显示后端给出的错误", async ({ page }) => {
+test("销售退货单不选原销售出库行时提交前被拦下，界面显示客户端给出的错误", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
   await seedStock(master);
   await createPostedOutbound(master);
+  const submitted: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "POST") {
+      submitted.push(request.url());
+    }
+  });
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
@@ -199,4 +205,5 @@ test("销售退货单不选原销售出库行时保存失败，界面显示后�
 
   await expect(page.getByTestId("document-form-error")).toBeVisible();
   await expect(page.getByTestId("document-form-error")).toContainText("缺少原单据行引用");
+  expect(submitted).toEqual([]);
 });

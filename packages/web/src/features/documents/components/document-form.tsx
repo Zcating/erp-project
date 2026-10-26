@@ -25,8 +25,9 @@ import {
   unitOptions,
   warehouseOptions,
 } from "../lib/options";
-import { buildDocumentInput, type DocumentLineDraft } from "../lib/payload";
+import { buildDocumentInput } from "../lib/payload";
 import { documentListQueryOptions } from "../lib/queries";
+import { documentFormSchema, type DocumentLineDraft } from "../lib/schema";
 
 export type DocumentFormProps = {
   documentType: DraftDocumentType;
@@ -79,8 +80,13 @@ export function DocumentForm({
             })),
     },
     onSubmit: async ({ value }) => {
+      const parsed = documentFormSchema(documentType).safeParse(value);
+      if (!parsed.success) {
+        setError(parsed.error.issues[0]?.message ?? "提交失败");
+        return;
+      }
       setError(null);
-      const result = await onSubmit(buildDocumentInput(value, documentType));
+      const result = await onSubmit(buildDocumentInput(parsed.data, documentType));
       if (!result.ok) {
         setError(result.message);
       }

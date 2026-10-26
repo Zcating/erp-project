@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { DraftDocumentType } from "./api";
-import { buildDocumentInput, type DocumentFormValues } from "./payload";
+import { buildDocumentInput } from "./payload";
+import type { DocumentFormValues } from "./schema";
 
 const values: DocumentFormValues = {
   supplierId: "sup-1",

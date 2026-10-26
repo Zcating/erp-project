@@ -247,9 +247,15 @@ test("单据行金额按金额精度回显：单价 1.115、数量 3 得 3.35，
   );
 });
 
-test("缺少供应商时表单显示后端给出的错误消息", async ({ page }) => {
+test("缺少供应商时表单显示客户端给出的错误消息且不发出提交请求", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
+  const submitted: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "POST") {
+      submitted.push(request.url());
+    }
+  });
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
@@ -259,11 +265,18 @@ test("缺少供应商时表单显示后端给出的错误消息", async ({ page 
   await page.getByTestId("document-submit").click();
 
   await expect(page.getByTestId("document-form-error")).toHaveText("缺少供应商");
+  expect(submitted).toEqual([]);
 });
 
-test("源仓与目标仓相同的调拨单保存失败并给出明确提示", async ({ page }) => {
+test("源仓与目标仓相同的调拨单提交前被拦下并给出明确提示", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
+  const submitted: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "POST") {
+      submitted.push(request.url());
+    }
+  });
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
@@ -274,6 +287,7 @@ test("源仓与目标仓相同的调拨单保存失败并给出明确提示", as
   await page.getByTestId("document-submit").click();
 
   await expect(page.getByTestId("document-form-error")).toHaveText("源仓与目标仓必须不同");
+  expect(submitted).toEqual([]);
 });
 
 test("删除草稿后单据列表里不再显示该条草稿", async ({ page }) => {

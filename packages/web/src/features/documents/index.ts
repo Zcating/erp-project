@@ -47,7 +47,14 @@ export {
   warehouseOptions,
   type OriginalLineChoice,
 } from "./lib/options";
-export { buildDocumentInput, type DocumentFormValues, type DocumentLineDraft } from "./lib/payload";
+export { buildDocumentInput } from "./lib/payload";
+export {
+  documentFormSchema,
+  documentFormValuesSchema,
+  documentLineDraftSchema,
+  type DocumentFormValues,
+  type DocumentLineDraft,
+} from "./lib/schema";
 export {
   documentDetailQueryKey,
   documentDetailQueryOptions,

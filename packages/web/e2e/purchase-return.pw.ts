@@ -180,10 +180,16 @@ test("采购退货单能在新建页选择原采购入库行，过账后库存�
   expect(afterVoid.payload.data.movements[1].amount).toBe("-8.00");
 });
 
-test("采购退货单不选原采购入库行时保存失败，界面显示后端给出的错误", async ({ page }) => {
+test("采购退货单不选原采购入库行时提交前被拦下，界面显示客户端给出的错误", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
   await createPostedInbound(master);
+  const submitted: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "POST") {
+      submitted.push(request.url());
+    }
+  });
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
@@ -193,4 +199,5 @@ test("采购退货单不选原采购入库行时保存失败，界面显示后�
 
   await expect(page.getByTestId("document-form-error")).toBeVisible();
   await expect(page.getByTestId("document-form-error")).toContainText("缺少原单据行引用");
+  expect(submitted).toEqual([]);
 });

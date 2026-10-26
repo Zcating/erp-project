@@ -1,21 +1,5 @@
 import type { DocumentInput, DraftDocumentType } from "./api";
-
-export type DocumentLineDraft = {
-  itemId: string;
-  quantity: string;
-  unitPrice: string;
-  unit: string;
-  originalLineId: string;
-};
-
-export type DocumentFormValues = {
-  supplierId: string;
-  customerId: string;
-  sourceWarehouseId: string;
-  targetWarehouseId: string;
-  warehouseId: string;
-  lines: DocumentLineDraft[];
-};
+import type { DocumentFormValues } from "./schema";
 
 export function buildDocumentInput(
   values: DocumentFormValues,
