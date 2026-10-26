@@ -2,10 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import { AdminShell } from "@/components/admin-shell";
+import { Label } from "@/components/ui/label";
+import { Picker } from "@/components/ui/picker";
 import {
+  itemOptions,
   stockBalanceQueryOptions,
   stockItemFilterAtom,
   stockWarehouseFilterAtom,
+  warehouseOptions,
 } from "@/features/inventory";
 import { itemListQueryOptions } from "@/features/items";
 import { warehouseListQueryOptions } from "@/features/parties";
@@ -37,41 +41,39 @@ function StockQueryPage() {
       <h1 className="mb-4 text-2xl font-semibold">库存查询</h1>
 
       <div className="mb-4 flex flex-wrap items-end gap-4">
-        <label className="block text-sm" htmlFor="stock-warehouse-filter">
-          仓库
-          <select
+        <div>
+          <Label
+            id="stock-warehouse-filter-label"
+            htmlFor="stock-warehouse-filter"
+            className="block text-sm"
+          >
+            仓库
+          </Label>
+          <Picker
             id="stock-warehouse-filter"
-            data-testid="stock-warehouse-filter"
-            className="mt-1 block w-48 rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-48"
             value={warehouseFilter}
-            onChange={(event) => setWarehouseFilter(event.target.value)}
-          >
-            <option value="">全部仓库</option>
-            {(warehouses ?? []).map((warehouse) => (
-              <option key={warehouse.id} value={warehouse.id}>
-                {warehouse.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            onValueChange={setWarehouseFilter}
+            options={warehouseOptions(warehouses ?? [])}
+            data-testid="stock-warehouse-filter"
+            aria-labelledby="stock-warehouse-filter-label"
+          />
+        </div>
 
-        <label className="block text-sm" htmlFor="stock-item-filter">
-          商品
-          <select
+        <div>
+          <Label id="stock-item-filter-label" htmlFor="stock-item-filter" className="block text-sm">
+            商品
+          </Label>
+          <Picker
             id="stock-item-filter"
-            data-testid="stock-item-filter"
-            className="mt-1 block w-48 rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-48"
             value={itemFilter}
-            onChange={(event) => setItemFilter(event.target.value)}
-          >
-            <option value="">全部商品</option>
-            {(items ?? []).map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.code} {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            onValueChange={setItemFilter}
+            options={itemOptions(items ?? [])}
+            data-testid="stock-item-filter"
+            aria-labelledby="stock-item-filter-label"
+          />
+        </div>
       </div>
 
       <table className="w-full border-collapse text-sm" data-testid="stock-table">

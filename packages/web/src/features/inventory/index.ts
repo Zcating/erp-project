@@ -5,6 +5,7 @@ export {
   type StockMovement,
   type StockMovementQuery,
 } from "./lib/api";
+export { itemOptions, movementOrderOptions, warehouseOptions } from "./lib/options";
 export {
   stockBalanceQueryKey,
   stockBalanceQueryOptions,
