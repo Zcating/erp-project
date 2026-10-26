@@ -1,31 +1,23 @@
 import { randomUUID } from "node:crypto";
-import { NotFoundError, ValidationError } from "../../shared/errors/index.js";
-import type { MasterDataReference, MasterDataReferenceChecker } from "../../shared/ports/index.js";
-import type { PostedItemReferenceChecker } from "../../shared/ports/index.js";
-import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
-import { baseQuantityOf } from "../item-master/index.js";
-import { buildDocumentLines } from "./lines.js";
+import { NotFoundError, ValidationError } from "../../shared/errors";
+import type { MasterDataReference, MasterDataReferenceChecker } from "../../shared/ports";
+import type { PostedItemReferenceChecker } from "../../shared/ports";
+import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
+import { baseQuantityOf } from "../item-master";
+import { buildDocumentLines } from "./lines";
 import type {
   Document,
   DocumentFilter,
   DocumentInput,
   DocumentLineInput,
   DraftDocumentType,
-} from "./model.js";
-import {
-  DEFAULT_DOCUMENT_TIME_ZONE,
-  formatDocumentDate,
-  formatDocumentNumber,
-} from "./numbering.js";
-import type { DocumentItemLookup, DocumentRepository } from "./ports.js";
-import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES, WAREHOUSE_ROLE_LABELS } from "./rules.js";
-import type { DocumentTypeRule } from "./rules.js";
-import { assertDocumentIsDraft } from "./state-machine.js";
-import {
-  assertDraftDocumentType,
-  assertQuantityText,
-  validateDocumentInput,
-} from "./validation.js";
+} from "./model";
+import { DEFAULT_DOCUMENT_TIME_ZONE, formatDocumentDate, formatDocumentNumber } from "./numbering";
+import type { DocumentItemLookup, DocumentRepository } from "./ports";
+import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES, WAREHOUSE_ROLE_LABELS } from "./rules";
+import type { DocumentTypeRule } from "./rules";
+import { assertDocumentIsDraft } from "./state-machine";
+import { assertDraftDocumentType, assertQuantityText, validateDocumentInput } from "./validation";
 
 export type DocumentService = MasterDataReferenceChecker &
   PostedItemReferenceChecker & {

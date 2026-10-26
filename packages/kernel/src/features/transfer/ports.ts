@@ -1,6 +1,6 @@
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { InTransitQuantity } from "../inventory/index.js";
-import type { TransferInTransitRecord } from "./model.js";
+import type { TransactionContext } from "../../shared/transactions";
+import type { InTransitQuantity } from "../inventory";
+import type { TransferInTransitRecord } from "./model";
 
 export type TransferInTransitRepository = {
   create(record: TransferInTransitRecord, context?: TransactionContext): Promise<void>;

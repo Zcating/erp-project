@@ -1,10 +1,7 @@
-import type {
-  MasterDataReferenceChecker,
-  PostedItemReferenceChecker,
-} from "../../shared/ports/index.js";
-import type { ItemMaster } from "../item-master/index.js";
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model.js";
+import type { MasterDataReferenceChecker, PostedItemReferenceChecker } from "../../shared/ports";
+import type { ItemMaster } from "../item-master";
+import type { TransactionContext } from "../../shared/transactions";
+import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model";
 
 export type DocumentRepository = MasterDataReferenceChecker &
   PostedItemReferenceChecker & {

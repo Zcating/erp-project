@@ -4,18 +4,18 @@ import {
   StateConflictError,
   StockNegativeError,
   ValidationError,
-} from "../../shared/errors/index.js";
-import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
-import { assertDocumentStatusTransition } from "../documents/index.js";
-import type { Document, DocumentRepository } from "../documents/index.js";
-import type { StockLedgerEntry, StockLedgerRepository } from "../inventory/index.js";
+} from "../../shared/errors";
+import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
+import { assertDocumentStatusTransition } from "../documents";
+import type { Document, DocumentRepository } from "../documents";
+import type { StockLedgerEntry, StockLedgerRepository } from "../inventory";
 import type {
   InventoryMovement,
   PostingDirection,
   PostingPhase,
   PostingTypeHandler,
-} from "./model.js";
-import { DEFAULT_POSTING_PHASE } from "./model.js";
+} from "./model";
+import { DEFAULT_POSTING_PHASE } from "./model";
 
 export type PostingService = {
   post(documentId: string, context?: TransactionContext, phase?: PostingPhase): Promise<Document>;

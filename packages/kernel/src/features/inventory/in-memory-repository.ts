@@ -1,11 +1,6 @@
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import type {
-  StockBalance,
-  StockLedgerEntry,
-  StockMovement,
-  StockMovementFilter,
-} from "./model.js";
-import type { StockBalanceKey, StockLedgerRepository } from "./ports.js";
+import type { TransactionContext } from "../../shared/transactions";
+import type { StockBalance, StockLedgerEntry, StockMovement, StockMovementFilter } from "./model";
+import type { StockBalanceKey, StockLedgerRepository } from "./ports";
 
 type StoredEntry = {
   seq: number;

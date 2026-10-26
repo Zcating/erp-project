@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { StateConflictError, StockNegativeError } from "../../shared/errors/index.js";
-import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
-import { createInMemoryDocumentRepository } from "../documents/in-memory-repository.js";
-import type { Document, DocumentInput } from "../documents/model.js";
-import { createDocumentService } from "../documents/service.js";
-import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository.js";
-import type { StockLedgerRepository } from "../inventory/ports.js";
-import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting.js";
-import type { InventoryMovement, PostingTypeHandler } from "./model.js";
-import { createPostingService } from "./service.js";
+import { StateConflictError, StockNegativeError } from "../../shared/errors";
+import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
+import { createInMemoryDocumentRepository } from "../documents/in-memory-repository";
+import type { Document, DocumentInput } from "../documents/model";
+import { createDocumentService } from "../documents/service";
+import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository";
+import type { StockLedgerRepository } from "../inventory/ports";
+import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting";
+import type { InventoryMovement, PostingTypeHandler } from "./model";
+import { createPostingService } from "./service";
 
 const FIXED_CLOCK = new Date("2026-01-02T03:04:05Z");
 

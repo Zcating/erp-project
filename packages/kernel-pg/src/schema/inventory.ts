@@ -1,9 +1,9 @@
 import { index, integer, primaryKey, serial, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { documents } from "./documents.js";
-import { erpSchema } from "./erp-schema.js";
-import { items } from "./item-master.js";
-import { amountType, quantityType, unitPriceType } from "./numeric-types.js";
-import { warehouses } from "./parties.js";
+import { documents } from "./documents";
+import { erpSchema } from "./erp-schema";
+import { items } from "./item-master";
+import { amountType, quantityType, unitPriceType } from "./numeric-types";
+import { warehouses } from "./parties";
 
 export const inventoryBalances = erpSchema.table(
   "inventory_balances",

@@ -7,8 +7,8 @@ import type {
 import type { PostingService, TransferQueryService } from "@erp-inventory-sales/kernel";
 import { ValidationError, isDocumentStatus, isDocumentType } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
-import { success } from "../../shared/envelope.js";
-import { documentBodySchema, postingBodySchema, type DocumentBody } from "./schema.js";
+import { success } from "../../shared/envelope";
+import { documentBodySchema, postingBodySchema, type DocumentBody } from "./schema";
 
 export type DocumentWithPhases = Document & { postedPhases?: string[] };
 

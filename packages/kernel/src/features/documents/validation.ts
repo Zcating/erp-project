@@ -7,15 +7,15 @@ import {
   toFixedString,
   unitPrice,
 } from "@erp-inventory-sales/shared";
-import { ValidationError } from "../../shared/errors/index.js";
-import { computeLineAmount } from "./lines.js";
+import { ValidationError } from "../../shared/errors";
+import { computeLineAmount } from "./lines";
 import {
   isDraftDocumentType,
   type DocumentInput,
   type DocumentLineInput,
   type DraftDocumentType,
-} from "./model.js";
-import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES } from "./rules.js";
+} from "./model";
+import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES } from "./rules";
 
 const DECIMAL_PATTERN = /^-?\d+(?:\.\d+)?$/;
 

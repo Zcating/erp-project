@@ -11,7 +11,7 @@ import {
   selling,
   stocktake,
   transfer,
-} from "./index.js";
+} from "./index";
 
 describe("kernel package", () => {
   it("exposes its public surface", () => {

@@ -1,7 +1,7 @@
-import { createInMemoryTransferInTransitRepository } from "./in-memory-repository.js";
-import { TRANSFER_IN_TRANSIT_STATUSES, TRANSFER_POSTING_PHASES } from "./model.js";
-import { createTransferPostingHandler } from "./posting.js";
-import { createTransferQueryService } from "./service.js";
+import { createInMemoryTransferInTransitRepository } from "./in-memory-repository";
+import { TRANSFER_IN_TRANSIT_STATUSES, TRANSFER_POSTING_PHASES } from "./model";
+import { createTransferPostingHandler } from "./posting";
+import { createTransferQueryService } from "./service";
 
 export const transfer = {
   TRANSFER_IN_TRANSIT_STATUSES,
@@ -23,6 +23,6 @@ export type {
   TransferInTransitRecord,
   TransferInTransitStatus,
   TransferPostingPhase,
-} from "./model.js";
-export type { TransferInTransitRepository } from "./ports.js";
-export type { TransferQueryService } from "./service.js";
+} from "./model";
+export type { TransferInTransitRepository } from "./ports";
+export type { TransferQueryService } from "./service";

@@ -1,6 +1,6 @@
-import type { InTransitQuantity } from "../inventory/index.js";
-import type { TransferInTransitRecord } from "./model.js";
-import type { TransferInTransitRepository } from "./ports.js";
+import type { InTransitQuantity } from "../inventory";
+import type { TransferInTransitRecord } from "./model";
+import type { TransferInTransitRepository } from "./ports";
 
 export function createInMemoryTransferInTransitRepository(): TransferInTransitRepository {
   const stored = new Map<string, TransferInTransitRecord>();

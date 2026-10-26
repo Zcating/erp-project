@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import { erpSchema } from "./erp-schema.js";
-import { conversionRateType } from "./numeric-types.js";
+import { erpSchema } from "./erp-schema";
+import { conversionRateType } from "./numeric-types";
 
 export const items = erpSchema.table(
   "items",

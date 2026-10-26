@@ -1,6 +1,6 @@
 import type { FastifyRequest } from "fastify";
-import { readSessionCookie } from "./cookie.js";
-import type { SessionStore } from "./session-store.js";
+import { readSessionCookie } from "./cookie";
+import type { SessionStore } from "./session-store";
 
 export type AdminSession = { adminId: string };
 

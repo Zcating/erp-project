@@ -1,5 +1,5 @@
 import { text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import { erpSchema } from "./erp-schema.js";
+import { erpSchema } from "./erp-schema";
 
 export const suppliers = erpSchema.table(
   "suppliers",

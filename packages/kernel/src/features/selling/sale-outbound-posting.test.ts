@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { createInMemoryDocumentRepository } from "../documents/in-memory-repository.js";
-import type { DocumentInput } from "../documents/model.js";
-import { createDocumentService } from "../documents/service.js";
-import { createInMemoryItemMasterRepository } from "../item-master/in-memory-repository.js";
-import { createItemMasterService } from "../item-master/service.js";
-import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository.js";
-import { createPostingService } from "../posting/service.js";
-import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting.js";
-import { StockNegativeError } from "../../shared/errors/index.js";
-import { createSaleOutboundPostingHandler } from "./sale-outbound-posting.js";
+import { createInMemoryDocumentRepository } from "../documents/in-memory-repository";
+import type { DocumentInput } from "../documents/model";
+import { createDocumentService } from "../documents/service";
+import { createInMemoryItemMasterRepository } from "../item-master/in-memory-repository";
+import { createItemMasterService } from "../item-master/service";
+import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository";
+import { createPostingService } from "../posting/service";
+import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting";
+import { StockNegativeError } from "../../shared/errors";
+import { createSaleOutboundPostingHandler } from "./sale-outbound-posting";
 
 const FIXED_CLOCK = new Date("2026-01-02T03:04:05Z");
 

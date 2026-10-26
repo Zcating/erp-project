@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { databaseUrl, e2eDatabaseUrl, testDatabaseUrl } from "./config.js";
+import { databaseUrl, e2eDatabaseUrl, testDatabaseUrl } from "./config";
 
 const originalDatabaseUrl = process.env.DATABASE_URL;
 const originalTestDatabaseUrl = process.env.TEST_DATABASE_URL;

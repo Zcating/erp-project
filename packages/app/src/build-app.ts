@@ -43,16 +43,16 @@ import {
 } from "@erp-inventory-sales/kernel-pg";
 import type { DatabaseConnection, KernelDatabase } from "@erp-inventory-sales/kernel-pg";
 import Fastify, { type FastifyInstance } from "fastify";
-import { registerDecimalRoutes } from "./features/decimals/index.js";
-import { registerDocumentRoutes, resolveDocumentTimeZone } from "./features/documents/index.js";
-import { registerHealthRoutes } from "./features/health/index.js";
-import { registerInventoryRoutes } from "./features/inventory/index.js";
-import { registerItemMasterRoutes } from "./features/item-master/index.js";
+import { registerDecimalRoutes } from "./features/decimals";
+import { registerDocumentRoutes, resolveDocumentTimeZone } from "./features/documents";
+import { registerHealthRoutes } from "./features/health";
+import { registerInventoryRoutes } from "./features/inventory";
+import { registerItemMasterRoutes } from "./features/item-master";
 import {
   registerCustomerRoutes,
   registerSupplierRoutes,
   registerWarehouseRoutes,
-} from "./features/parties/index.js";
+} from "./features/parties";
 import {
   createSessionResolver,
   createSessionStore,
@@ -62,9 +62,9 @@ import {
   resolveAdminCredentials,
   type AdminCredentials,
   type SessionResolver,
-} from "./features/session/index.js";
-import { createRouteRegistry, registerSystemRoutes } from "./features/system/index.js";
-import { registerErrorHandling } from "./shared/error-handling.js";
+} from "./features/session";
+import { createRouteRegistry, registerSystemRoutes } from "./features/system";
+import { registerErrorHandling } from "./shared/error-handling";
 
 export type BuildAppOptions = {
   resolveSession?: SessionResolver;

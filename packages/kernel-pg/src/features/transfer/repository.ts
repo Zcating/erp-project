@@ -5,9 +5,9 @@ import type {
   TransactionContext,
 } from "@erp-inventory-sales/kernel";
 import { and, asc, eq, inArray } from "drizzle-orm";
-import type { KernelDatabase } from "../../db/client.js";
-import type { PgTransaction } from "../../db/transactions.js";
-import { transferInTransit } from "../../schema/transfer.js";
+import type { KernelDatabase } from "../../db/client";
+import type { PgTransaction } from "../../db/transactions";
+import { transferInTransit } from "../../schema/transfer";
 
 type TransferExecutor = KernelDatabase | PgTransaction;
 

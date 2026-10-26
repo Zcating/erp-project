@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "pg";
 import { beforeAll, describe, expect, it } from "vitest";
-import { testDatabaseUrl } from "./config.js";
+import { testDatabaseUrl } from "./config";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const resolveFromHere = createRequire(import.meta.url);

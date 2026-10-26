@@ -12,8 +12,8 @@ import {
   type DocumentLine,
   type DocumentLineInput,
   type DocumentType,
-} from "./model.js";
-import { DOCUMENT_TYPE_RULES } from "./rules.js";
+} from "./model";
+import { DOCUMENT_TYPE_RULES } from "./rules";
 
 export function computeLineAmount(quantityRaw: string, unitPriceRaw: string): string {
   return toFixedString(amountOf(quantity(quantityRaw), unitPrice(unitPriceRaw)), AMOUNT_SCALE);

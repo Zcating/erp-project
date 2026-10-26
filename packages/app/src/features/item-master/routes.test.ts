@@ -1,8 +1,8 @@
 import { createInMemoryItemMasterRepository } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it } from "vitest";
-import { buildApp } from "../../build-app.js";
-import { DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME } from "../session/index.js";
+import { buildApp } from "../../build-app";
+import { DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME } from "../session";
 
 type ItemApp = {
   app: FastifyInstance;

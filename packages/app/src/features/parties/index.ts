@@ -5,7 +5,7 @@ export {
   type CustomerRouteDeps,
   type SupplierRouteDeps,
   type WarehouseRouteDeps,
-} from "./routes.js";
+} from "./routes";
 export {
   customerBodySchema,
   supplierBodySchema,
@@ -13,4 +13,4 @@ export {
   type CustomerBody,
   type SupplierBody,
   type WarehouseBody,
-} from "./schema.js";
+} from "./schema";

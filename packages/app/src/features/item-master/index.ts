@@ -1,6 +1,2 @@
-export { registerItemMasterRoutes, type ItemMasterRouteDeps } from "./routes.js";
-export {
-  itemAuxiliaryUnitBodySchema,
-  itemMasterBodySchema,
-  type ItemMasterBody,
-} from "./schema.js";
+export { registerItemMasterRoutes, type ItemMasterRouteDeps } from "./routes";
+export { itemAuxiliaryUnitBodySchema, itemMasterBodySchema, type ItemMasterBody } from "./schema";

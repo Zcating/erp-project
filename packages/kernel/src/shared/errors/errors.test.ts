@@ -7,7 +7,7 @@ import {
   StateConflictError,
   StockNegativeError,
   ValidationError,
-} from "./index.js";
+} from "./index";
 
 describe("内核错误分类", () => {
   it("每类错误都带可判别的错误码", () => {

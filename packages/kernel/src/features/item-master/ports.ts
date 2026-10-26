@@ -1,5 +1,5 @@
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { ItemMaster } from "./model.js";
+import type { TransactionContext } from "../../shared/transactions";
+import type { ItemMaster } from "./model";
 
 export type ItemMasterRepository = {
   list(context?: TransactionContext): Promise<ItemMaster[]>;

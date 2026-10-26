@@ -1,6 +1,6 @@
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { Document, DraftDocumentType } from "../documents/index.js";
-import type { StockLedgerEntry } from "../inventory/index.js";
+import type { TransactionContext } from "../../shared/transactions";
+import type { Document, DraftDocumentType } from "../documents";
+import type { StockLedgerEntry } from "../inventory";
 
 export const POSTING_DIRECTIONS = ["FORWARD", "REVERSE"] as const;
 

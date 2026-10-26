@@ -1,13 +1,13 @@
 import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-inventory-sales/shared";
-import type { TransactionContext } from "../../shared/transactions/index.js";
+import type { TransactionContext } from "../../shared/transactions";
 import type {
   StockBalance,
   StockBalanceFilter,
   StockBalanceSummary,
   StockMovement,
   StockMovementFilter,
-} from "./model.js";
-import type { InTransitQuantityReader, StockLedgerRepository } from "./ports.js";
+} from "./model";
+import type { InTransitQuantityReader, StockLedgerRepository } from "./ports";
 
 const IN_TRANSIT_PLACEHOLDER = "0.000";
 

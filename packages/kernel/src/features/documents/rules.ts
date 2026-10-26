@@ -1,4 +1,4 @@
-import type { DocumentType, DraftDocumentType } from "./model.js";
+import type { DocumentType, DraftDocumentType } from "./model";
 
 export type DocumentPartyRole = "SUPPLIER" | "CUSTOMER";
 

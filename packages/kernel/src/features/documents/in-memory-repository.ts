@@ -1,8 +1,8 @@
 import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-inventory-sales/shared";
-import { DuplicateError } from "../../shared/errors/index.js";
-import type { MasterDataReference } from "../../shared/ports/index.js";
-import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model.js";
-import type { DocumentRepository } from "./ports.js";
+import { DuplicateError } from "../../shared/errors";
+import type { MasterDataReference } from "../../shared/ports";
+import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model";
+import type { DocumentRepository } from "./ports";
 
 export function createInMemoryDocumentRepository(): DocumentRepository {
   const stored = new Map<string, Document>();

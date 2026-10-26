@@ -1,8 +1,8 @@
-import { ITEM_IMPORT_COLUMNS } from "./csv.js";
-import type { ItemImportRow } from "./csv.js";
-import { ItemBatchError, itemBatchErrorFromDetails } from "./errors.js";
-import type { ItemBatchErrorDetail } from "./errors.js";
-import type { ItemAuxiliaryUnit, ItemMasterInput } from "./model.js";
+import { ITEM_IMPORT_COLUMNS } from "./csv";
+import type { ItemImportRow } from "./csv";
+import { ItemBatchError, itemBatchErrorFromDetails } from "./errors";
+import type { ItemBatchErrorDetail } from "./errors";
+import type { ItemAuxiliaryUnit, ItemMasterInput } from "./model";
 
 export const ITEM_IMPORT_JSON_FIELDS = ITEM_IMPORT_COLUMNS;
 

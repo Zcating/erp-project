@@ -8,17 +8,17 @@ import {
   unitPrice,
 } from "@erp-inventory-sales/shared";
 import type { Amount, Quantity } from "@erp-inventory-sales/shared";
-import { ValidationError } from "../../shared/errors/index.js";
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { Document, DocumentRepository } from "../documents/index.js";
+import { ValidationError } from "../../shared/errors";
+import type { TransactionContext } from "../../shared/transactions";
+import type { Document, DocumentRepository } from "../documents";
 import type {
   StockBalance,
   StockBalanceKey,
   StockLedgerEntry,
   StockLedgerRepository,
-} from "../inventory/index.js";
-import { reverseDocumentPostings } from "../posting/index.js";
-import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting/index.js";
+} from "../inventory";
+import { reverseDocumentPostings } from "../posting";
+import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting";
 
 const EMPTY_QUANTITY = "0.000";
 const EMPTY_UNIT_COST = "0.000000";

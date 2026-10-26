@@ -1,6 +1,6 @@
-import { ItemBatchError, itemBatchErrorFromDetails } from "./errors.js";
-import type { ItemBatchErrorDetail } from "./errors.js";
-import type { ItemAuxiliaryUnit, ItemMasterInput } from "./model.js";
+import { ItemBatchError, itemBatchErrorFromDetails } from "./errors";
+import type { ItemBatchErrorDetail } from "./errors";
+import type { ItemAuxiliaryUnit, ItemMasterInput } from "./model";
 
 export const ITEM_IMPORT_COLUMNS = [
   "code",

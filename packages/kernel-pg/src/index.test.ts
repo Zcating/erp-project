@@ -18,7 +18,7 @@ import {
   transferInTransit,
   unitPriceType,
   warehouses,
-} from "./index.js";
+} from "./index";
 
 describe("kernel-pg package", () => {
   it("exposes its public surface", () => {

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createInMemoryTransactionRunner } from "../../shared/transactions/index.js";
-import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
-import { parseItemImportCsv } from "./csv.js";
-import { ItemBatchError } from "./errors.js";
-import { createInMemoryItemMasterRepository } from "./in-memory-repository.js";
-import { createItemImportService } from "./import-service.js";
-import { createItemMasterService } from "./service.js";
+import { createInMemoryTransactionRunner } from "../../shared/transactions";
+import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
+import { parseItemImportCsv } from "./csv";
+import { ItemBatchError } from "./errors";
+import { createInMemoryItemMasterRepository } from "./in-memory-repository";
+import { createItemImportService } from "./import-service";
+import { createItemMasterService } from "./service";
 
 const HEADER =
   "code,barcode,name,spec,brand,category,baseUnit,auxUnit1,auxUnit1Rate,auxUnit2,auxUnit2Rate";

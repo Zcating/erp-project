@@ -1,8 +1,8 @@
 import { ItemBatchError } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
-import { failure } from "./envelope.js";
-import type { ErrorDetail } from "./envelope.js";
-import { httpStatusForErrorCode, INTERNAL_ERROR_CODE, isKnownErrorCode } from "./error-status.js";
+import { failure } from "./envelope";
+import type { ErrorDetail } from "./envelope";
+import { httpStatusForErrorCode, INTERNAL_ERROR_CODE, isKnownErrorCode } from "./error-status";
 
 export function registerErrorHandling(app: FastifyInstance): void {
   app.setNotFoundHandler((request, reply) => {

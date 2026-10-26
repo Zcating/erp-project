@@ -1,5 +1,5 @@
-import type { KernelErrorCode } from "../../shared/errors/index.js";
-import { KernelError } from "../../shared/errors/index.js";
+import type { KernelErrorCode } from "../../shared/errors";
+import { KernelError } from "../../shared/errors";
 
 export type ItemBatchErrorDetail = {
   line: number;

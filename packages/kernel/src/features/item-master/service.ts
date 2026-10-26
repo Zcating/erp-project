@@ -5,14 +5,14 @@ import {
   KernelError,
   NotFoundError,
   ValidationError,
-} from "../../shared/errors/index.js";
-import type { PostedItemReferenceChecker } from "../../shared/ports/index.js";
-import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
-import { itemBatchErrorFromDetails } from "./errors.js";
-import type { ItemBatchErrorDetail } from "./errors.js";
-import type { ItemMaster, ItemMasterInput } from "./model.js";
-import type { ItemMasterRepository } from "./ports.js";
-import { formatConversionRate, validateItemMasterInput } from "./validation.js";
+} from "../../shared/errors";
+import type { PostedItemReferenceChecker } from "../../shared/ports";
+import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
+import { itemBatchErrorFromDetails } from "./errors";
+import type { ItemBatchErrorDetail } from "./errors";
+import type { ItemMaster, ItemMasterInput } from "./model";
+import type { ItemMasterRepository } from "./ports";
+import { formatConversionRate, validateItemMasterInput } from "./validation";
 
 export type ItemBatchRow = {
   line: number;

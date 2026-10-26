@@ -6,17 +6,17 @@ import {
   unitPrice,
 } from "@erp-inventory-sales/shared";
 import { describe, expect, it } from "vitest";
-import { ValidationError } from "../../shared/errors/index.js";
-import { createInMemoryDocumentRepository } from "../documents/in-memory-repository.js";
-import type { Document, DocumentInput } from "../documents/model.js";
-import { createDocumentService } from "../documents/service.js";
-import { createInMemoryItemMasterRepository } from "../item-master/in-memory-repository.js";
-import { createItemMasterService } from "../item-master/service.js";
-import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository.js";
-import { createPostingService } from "../posting/service.js";
-import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting.js";
-import { createSaleOutboundPostingHandler } from "../selling/sale-outbound-posting.js";
-import { createSaleReturnPostingHandler } from "./sale-return-posting.js";
+import { ValidationError } from "../../shared/errors";
+import { createInMemoryDocumentRepository } from "../documents/in-memory-repository";
+import type { Document, DocumentInput } from "../documents/model";
+import { createDocumentService } from "../documents/service";
+import { createInMemoryItemMasterRepository } from "../item-master/in-memory-repository";
+import { createItemMasterService } from "../item-master/service";
+import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository";
+import { createPostingService } from "../posting/service";
+import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting";
+import { createSaleOutboundPostingHandler } from "../selling/sale-outbound-posting";
+import { createSaleReturnPostingHandler } from "./sale-return-posting";
 
 const FIXED_CLOCK = new Date("2026-01-02T03:04:05Z");
 

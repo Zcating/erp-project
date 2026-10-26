@@ -1,6 +1,6 @@
-import { revaluedUnitCost, weightedAverageUnitCost } from "./costing.js";
-import { createInMemoryStockLedgerRepository } from "./in-memory-repository.js";
-import { STOCK_LEDGER_DIRECTIONS } from "./model.js";
+import { revaluedUnitCost, weightedAverageUnitCost } from "./costing";
+import { createInMemoryStockLedgerRepository } from "./in-memory-repository";
+import { STOCK_LEDGER_DIRECTIONS } from "./model";
 import type {
   StockBalance,
   StockBalanceFilter,
@@ -10,15 +10,15 @@ import type {
   StockMovement,
   StockMovementFilter,
   StockMovementOrder,
-} from "./model.js";
+} from "./model";
 import type {
   InTransitQuantity,
   InTransitQuantityReader,
   StockBalanceKey,
   StockLedgerRepository,
-} from "./ports.js";
-import { createInventoryQueryService } from "./service.js";
-import type { InventoryQueryService, InventoryQueryServiceOptions } from "./service.js";
+} from "./ports";
+import { createInventoryQueryService } from "./service";
+import type { InventoryQueryService, InventoryQueryServiceOptions } from "./service";
 
 export const inventory = {
   STOCK_LEDGER_DIRECTIONS,

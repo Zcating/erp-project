@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { DuplicateError, NotFoundError, ValidationError } from "../../shared/errors/index.js";
-import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
-import { createInMemoryItemMasterRepository } from "./in-memory-repository.js";
-import type { ItemMasterInput } from "./model.js";
-import type { ItemMasterRepository } from "./ports.js";
-import { createItemMasterService } from "./service.js";
+import { DuplicateError, NotFoundError, ValidationError } from "../../shared/errors";
+import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
+import { createInMemoryItemMasterRepository } from "./in-memory-repository";
+import type { ItemMasterInput } from "./model";
+import type { ItemMasterRepository } from "./ports";
+import { createItemMasterService } from "./service";
 
 const baseInput = (overrides: Partial<ItemMasterInput> = {}): ItemMasterInput => ({
   code: "SKU-001",

@@ -1,34 +1,30 @@
-import { ITEM_IMPORT_COLUMNS, parseCsv, parseItemImportCsv } from "./csv.js";
-import type { CsvParseResult, CsvRecord, ItemImportRow } from "./csv.js";
-import { ItemBatchError, itemBatchErrorFromDetails } from "./errors.js";
-import type { ItemBatchErrorDetail } from "./errors.js";
-import { createInMemoryItemMasterRepository } from "./in-memory-repository.js";
-import { createItemImportService } from "./import-service.js";
-import type {
-  ItemImportResult,
-  ItemImportService,
-  ItemImportServiceDeps,
-} from "./import-service.js";
-import { ITEM_IMPORT_JSON_FIELDS, parseItemImportJson } from "./json.js";
+import { ITEM_IMPORT_COLUMNS, parseCsv, parseItemImportCsv } from "./csv";
+import type { CsvParseResult, CsvRecord, ItemImportRow } from "./csv";
+import { ItemBatchError, itemBatchErrorFromDetails } from "./errors";
+import type { ItemBatchErrorDetail } from "./errors";
+import { createInMemoryItemMasterRepository } from "./in-memory-repository";
+import { createItemImportService } from "./import-service";
+import type { ItemImportResult, ItemImportService, ItemImportServiceDeps } from "./import-service";
+import { ITEM_IMPORT_JSON_FIELDS, parseItemImportJson } from "./json";
 import {
   CONVERSION_RATE_SCALE,
   type ItemAuxiliaryUnit,
   type ItemMaster,
   type ItemMasterInput,
-} from "./model.js";
-import type { ItemMasterRepository } from "./ports.js";
-import { baseQuantityOf } from "./units.js";
+} from "./model";
+import type { ItemMasterRepository } from "./ports";
+import { baseQuantityOf } from "./units";
 import {
   createItemMasterService,
   type ItemBatchRow,
   type ItemMasterService,
   type ItemMasterServiceOptions,
-} from "./service.js";
+} from "./service";
 import {
   formatConversionRate,
   validateConversionRate,
   validateItemMasterInput,
-} from "./validation.js";
+} from "./validation";
 
 export const itemMaster = {
   CONVERSION_RATE_SCALE,

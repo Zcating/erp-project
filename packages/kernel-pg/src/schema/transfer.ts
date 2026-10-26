@@ -1,9 +1,9 @@
 import { index, integer, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import { documents } from "./documents.js";
-import { erpSchema } from "./erp-schema.js";
-import { items } from "./item-master.js";
-import { quantityType, unitPriceType } from "./numeric-types.js";
-import { warehouses } from "./parties.js";
+import { documents } from "./documents";
+import { erpSchema } from "./erp-schema";
+import { items } from "./item-master";
+import { quantityType, unitPriceType } from "./numeric-types";
+import { warehouses } from "./parties";
 
 export const transferInTransit = erpSchema.table(
   "transfer_in_transit",

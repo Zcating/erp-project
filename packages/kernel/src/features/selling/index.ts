@@ -1,4 +1,4 @@
-import { createSaleOutboundPostingHandler } from "./sale-outbound-posting.js";
+import { createSaleOutboundPostingHandler } from "./sale-outbound-posting";
 
 export const selling = {
   createSaleOutboundPostingHandler,

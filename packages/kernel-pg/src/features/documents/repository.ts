@@ -10,9 +10,9 @@ import type {
 } from "@erp-inventory-sales/kernel";
 import { DuplicateError, ValidationError } from "@erp-inventory-sales/kernel";
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
-import type { KernelDatabase } from "../../db/client.js";
-import type { PgTransaction } from "../../db/transactions.js";
-import { documentLines, documentNumberCounters, documents } from "../../schema/documents.js";
+import type { KernelDatabase } from "../../db/client";
+import type { PgTransaction } from "../../db/transactions";
+import { documentLines, documentNumberCounters, documents } from "../../schema/documents";
 
 type DocumentExecutor = KernelDatabase | PgTransaction;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { httpStatusForErrorCode } from "./error-status.js";
+import { httpStatusForErrorCode } from "./error-status";
 
 describe("错误码到状态码的映射", () => {
   it("内核六类错误码映射到固定状态码", () => {

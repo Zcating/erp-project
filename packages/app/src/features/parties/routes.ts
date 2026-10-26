@@ -12,7 +12,7 @@ import type {
 import { ValidationError } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
 import { z } from "@erp-inventory-sales/shared";
-import { success } from "../../shared/envelope.js";
+import { success } from "../../shared/envelope";
 import {
   customerBodySchema,
   supplierBodySchema,
@@ -20,7 +20,7 @@ import {
   type CustomerBody,
   type SupplierBody,
   type WarehouseBody,
-} from "./schema.js";
+} from "./schema";
 
 export type SupplierRouteDeps = {
   service: SupplierService;

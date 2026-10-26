@@ -1,5 +1,5 @@
-import { buildApp } from "./build-app.js";
-import { resolveAdminCredentials } from "./features/session/index.js";
+import { buildApp } from "./build-app";
+import { resolveAdminCredentials } from "./features/session";
 
 const port = Number(process.env.PORT ?? 3000);
 const admin = resolveAdminCredentials();

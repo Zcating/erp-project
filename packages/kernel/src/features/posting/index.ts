@@ -1,14 +1,14 @@
-import { DEFAULT_POSTING_PHASE, POSTING_DIRECTIONS } from "./model.js";
+import { DEFAULT_POSTING_PHASE, POSTING_DIRECTIONS } from "./model";
 import type {
   InventoryMovement,
   PostingDirection,
   PostingPhase,
   PostingPhaseHandler,
   PostingTypeHandler,
-} from "./model.js";
-import { createPostingService } from "./service.js";
-import type { PostingService, PostingServiceOptions } from "./service.js";
-import { reverseDocumentPostings } from "./reversal.js";
+} from "./model";
+import { createPostingService } from "./service";
+import type { PostingService, PostingServiceOptions } from "./service";
+import { reverseDocumentPostings } from "./reversal";
 
 export const posting = {
   DEFAULT_POSTING_PHASE,

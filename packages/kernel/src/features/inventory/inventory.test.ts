@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { createInMemoryStockLedgerRepository } from "./in-memory-repository.js";
-import type { StockLedgerEntry } from "./model.js";
-import { createInventoryQueryService } from "./service.js";
+import { createInMemoryStockLedgerRepository } from "./in-memory-repository";
+import type { StockLedgerEntry } from "./model";
+import { createInventoryQueryService } from "./service";
 
 const entry = (overrides: Partial<StockLedgerEntry> = {}): StockLedgerEntry => ({
   documentId: "doc-1",

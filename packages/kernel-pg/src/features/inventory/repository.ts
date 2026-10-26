@@ -8,9 +8,9 @@ import type {
   TransactionContext,
 } from "@erp-inventory-sales/kernel";
 import { and, asc, desc, eq, gte, lte, or } from "drizzle-orm";
-import type { KernelDatabase } from "../../db/client.js";
-import type { PgTransaction } from "../../db/transactions.js";
-import { inventoryBalances, inventoryLedgerEntries } from "../../schema/inventory.js";
+import type { KernelDatabase } from "../../db/client";
+import type { PgTransaction } from "../../db/transactions";
+import { inventoryBalances, inventoryLedgerEntries } from "../../schema/inventory";
 
 type InventoryExecutor = KernelDatabase | PgTransaction;
 

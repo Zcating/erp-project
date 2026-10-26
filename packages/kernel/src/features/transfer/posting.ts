@@ -8,26 +8,26 @@ import {
   toFixedString,
   unitPrice,
 } from "@erp-inventory-sales/shared";
-import { StockNegativeError, ValidationError } from "../../shared/errors/index.js";
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { Document } from "../documents/index.js";
-import { weightedAverageUnitCost } from "../inventory/index.js";
+import { StockNegativeError, ValidationError } from "../../shared/errors";
+import type { TransactionContext } from "../../shared/transactions";
+import type { Document } from "../documents";
+import { weightedAverageUnitCost } from "../inventory";
 import type {
   StockBalance,
   StockBalanceKey,
   StockLedgerEntry,
   StockLedgerRepository,
-} from "../inventory/index.js";
-import { reverseDocumentPostings } from "../posting/index.js";
+} from "../inventory";
+import { reverseDocumentPostings } from "../posting";
 import type {
   InventoryMovement,
   PostingDirection,
   PostingPhase,
   PostingTypeHandler,
-} from "../posting/index.js";
-import { TRANSFER_POSTING_PHASES } from "./model.js";
-import type { TransferInTransitRecord } from "./model.js";
-import type { TransferInTransitRepository } from "./ports.js";
+} from "../posting";
+import { TRANSFER_POSTING_PHASES } from "./model";
+import type { TransferInTransitRecord } from "./model";
+import type { TransferInTransitRepository } from "./ports";
 
 const EMPTY_QUANTITY = "0.000";
 const EMPTY_UNIT_COST = "0.000000";

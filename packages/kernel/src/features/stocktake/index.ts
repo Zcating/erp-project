@@ -1,4 +1,4 @@
-import { createStocktakePostingHandler } from "./stocktake-posting.js";
+import { createStocktakePostingHandler } from "./stocktake-posting";
 
 export const stocktake = {
   createStocktakePostingHandler,

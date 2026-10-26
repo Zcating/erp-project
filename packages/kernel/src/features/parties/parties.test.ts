@@ -1,17 +1,12 @@
 import { describe, expect, it } from "vitest";
-import {
-  ConflictError,
-  DuplicateError,
-  NotFoundError,
-  ValidationError,
-} from "../../shared/errors/index.js";
+import { ConflictError, DuplicateError, NotFoundError, ValidationError } from "../../shared/errors";
 import {
   createInMemoryCustomerRepository,
   createInMemorySupplierRepository,
   createInMemoryWarehouseRepository,
-} from "./in-memory-repository.js";
-import type { CustomerInput, SupplierInput, WarehouseInput } from "./model.js";
-import { createCustomerService, createSupplierService, createWarehouseService } from "./service.js";
+} from "./in-memory-repository";
+import type { CustomerInput, SupplierInput, WarehouseInput } from "./model";
+import { createCustomerService, createSupplierService, createWarehouseService } from "./service";
 
 const supplierInput = (overrides: Partial<SupplierInput> = {}): SupplierInput => ({
   code: "SUP-001",

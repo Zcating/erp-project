@@ -2,7 +2,7 @@ import {
   createInMemoryCustomerRepository,
   createInMemorySupplierRepository,
   createInMemoryWarehouseRepository,
-} from "./in-memory-repository.js";
+} from "./in-memory-repository";
 import type {
   Customer,
   CustomerInput,
@@ -10,13 +10,13 @@ import type {
   SupplierInput,
   Warehouse,
   WarehouseInput,
-} from "./model.js";
+} from "./model";
 import type {
   CustomerRepository,
   PartyRepository,
   SupplierRepository,
   WarehouseRepository,
-} from "./ports.js";
+} from "./ports";
 import {
   createCustomerService,
   createSupplierService,
@@ -25,12 +25,8 @@ import {
   type PartyServiceOptions,
   type SupplierService,
   type WarehouseService,
-} from "./service.js";
-import {
-  validateCustomerInput,
-  validateSupplierInput,
-  validateWarehouseInput,
-} from "./validation.js";
+} from "./service";
+import { validateCustomerInput, validateSupplierInput, validateWarehouseInput } from "./validation";
 
 export const parties = {
   createInMemoryCustomerRepository,

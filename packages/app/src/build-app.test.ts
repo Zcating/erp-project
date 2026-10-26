@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it } from "vitest";
-import { buildApp } from "./build-app.js";
-import { DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME } from "./features/session/index.js";
+import { buildApp } from "./build-app";
+import { DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME } from "./features/session";
 
 const sessionCookieHeader = async (app: FastifyInstance): Promise<string> => {
   const response = await app.inject({

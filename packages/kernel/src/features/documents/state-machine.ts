@@ -1,5 +1,5 @@
-import { StateConflictError } from "../../shared/errors/index.js";
-import { DOCUMENT_STATUS_LABELS, type DocumentStatus } from "./model.js";
+import { StateConflictError } from "../../shared/errors";
+import { DOCUMENT_STATUS_LABELS, type DocumentStatus } from "./model";
 
 export const DOCUMENT_STATUS_TRANSITIONS: Record<DocumentStatus, readonly DocumentStatus[]> = {
   DRAFT: ["POSTED"],

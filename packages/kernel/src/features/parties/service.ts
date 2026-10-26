@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { ConflictError, DuplicateError, NotFoundError } from "../../shared/errors/index.js";
-import type { MasterDataReferenceChecker } from "../../shared/ports/index.js";
+import { ConflictError, DuplicateError, NotFoundError } from "../../shared/errors";
+import type { MasterDataReferenceChecker } from "../../shared/ports";
 import type {
   Customer,
   CustomerInput,
@@ -8,18 +8,14 @@ import type {
   SupplierInput,
   Warehouse,
   WarehouseInput,
-} from "./model.js";
+} from "./model";
 import type {
   CustomerRepository,
   PartyRepository,
   SupplierRepository,
   WarehouseRepository,
-} from "./ports.js";
-import {
-  validateCustomerInput,
-  validateSupplierInput,
-  validateWarehouseInput,
-} from "./validation.js";
+} from "./ports";
+import { validateCustomerInput, validateSupplierInput, validateWarehouseInput } from "./validation";
 
 export type SupplierService = {
   list(): Promise<Supplier[]>;

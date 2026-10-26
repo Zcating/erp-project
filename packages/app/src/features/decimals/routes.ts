@@ -1,9 +1,9 @@
 import { ValidationError } from "@erp-inventory-sales/kernel";
 import { AMOUNT_SCALE, toFixedString } from "@erp-inventory-sales/shared";
 import type { FastifyInstance } from "fastify";
-import { success } from "../../shared/envelope.js";
-import { parseAmount } from "../../shared/parse-decimal.js";
-import { amountBodySchema } from "./schema.js";
+import { success } from "../../shared/envelope";
+import { parseAmount } from "../../shared/parse-decimal";
+import { amountBodySchema } from "./schema";
 
 export function registerDecimalRoutes(app: FastifyInstance): void {
   app.post("/api/decimals/amount", async (request) => {

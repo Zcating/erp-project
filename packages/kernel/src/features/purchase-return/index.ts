@@ -1,4 +1,4 @@
-import { createPurchaseReturnPostingHandler } from "./purchase-return-posting.js";
+import { createPurchaseReturnPostingHandler } from "./purchase-return-posting";
 
 export const purchaseReturn = {
   createPurchaseReturnPostingHandler,

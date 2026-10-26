@@ -1,12 +1,12 @@
 import type { FastifyInstance, LightMyRequestResponse } from "fastify";
 import { describe, expect, it } from "vitest";
-import { buildApp } from "../../build-app.js";
+import { buildApp } from "../../build-app";
 import {
   DEFAULT_ADMIN_PASSWORD,
   DEFAULT_ADMIN_USERNAME,
   SESSION_COOKIE_NAME,
   resolveAdminCredentials,
-} from "./index.js";
+} from "./index";
 
 const sessionCookieHeader = (response: LightMyRequestResponse): string => {
   const header = response.headers["set-cookie"];

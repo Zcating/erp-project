@@ -1,2 +1,2 @@
-export { registerInventoryRoutes } from "./routes.js";
-export type { InventoryRouteDeps } from "./routes.js";
+export { registerInventoryRoutes } from "./routes";
+export type { InventoryRouteDeps } from "./routes";

@@ -6,7 +6,7 @@ import type {
 } from "@erp-inventory-sales/kernel";
 import { ValidationError } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
-import { success } from "../../shared/envelope.js";
+import { success } from "../../shared/envelope";
 
 export type InventoryRouteDeps = {
   service: InventoryQueryService;

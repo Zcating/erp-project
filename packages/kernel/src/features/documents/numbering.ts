@@ -1,4 +1,4 @@
-import { DOCUMENT_NUMBER_PREFIXES, type DocumentType } from "./model.js";
+import { DOCUMENT_NUMBER_PREFIXES, type DocumentType } from "./model";
 
 export const DOCUMENT_NUMBER_SEQUENCE_WIDTH = 3;
 

@@ -1,12 +1,12 @@
 import { timingSafeEqual } from "node:crypto";
 import { z } from "@erp-inventory-sales/shared";
 import type { FastifyInstance } from "fastify";
-import { success } from "../../shared/envelope.js";
-import { UnauthenticatedError } from "../../shared/errors.js";
-import { buildSessionCookieHeader } from "./cookie.js";
-import type { AdminCredentials } from "./credentials.js";
-import type { SessionResolver } from "./session-resolver.js";
-import type { SessionStore } from "./session-store.js";
+import { success } from "../../shared/envelope";
+import { UnauthenticatedError } from "../../shared/errors";
+import { buildSessionCookieHeader } from "./cookie";
+import type { AdminCredentials } from "./credentials";
+import type { SessionResolver } from "./session-resolver";
+import type { SessionStore } from "./session-store";
 
 export const LOGIN_FAILED_MESSAGE = "账号或密码不正确";
 

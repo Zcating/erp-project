@@ -1,10 +1,5 @@
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import type {
-  StockBalance,
-  StockLedgerEntry,
-  StockMovement,
-  StockMovementFilter,
-} from "./model.js";
+import type { TransactionContext } from "../../shared/transactions";
+import type { StockBalance, StockLedgerEntry, StockMovement, StockMovementFilter } from "./model";
 
 export type StockBalanceKey = {
   warehouseId: string;

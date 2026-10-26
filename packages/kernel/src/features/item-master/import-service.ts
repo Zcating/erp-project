@@ -1,10 +1,10 @@
-import type { TransactionRunner } from "../../shared/transactions/index.js";
-import { parseItemImportCsv } from "./csv.js";
-import type { ItemImportRow } from "./csv.js";
-import { ItemBatchError } from "./errors.js";
-import { parseItemImportJson } from "./json.js";
-import type { ItemMaster } from "./model.js";
-import type { ItemMasterService } from "./service.js";
+import type { TransactionRunner } from "../../shared/transactions";
+import { parseItemImportCsv } from "./csv";
+import type { ItemImportRow } from "./csv";
+import { ItemBatchError } from "./errors";
+import { parseItemImportJson } from "./json";
+import type { ItemMaster } from "./model";
+import type { ItemMasterService } from "./service";
 
 export type ItemImportResult = {
   count: number;

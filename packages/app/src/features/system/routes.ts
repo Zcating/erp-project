@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { success } from "../../shared/envelope.js";
+import { success } from "../../shared/envelope";
 
 export type RegisteredRoute = {
   method: string;

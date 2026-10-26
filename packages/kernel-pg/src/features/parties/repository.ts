@@ -9,8 +9,8 @@ import type {
 import { DuplicateError } from "@erp-inventory-sales/kernel";
 import type { InferSelectModel } from "drizzle-orm";
 import { asc, eq } from "drizzle-orm";
-import type { KernelDatabase } from "../../db/client.js";
-import { customers, suppliers, warehouses } from "../../schema/parties.js";
+import type { KernelDatabase } from "../../db/client";
+import { customers, suppliers, warehouses } from "../../schema/parties";
 
 type SupplierRecord = InferSelectModel<typeof suppliers>;
 type CustomerRecord = InferSelectModel<typeof customers>;

@@ -1,11 +1,11 @@
-import { DuplicateError } from "../../shared/errors/index.js";
-import type { Customer, Supplier, Warehouse } from "./model.js";
+import { DuplicateError } from "../../shared/errors";
+import type { Customer, Supplier, Warehouse } from "./model";
 import type {
   CustomerRepository,
   PartyRepository,
   SupplierRepository,
   WarehouseRepository,
-} from "./ports.js";
+} from "./ports";
 
 export function createInMemorySupplierRepository(): SupplierRepository {
   return createInMemoryPartyRepository<Supplier>("供应商");

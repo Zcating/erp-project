@@ -4,10 +4,10 @@ export {
   quantityType,
   unitPriceType,
   type DecimalText,
-} from "./numeric-types.js";
-export { documentLines, documentNumberCounters, documents } from "./documents.js";
-export { erpSchema } from "./erp-schema.js";
-export { inventoryBalances, inventoryLedgerEntries } from "./inventory.js";
-export { itemAuxiliaryUnits, items } from "./item-master.js";
-export { customers, suppliers, warehouses } from "./parties.js";
-export { transferInTransit } from "./transfer.js";
+} from "./numeric-types";
+export { documentLines, documentNumberCounters, documents } from "./documents";
+export { erpSchema } from "./erp-schema";
+export { inventoryBalances, inventoryLedgerEntries } from "./inventory";
+export { itemAuxiliaryUnits, items } from "./item-master";
+export { customers, suppliers, warehouses } from "./parties";
+export { transferInTransit } from "./transfer";

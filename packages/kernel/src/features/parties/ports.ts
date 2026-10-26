@@ -1,4 +1,4 @@
-import type { Customer, Supplier, Warehouse } from "./model.js";
+import type { Customer, Supplier, Warehouse } from "./model";
 
 export type PartyRepository<TRecord> = {
   list(): Promise<TRecord[]>;

@@ -1,6 +1,6 @@
 import type { TransactionContext, TransactionRunner } from "@erp-inventory-sales/kernel";
 import { randomUUID } from "node:crypto";
-import type { KernelDatabase } from "./client.js";
+import type { KernelDatabase } from "./client";
 
 type TransactionCallback = Parameters<KernelDatabase["transaction"]>[0];
 

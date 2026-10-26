@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { StockNegativeError, ValidationError } from "../../shared/errors/index.js";
-import { createInMemoryDocumentRepository } from "../documents/in-memory-repository.js";
-import type { DocumentInput } from "../documents/model.js";
-import { createDocumentService } from "../documents/service.js";
-import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository.js";
-import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting.js";
-import { createPostingService } from "../posting/service.js";
-import { TRANSFER_POSTING_PHASES } from "./model.js";
-import { createInMemoryTransferInTransitRepository } from "./in-memory-repository.js";
-import { createTransferPostingHandler } from "./posting.js";
+import { StockNegativeError, ValidationError } from "../../shared/errors";
+import { createInMemoryDocumentRepository } from "../documents/in-memory-repository";
+import type { DocumentInput } from "../documents/model";
+import { createDocumentService } from "../documents/service";
+import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository";
+import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting";
+import { createPostingService } from "../posting/service";
+import { TRANSFER_POSTING_PHASES } from "./model";
+import { createInMemoryTransferInTransitRepository } from "./in-memory-repository";
+import { createTransferPostingHandler } from "./posting";
 
 const FIXED_CLOCK = new Date("2026-01-02T03:04:05Z");
 

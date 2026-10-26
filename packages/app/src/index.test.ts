@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildApp, kernelPg, ports, shared } from "./index.js";
+import { buildApp, kernelPg, ports, shared } from "./index";
 
 describe("app package", () => {
   it("exposes its public surface", () => {

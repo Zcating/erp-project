@@ -1,5 +1,5 @@
-import { ValidationError } from "../../shared/errors/index.js";
-import type { CustomerInput, SupplierInput, WarehouseInput } from "./model.js";
+import { ValidationError } from "../../shared/errors";
+import type { CustomerInput, SupplierInput, WarehouseInput } from "./model";
 
 export function validateSupplierInput(input: SupplierInput): void {
   validatePartyInput(input, "供应商");

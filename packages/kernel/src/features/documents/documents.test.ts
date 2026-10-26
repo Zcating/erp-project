@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { NotFoundError, StateConflictError, ValidationError } from "../../shared/errors/index.js";
-import { createInMemoryDocumentRepository } from "./in-memory-repository.js";
-import { DOCUMENT_NUMBER_PREFIXES, type Document, type DocumentInput } from "./model.js";
-import { formatDocumentDate, formatDocumentNumber } from "./numbering.js";
-import { createDocumentService } from "./service.js";
-import { assertDocumentStatusTransition, canTransitionDocumentStatus } from "./state-machine.js";
+import { NotFoundError, StateConflictError, ValidationError } from "../../shared/errors";
+import { createInMemoryDocumentRepository } from "./in-memory-repository";
+import { DOCUMENT_NUMBER_PREFIXES, type Document, type DocumentInput } from "./model";
+import { formatDocumentDate, formatDocumentNumber } from "./numbering";
+import { createDocumentService } from "./service";
+import { assertDocumentStatusTransition, canTransitionDocumentStatus } from "./state-machine";
 
 const FIXED_CLOCK = new Date("2026-01-02T03:04:05Z");
 

@@ -3,4 +3,4 @@ export {
   registerSystemRoutes,
   type RegisteredRoute,
   type RouteRegistry,
-} from "./routes.js";
+} from "./routes";

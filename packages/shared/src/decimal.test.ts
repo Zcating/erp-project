@@ -11,7 +11,7 @@ import {
   type Amount,
   type Quantity,
   type UnitPrice,
-} from "./index.js";
+} from "./index";
 
 describe("十进制能力", () => {
   it("数量 1.0005 按四舍五入承载为 1.001，不截断", () => {

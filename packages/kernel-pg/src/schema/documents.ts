@@ -8,9 +8,9 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import { erpSchema } from "./erp-schema.js";
-import { amountType, quantityType, unitPriceType } from "./numeric-types.js";
-import { customers, suppliers, warehouses } from "./parties.js";
+import { erpSchema } from "./erp-schema";
+import { amountType, quantityType, unitPriceType } from "./numeric-types";
+import { customers, suppliers, warehouses } from "./parties";
 
 export const documents = erpSchema.table(
   "documents",

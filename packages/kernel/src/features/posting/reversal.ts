@@ -5,11 +5,11 @@ import {
   quantity,
   toFixedString,
 } from "@erp-inventory-sales/shared";
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import { revaluedUnitCost } from "../inventory/index.js";
-import type { StockBalance } from "../inventory/index.js";
-import type { StockLedgerRepository } from "../inventory/index.js";
-import type { InventoryMovement } from "./model.js";
+import type { TransactionContext } from "../../shared/transactions";
+import { revaluedUnitCost } from "../inventory";
+import type { StockBalance } from "../inventory";
+import type { StockLedgerRepository } from "../inventory";
+import type { InventoryMovement } from "./model";
 
 const EMPTY_QUANTITY = "0.000";
 const EMPTY_UNIT_COST = "0.000000";

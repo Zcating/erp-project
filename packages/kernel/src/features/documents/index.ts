@@ -1,11 +1,11 @@
-import { createInMemoryDocumentRepository } from "./in-memory-repository.js";
-import { buildDocumentLines, computeLineAmount } from "./lines.js";
+import { createInMemoryDocumentRepository } from "./in-memory-repository";
+import { buildDocumentLines, computeLineAmount } from "./lines";
 import {
   DEFAULT_DOCUMENT_TIME_ZONE,
   DOCUMENT_NUMBER_SEQUENCE_WIDTH,
   formatDocumentDate,
   formatDocumentNumber,
-} from "./numbering.js";
+} from "./numbering";
 import {
   DOCUMENT_NUMBER_PREFIXES,
   DOCUMENT_STATUSES,
@@ -15,7 +15,7 @@ import {
   isDocumentStatus,
   isDocumentType,
   isDraftDocumentType,
-} from "./model.js";
+} from "./model";
 import type {
   Document,
   DocumentFilter,
@@ -25,24 +25,24 @@ import type {
   DocumentStatus,
   DocumentType,
   DraftDocumentType,
-} from "./model.js";
-import type { DocumentItemLookup, DocumentRepository } from "./ports.js";
-import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES, WAREHOUSE_ROLE_LABELS } from "./rules.js";
-import type { DocumentPartyRole, DocumentTypeRule, DocumentWarehouseRole } from "./rules.js";
-import { createDocumentService } from "./service.js";
-import type { DocumentService, DocumentServiceOptions } from "./service.js";
+} from "./model";
+import type { DocumentItemLookup, DocumentRepository } from "./ports";
+import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES, WAREHOUSE_ROLE_LABELS } from "./rules";
+import type { DocumentPartyRole, DocumentTypeRule, DocumentWarehouseRole } from "./rules";
+import { createDocumentService } from "./service";
+import type { DocumentService, DocumentServiceOptions } from "./service";
 import {
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
   canTransitionDocumentStatus,
   DOCUMENT_STATUS_TRANSITIONS,
-} from "./state-machine.js";
+} from "./state-machine";
 import {
   assertDraftDocumentType,
   assertQuantityText,
   validateDocumentInput,
   validateDocumentLine,
-} from "./validation.js";
+} from "./validation";
 
 export const documents = {
   DEFAULT_DOCUMENT_TIME_ZONE,

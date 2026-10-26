@@ -1,7 +1,7 @@
-import { DuplicateError } from "../../shared/errors/index.js";
-import type { TransactionContext } from "../../shared/transactions/index.js";
-import type { ItemMaster } from "./model.js";
-import type { ItemMasterRepository } from "./ports.js";
+import { DuplicateError } from "../../shared/errors";
+import type { TransactionContext } from "../../shared/transactions";
+import type { ItemMaster } from "./model";
+import type { ItemMasterRepository } from "./ports";
 
 export function createInMemoryItemMasterRepository(): ItemMasterRepository {
   const stored = new Map<string, ItemMaster>();

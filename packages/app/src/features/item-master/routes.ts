@@ -5,8 +5,8 @@ import type {
 } from "@erp-inventory-sales/kernel";
 import { ValidationError } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { success } from "../../shared/envelope.js";
-import { itemMasterBodySchema, type ItemMasterBody } from "./schema.js";
+import { success } from "../../shared/envelope";
+import { itemMasterBodySchema, type ItemMasterBody } from "./schema";
 
 export type ItemMasterRouteDeps = {
   service: ItemMasterService;

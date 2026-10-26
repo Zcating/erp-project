@@ -4,4 +4,4 @@ export { z };
 
 export const shared = {};
 
-export * from "./decimal.js";
+export * from "./decimal";

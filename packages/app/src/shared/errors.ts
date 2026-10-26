@@ -1,4 +1,4 @@
-import { UNAUTHENTICATED_ERROR_CODE } from "./error-status.js";
+import { UNAUTHENTICATED_ERROR_CODE } from "./error-status";
 
 export class UnauthenticatedError extends Error {
   readonly code = UNAUTHENTICATED_ERROR_CODE;

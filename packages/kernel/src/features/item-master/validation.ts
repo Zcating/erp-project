@@ -1,5 +1,5 @@
-import { ValidationError } from "../../shared/errors/index.js";
-import { CONVERSION_RATE_SCALE, type ItemMasterInput } from "./model.js";
+import { ValidationError } from "../../shared/errors";
+import { CONVERSION_RATE_SCALE, type ItemMasterInput } from "./model";
 
 const POSITIVE_DECIMAL_PATTERN = /^\d+(?:\.\d+)?$/;
 const ZERO_DECIMAL_PATTERN = /^0*(\.0*)?$/;

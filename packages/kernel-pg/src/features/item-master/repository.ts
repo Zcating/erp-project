@@ -7,9 +7,9 @@ import { ConflictError, DuplicateError } from "@erp-inventory-sales/kernel";
 import { randomUUID } from "node:crypto";
 import type { InferSelectModel } from "drizzle-orm";
 import { asc, eq, inArray } from "drizzle-orm";
-import type { KernelDatabase } from "../../db/client.js";
-import type { PgTransaction } from "../../db/transactions.js";
-import { itemAuxiliaryUnits, items } from "../../schema/item-master.js";
+import type { KernelDatabase } from "../../db/client";
+import type { PgTransaction } from "../../db/transactions";
+import { itemAuxiliaryUnits, items } from "../../schema/item-master";
 
 type ItemRecord = InferSelectModel<typeof items>;
 type AuxiliaryUnitRecord = InferSelectModel<typeof itemAuxiliaryUnits>;

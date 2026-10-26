@@ -1,18 +1,18 @@
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { PoolConfig } from "pg";
-import { createDatabase } from "./db/client.js";
-import type { DatabaseConnection, KernelDatabase } from "./db/client.js";
-import { createTransactionRunner } from "./db/transactions.js";
-import type { PgTransaction } from "./db/transactions.js";
-import { createDocumentRepository } from "./features/documents/repository.js";
-import { createStockLedgerRepository } from "./features/inventory/repository.js";
-import { createItemMasterRepository } from "./features/item-master/repository.js";
+import { createDatabase } from "./db/client";
+import type { DatabaseConnection, KernelDatabase } from "./db/client";
+import { createTransactionRunner } from "./db/transactions";
+import type { PgTransaction } from "./db/transactions";
+import { createDocumentRepository } from "./features/documents/repository";
+import { createStockLedgerRepository } from "./features/inventory/repository";
+import { createItemMasterRepository } from "./features/item-master/repository";
 import {
   createCustomerRepository,
   createSupplierRepository,
   createWarehouseRepository,
-} from "./features/parties/repository.js";
-import { createTransferInTransitRepository } from "./features/transfer/repository.js";
+} from "./features/parties/repository";
+import { createTransferInTransitRepository } from "./features/transfer/repository";
 
 export type { DatabaseConnection, KernelDatabase, NodePgDatabase, PgTransaction, PoolConfig };
 
@@ -27,7 +27,7 @@ export {
   quantityType,
   unitPriceType,
   type DecimalText,
-} from "./schema/index.js";
+} from "./schema";
 export {
   customers,
   erpSchema,
@@ -36,7 +36,7 @@ export {
   suppliers,
   transferInTransit,
   warehouses,
-} from "./schema/index.js";
+} from "./schema";
 
 export const kernelPg = {
   createDatabase,
@@ -62,4 +62,4 @@ export {
   createWarehouseRepository,
 };
 
-export { databaseUrl } from "./db/config.js";
+export { databaseUrl } from "./db/config";

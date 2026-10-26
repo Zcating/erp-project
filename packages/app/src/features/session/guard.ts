@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { UnauthenticatedError } from "../../shared/errors.js";
-import type { SessionResolver } from "./session-resolver.js";
+import { UnauthenticatedError } from "../../shared/errors";
+import type { SessionResolver } from "./session-resolver";
 
 export const SESSION_FREE_ROUTES = new Set([
   "GET /api/health",
