@@ -15,6 +15,11 @@ export const DOCUMENT_STATUS_LABELS: Record<string, string> = {
 
 export const DOCUMENT_STATUS_OPTIONS = ["DRAFT", "POSTED", "VOIDED"] as const;
 
+export const TRANSFER_POSTING_PHASES = {
+  OUT: "OUT",
+  IN: "IN",
+} as const;
+
 const QUANTITY_SCALE = 3;
 const UNIT_PRICE_SCALE = 6;
 const AMOUNT_SCALE = 2;

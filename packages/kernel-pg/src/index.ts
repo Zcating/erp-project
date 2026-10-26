@@ -12,6 +12,7 @@ import {
   createSupplierRepository,
   createWarehouseRepository,
 } from "./features/parties/repository.js";
+import { createTransferInTransitRepository } from "./features/transfer/repository.js";
 
 export type { DatabaseConnection, KernelDatabase, NodePgDatabase, PgTransaction, PoolConfig };
 
@@ -33,6 +34,7 @@ export {
   itemAuxiliaryUnits,
   items,
   suppliers,
+  transferInTransit,
   warehouses,
 } from "./schema/index.js";
 
@@ -44,6 +46,7 @@ export const kernelPg = {
   createStockLedgerRepository,
   createSupplierRepository,
   createTransactionRunner,
+  createTransferInTransitRepository,
   createWarehouseRepository,
 };
 
@@ -55,6 +58,7 @@ export {
   createStockLedgerRepository,
   createSupplierRepository,
   createTransactionRunner,
+  createTransferInTransitRepository,
   createWarehouseRepository,
 };
 

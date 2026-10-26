@@ -15,6 +15,7 @@ import {
   kernelPg,
   quantityType,
   suppliers,
+  transferInTransit,
   unitPriceType,
   warehouses,
 } from "./index.js";
@@ -29,6 +30,7 @@ describe("kernel-pg package", () => {
       "createStockLedgerRepository",
       "createSupplierRepository",
       "createTransactionRunner",
+      "createTransferInTransitRepository",
       "createWarehouseRepository",
     ]);
   });
@@ -119,6 +121,21 @@ describe("kernel-pg package", () => {
     expect(indexNamesOf(getTableConfig(inventoryLedgerEntries))).toEqual([
       "inventory_ledger_entries_document_idx",
       "inventory_ledger_entries_document_no_idx",
+    ]);
+  });
+
+  it("在途表落在 erp schema，数量与在途成本分别用 erp.quantity 与 erp.unit_price 承载", () => {
+    expect(getTableConfig(transferInTransit).schema).toBe("erp");
+    expect(getTableConfig(transferInTransit).name).toBe("transfer_in_transit");
+    expect(transferInTransit.quantity.getSQLType()).toBe("erp.quantity");
+    expect(transferInTransit.unitCost.getSQLType()).toBe("erp.unit_price");
+
+    const indexNamesOf = (table: ReturnType<typeof getTableConfig>): string[] =>
+      table.indexes.map((index) => index.config.name ?? "");
+
+    expect(indexNamesOf(getTableConfig(transferInTransit))).toEqual([
+      "transfer_in_transit_document_line_key",
+      "transfer_in_transit_source_item_idx",
     ]);
   });
 });

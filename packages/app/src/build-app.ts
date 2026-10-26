@@ -5,6 +5,7 @@ import type {
   StockLedgerRepository,
   SupplierRepository,
   TransactionRunner,
+  TransferInTransitRepository,
   WarehouseRepository,
 } from "@erp-inventory-sales/kernel";
 import {
@@ -13,6 +14,7 @@ import {
   createInMemoryDocumentRepository,
   createInMemoryStockLedgerRepository,
   createInMemoryTransactionRunner,
+  createInMemoryTransferInTransitRepository,
   createInventoryQueryService,
   createItemImportService,
   createItemMasterService,
@@ -23,6 +25,8 @@ import {
   createSaleReturnPostingHandler,
   createStocktakePostingHandler,
   createSupplierService,
+  createTransferPostingHandler,
+  createTransferQueryService,
   createWarehouseService,
 } from "@erp-inventory-sales/kernel";
 import {
@@ -33,6 +37,7 @@ import {
   createStockLedgerRepository,
   createSupplierRepository,
   createTransactionRunner,
+  createTransferInTransitRepository,
   createWarehouseRepository,
   databaseUrl,
 } from "@erp-inventory-sales/kernel-pg";
@@ -72,6 +77,7 @@ export type BuildAppOptions = {
   warehouseRepository?: WarehouseRepository;
   documentRepository?: DocumentRepository;
   stockLedgerRepository?: StockLedgerRepository;
+  transferInTransitRepository?: TransferInTransitRepository;
   transactionRunner?: TransactionRunner;
   documentTimeZone?: string;
 };
@@ -124,6 +130,11 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     (options.itemMasterRepository === undefined
       ? createStockLedgerRepository(database())
       : createInMemoryStockLedgerRepository());
+  const transferInTransitRepository =
+    options.transferInTransitRepository ??
+    (options.itemMasterRepository === undefined
+      ? createTransferInTransitRepository(database())
+      : createInMemoryTransferInTransitRepository());
   const documentService = createDocumentService(documentRepository, {
     runner: transactionRunner,
     timeZone: options.documentTimeZone ?? resolveDocumentTimeZone(),
@@ -142,6 +153,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       createSaleReturnPostingHandler(stockLedgerRepository, documentRepository),
       createPurchaseReturnPostingHandler(stockLedgerRepository, documentRepository),
       createStocktakePostingHandler(stockLedgerRepository),
+      createTransferPostingHandler(stockLedgerRepository, transferInTransitRepository),
     ],
     runner: transactionRunner,
   });
@@ -149,8 +161,16 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     service: itemMasterService,
     importService: createItemImportService({ items: itemMasterService, runner: transactionRunner }),
   });
-  registerDocumentRoutes(app, { service: documentService, postingService });
-  registerInventoryRoutes(app, { service: createInventoryQueryService(stockLedgerRepository) });
+  registerDocumentRoutes(app, {
+    service: documentService,
+    postingService,
+    transferService: createTransferQueryService(transferInTransitRepository),
+  });
+  registerInventoryRoutes(app, {
+    service: createInventoryQueryService(stockLedgerRepository, {
+      inTransit: transferInTransitRepository,
+    }),
+  });
   registerSupplierRoutes(app, {
     service: createSupplierService(supplierRepository, {
       referenceChecker: documentService,

@@ -1,5 +1,9 @@
 export { DocumentForm, type DocumentFormProps } from "./components/document-form";
-export { PostingActions, type PostingActionsProps } from "./components/posting-actions";
+export {
+  PostingActions,
+  type PostingActionOption,
+  type PostingActionsProps,
+} from "./components/posting-actions";
 export {
   createDocument,
   deleteDocument,
@@ -26,6 +30,7 @@ export {
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_OPTIONS,
   DOCUMENT_TYPE_LABELS,
+  TRANSFER_POSTING_PHASES,
 } from "./lib/format";
 export {
   documentDetailQueryKey,

@@ -19,5 +19,10 @@ export const documentBodySchema = z.object({
   lines: z.array(documentLineBodySchema).optional(),
 });
 
+export const postingBodySchema = z.object({
+  phase: z.string().nullish(),
+});
+
 export type DocumentBody = z.infer<typeof documentBodySchema>;
 export type DocumentLineBody = z.infer<typeof documentLineBodySchema>;
+export type PostingBody = z.infer<typeof postingBodySchema>;

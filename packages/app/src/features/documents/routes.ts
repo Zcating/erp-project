@@ -1,16 +1,32 @@
-import type { DocumentFilter, DocumentInput, DocumentService } from "@erp-inventory-sales/kernel";
-import type { PostingService } from "@erp-inventory-sales/kernel";
+import type {
+  Document,
+  DocumentFilter,
+  DocumentInput,
+  DocumentService,
+} from "@erp-inventory-sales/kernel";
+import type { PostingService, TransferQueryService } from "@erp-inventory-sales/kernel";
 import { ValidationError, isDocumentStatus, isDocumentType } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
 import { success } from "../../shared/envelope.js";
-import { documentBodySchema, type DocumentBody } from "./schema.js";
+import { documentBodySchema, postingBodySchema, type DocumentBody } from "./schema.js";
+
+export type DocumentWithPhases = Document & { postedPhases?: string[] };
 
 export type DocumentRouteDeps = {
   service: DocumentService;
   postingService: PostingService;
+  transferService: TransferQueryService;
 };
 
 export function registerDocumentRoutes(app: FastifyInstance, deps: DocumentRouteDeps): void {
+  const withPostedPhases = async (documents: Document[]): Promise<DocumentWithPhases[]> => {
+    const phases = await deps.transferService.listPostedPhasesOf(documents);
+    return documents.map((document) => {
+      const postedPhases = phases.get(document.id);
+      return postedPhases === undefined ? document : { ...document, postedPhases };
+    });
+  };
+
   app.post("/api/documents", async (request) => {
     const body = documentBodySchema.safeParse(request.body);
     if (!body.success) {
@@ -22,12 +38,20 @@ export function registerDocumentRoutes(app: FastifyInstance, deps: DocumentRoute
   app.get("/api/documents", async (request) => {
     const query = request.query as { type?: string; status?: string };
     const documents = await deps.service.list(toDocumentFilter(query));
-    return success({ documents });
+    return success({ documents: await withPostedPhases(documents) });
   });
 
   app.get("/api/documents/:id", async (request) => {
     const params = request.params as { id: string };
-    return success(await deps.service.get(params.id));
+    const document = await deps.service.get(params.id);
+    const [view] = await withPostedPhases([document]);
+    return success(view);
+  });
+
+  app.get("/api/documents/:id/in-transit", async (request) => {
+    const params = request.params as { id: string };
+    const records = await deps.transferService.listInTransit(params.id);
+    return success({ inTransit: records });
   });
 
   app.put("/api/documents/:id", async (request) => {
@@ -47,7 +71,12 @@ export function registerDocumentRoutes(app: FastifyInstance, deps: DocumentRoute
 
   app.post("/api/documents/:id/post", async (request) => {
     const params = request.params as { id: string };
-    return success(await deps.postingService.post(params.id));
+    const body = postingBodySchema.safeParse(request.body ?? {});
+    if (!body.success) {
+      throw new ValidationError("请求体必须是过账阶段对象");
+    }
+    const phase = body.data.phase ?? undefined;
+    return success(await deps.postingService.post(params.id, undefined, phase));
   });
 
   app.post("/api/documents/:id/void", async (request) => {

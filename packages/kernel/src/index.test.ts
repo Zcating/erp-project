@@ -10,6 +10,7 @@ import {
   salesReturn,
   selling,
   stocktake,
+  transfer,
 } from "./index.js";
 
 describe("kernel package", () => {
@@ -75,7 +76,11 @@ describe("kernel package", () => {
   });
 
   it("过账 feature 的公开面带过账服务与扩展点类型", () => {
-    expect(Object.keys(posting).sort()).toEqual(["POSTING_DIRECTIONS", "createPostingService"]);
+    expect(Object.keys(posting).sort()).toEqual([
+      "DEFAULT_POSTING_PHASE",
+      "POSTING_DIRECTIONS",
+      "createPostingService",
+    ]);
   });
 
   it("采购 feature 的公开面带采购入库的过账类型实现", () => {
@@ -96,5 +101,16 @@ describe("kernel package", () => {
 
   it("盘点 feature 的公开面带盘点的过账类型实现", () => {
     expect(Object.keys(stocktake).sort()).toEqual(["createStocktakePostingHandler"]);
+  });
+
+  it("调拨 feature 的公开面带调拨的过账类型实现、在途端口与查询服务", () => {
+    expect(Object.keys(transfer).sort()).toEqual([
+      "TRANSFER_IN_TRANSIT_STATUSES",
+      "TRANSFER_POSTING_PHASES",
+      "createInMemoryTransferInTransitRepository",
+      "createTransferPostingHandler",
+      "createTransferQueryService",
+    ]);
+    expect(transfer.TRANSFER_POSTING_PHASES).toEqual({ OUT: "OUT", IN: "IN" });
   });
 });

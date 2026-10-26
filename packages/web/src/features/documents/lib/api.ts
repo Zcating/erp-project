@@ -36,6 +36,7 @@ export type Document = {
   targetWarehouseId: string | null;
   warehouseId: string | null;
   lines: DocumentLine[];
+  postedPhases?: string[];
 };
 
 export type DocumentLineInput = {
@@ -151,11 +152,16 @@ export const deleteDocument = createServerFn({ method: "POST" })
   });
 
 export const postDocument = createServerFn({ method: "POST" })
-  .validator((data: { id: string }) => ({ id: data.id }))
+  .validator((data: { id: string; phase?: string | undefined }) => ({
+    id: data.id,
+    phase: data.phase,
+  }))
   .handler(async ({ data }): Promise<DocumentMutationResult> => {
     const { getRequestHeader } = await import("@tanstack/react-start/server");
     const response = await fetchApi(`/api/documents/${data.id}/post`, getRequestHeader("cookie"), {
       method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(data.phase === undefined ? {} : { phase: data.phase }),
     });
     return readMutationResult(response);
   });

@@ -11,6 +11,20 @@ export type StockBalanceKey = {
   itemId: string;
 };
 
+export type InTransitQuantity = {
+  warehouseId: string;
+  itemId: string;
+  quantity: string;
+};
+
+export type InTransitQuantityReader = {
+  listInTransit(
+    warehouseId: string | null,
+    itemId: string | null,
+    context?: TransactionContext,
+  ): Promise<InTransitQuantity[]>;
+};
+
 export type StockLedgerRepository = {
   findBalance(
     warehouseId: string,

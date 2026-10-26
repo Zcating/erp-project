@@ -51,6 +51,7 @@ describe("数据库迁移", () => {
         { table_schema: "erp", table_name: "item_auxiliary_units" },
         { table_schema: "erp", table_name: "items" },
         { table_schema: "erp", table_name: "suppliers" },
+        { table_schema: "erp", table_name: "transfer_in_transit" },
         { table_schema: "erp", table_name: "warehouses" },
       ]);
 
@@ -381,6 +382,63 @@ describe("数据库迁移", () => {
         "inventory_ledger_entries_document_no_idx",
         "inventory_ledger_entries_pkey",
       ]);
+    } finally {
+      await client.end();
+    }
+  });
+
+  it("在途表落在 erp schema，数量与在途成本分别用 erp.quantity 与 erp.unit_price 承载，并带调拨单据行唯一索引", async () => {
+    const client = await connectToTestDatabase();
+    try {
+      const columns = await client.query(
+        `select a.attname as column_name, format_type(a.atttypid, a.atttypmod) as column_type
+         from pg_attribute a
+         join pg_class c on c.oid = a.attrelid
+         join pg_namespace n on n.oid = c.relnamespace
+         where n.nspname = 'erp' and c.relname = 'transfer_in_transit' and a.attnum > 0
+         order by a.attname`,
+      );
+      expect(columns.rows).toEqual([
+        { column_name: "document_id", column_type: "uuid" },
+        { column_name: "document_no", column_type: "text" },
+        { column_name: "id", column_type: "uuid" },
+        { column_name: "item_id", column_type: "uuid" },
+        { column_name: "line_no", column_type: "integer" },
+        { column_name: "quantity", column_type: "erp.quantity" },
+        { column_name: "source_warehouse_id", column_type: "uuid" },
+        { column_name: "status", column_type: "text" },
+        { column_name: "target_warehouse_id", column_type: "uuid" },
+        { column_name: "unit_cost", column_type: "erp.unit_price" },
+      ]);
+
+      const indexes = await client.query(
+        `select indexname from pg_indexes
+         where schemaname = 'erp' and tablename = 'transfer_in_transit'
+         order by indexname`,
+      );
+      expect(indexes.rows.map((row) => row.indexname)).toEqual([
+        "transfer_in_transit_document_line_key",
+        "transfer_in_transit_pkey",
+        "transfer_in_transit_source_item_idx",
+      ]);
+
+      const constraints = await client.query(
+        `select conname, pg_get_constraintdef(oid) as definition
+         from pg_constraint
+         where conrelid = 'erp.transfer_in_transit'::regclass
+         order by conname`,
+      );
+      const definitions = constraints.rows.map((row) => row.definition as string);
+      expect(
+        definitions.some((definition) =>
+          definition.includes("FOREIGN KEY (document_id) REFERENCES erp.documents(id)"),
+        ),
+      ).toBe(true);
+      expect(
+        definitions.some((definition) =>
+          definition.includes("FOREIGN KEY (source_warehouse_id) REFERENCES erp.warehouses(id)"),
+        ),
+      ).toBe(true);
     } finally {
       await client.end();
     }

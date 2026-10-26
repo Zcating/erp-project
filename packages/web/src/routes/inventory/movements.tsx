@@ -171,7 +171,7 @@ function StockMovementPage() {
         <tbody>
           {(movements ?? []).map((movement) => (
             <tr
-              key={`${movement.documentId}::${movement.lineNo}::${movement.direction}`}
+              key={`${movement.documentId}::${movement.warehouseId}::${movement.lineNo}::${movement.direction}`}
               data-testid="movement-row"
               className="border-b border-border/60"
             >

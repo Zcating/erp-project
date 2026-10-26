@@ -11,9 +11,14 @@ import type {
   StockMovementFilter,
   StockMovementOrder,
 } from "./model.js";
-import type { StockBalanceKey, StockLedgerRepository } from "./ports.js";
+import type {
+  InTransitQuantity,
+  InTransitQuantityReader,
+  StockBalanceKey,
+  StockLedgerRepository,
+} from "./ports.js";
 import { createInventoryQueryService } from "./service.js";
-import type { InventoryQueryService } from "./service.js";
+import type { InventoryQueryService, InventoryQueryServiceOptions } from "./service.js";
 
 export const inventory = {
   STOCK_LEDGER_DIRECTIONS,
@@ -29,7 +34,7 @@ export {
   weightedAverageUnitCost,
 };
 
-export type { InventoryQueryService };
+export type { InventoryQueryService, InventoryQueryServiceOptions };
 export type {
   StockBalance,
   StockBalanceFilter,
@@ -40,4 +45,4 @@ export type {
   StockMovementFilter,
   StockMovementOrder,
 };
-export type { StockBalanceKey, StockLedgerRepository };
+export type { InTransitQuantity, InTransitQuantityReader, StockBalanceKey, StockLedgerRepository };

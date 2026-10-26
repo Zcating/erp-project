@@ -6,6 +6,10 @@ export const POSTING_DIRECTIONS = ["FORWARD", "REVERSE"] as const;
 
 export type PostingDirection = (typeof POSTING_DIRECTIONS)[number];
 
+export const DEFAULT_POSTING_PHASE = "DEFAULT";
+
+export type PostingPhase = string;
+
 export type InventoryMovement = {
   lineNo: number;
   warehouseId: string;
@@ -17,6 +21,18 @@ export type InventoryMovement = {
   costAfter: string;
   unitPrice: string;
   amount: string;
+};
+
+export type PostingPhaseHandler = {
+  phases: readonly PostingPhase[];
+  isPosted(document: Document, phase: PostingPhase, context?: TransactionContext): Promise<boolean>;
+  validate(document: Document, phase: PostingPhase, context?: TransactionContext): Promise<void>;
+  apply(
+    document: Document,
+    phase: PostingPhase,
+    context?: TransactionContext,
+  ): Promise<InventoryMovement[]>;
+  reverse(document: Document, context?: TransactionContext): Promise<InventoryMovement[]>;
 };
 
 export type PostingTypeHandler = {
@@ -36,4 +52,5 @@ export type PostingTypeHandler = {
     movements: InventoryMovement[],
     direction: PostingDirection,
   ): Promise<StockLedgerEntry[]>;
+  phaseHandler?: PostingPhaseHandler;
 };

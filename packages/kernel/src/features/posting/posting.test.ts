@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { StateConflictError } from "../../shared/errors/index.js";
+import { StateConflictError, StockNegativeError } from "../../shared/errors/index.js";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
 import { createInMemoryDocumentRepository } from "../documents/in-memory-repository.js";
-import type { DocumentInput } from "../documents/model.js";
+import type { Document, DocumentInput } from "../documents/model.js";
 import { createDocumentService } from "../documents/service.js";
 import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository.js";
 import type { StockLedgerRepository } from "../inventory/ports.js";
 import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting.js";
+import type { InventoryMovement, PostingTypeHandler } from "./model.js";
 import { createPostingService } from "./service.js";
 
 const FIXED_CLOCK = new Date("2026-01-02T03:04:05Z");
@@ -173,5 +174,137 @@ describe("过账框架的状态流转守卫与幂等", () => {
     expect(runCount).toBe(1);
     expect(contexts.length).toBeGreaterThan(0);
     expect(contexts.every((context) => context?.transactionId === "tx-1")).toBe(true);
+  });
+});
+
+describe("过账框架的作废负库存守卫", () => {
+  it("作废会把账面库存打成负数时整单作废失败，库存与流水都不变化，单据仍为已过账", async () => {
+    const { ledger, documentService, postingService } = await createFixture();
+    const document = await documentService.create(purchaseInboundInput());
+    await postingService.post(document.id);
+    await ledger.saveBalance({
+      warehouseId: "warehouse-1",
+      itemId: "item-1",
+      quantity: "5.000",
+      unitCost: "1.115000",
+    });
+
+    const failure = await postingService.void(document.id).then(
+      () => undefined,
+      (caught: unknown) => caught,
+    );
+
+    expect(failure).toBeInstanceOf(StockNegativeError);
+    expect((failure as StockNegativeError).message).toContain("-7.000");
+    expect((await ledger.findBalance("warehouse-1", "item-1"))?.quantity).toBe("5.000");
+    expect(await ledger.listEntriesByDocumentNo(document.documentNo)).toHaveLength(1);
+    expect((await documentService.get(document.id)).status).toBe("POSTED");
+  });
+
+  it("作废只会加回库存时守卫放行，反向流水照常追加", async () => {
+    const { ledger, documentService, postingService } = await createFixture();
+    const document = await documentService.create(purchaseInboundInput());
+    await postingService.post(document.id);
+
+    await postingService.void(document.id);
+
+    expect((await ledger.findBalance("warehouse-1", "item-1"))?.quantity).toBe("0.000");
+    expect(await ledger.listEntriesByDocumentNo(document.documentNo)).toHaveLength(2);
+  });
+});
+
+describe("过账框架的过账阶段语义", () => {
+  const createPhaseFixture = async () => {
+    const documents = createInMemoryDocumentRepository();
+    const ledger = createInMemoryStockLedgerRepository();
+    const applied = new Set<string>();
+    const handler: PostingTypeHandler = {
+      type: "STOCKTAKE",
+      validate: async () => {},
+      applyInventory: async () => [],
+      buildLedger: async (document: Document, movements: InventoryMovement[]) =>
+        movements.map((movement) => ({
+          documentId: document.id,
+          documentNo: document.documentNo,
+          lineNo: movement.lineNo,
+          warehouseId: movement.warehouseId,
+          itemId: movement.itemId,
+          direction: "POST" as const,
+          quantityBefore: movement.quantityBefore,
+          quantityAfter: movement.quantityAfter,
+          costBefore: movement.costBefore,
+          costAfter: movement.costAfter,
+          unitPrice: movement.unitPrice,
+          amount: movement.amount,
+        })),
+      phaseHandler: {
+        phases: ["OUT", "IN"],
+        isPosted: async (document, phase) => applied.has(`${document.id}:${phase}`),
+        validate: async () => {},
+        apply: async (document, phase) => {
+          applied.add(`${document.id}:${phase}`);
+          return [
+            {
+              lineNo: 1,
+              warehouseId: "warehouse-1",
+              itemId: "item-1",
+              quantityDelta: phase === "OUT" ? "-1.000" : "1.000",
+              quantityBefore: "0.000",
+              quantityAfter: phase === "OUT" ? "-1.000" : "1.000",
+              costBefore: "0.000000",
+              costAfter: "0.000000",
+              unitPrice: "0.000000",
+              amount: "0.00",
+            },
+          ];
+        },
+        reverse: async () => [],
+      },
+    };
+    const documentService = createDocumentService(documents, {
+      clock: () => FIXED_CLOCK,
+      timeZone: "Asia/Shanghai",
+    });
+    const postingService = createPostingService({
+      documents,
+      ledger,
+      handlers: [handler],
+    });
+    const document = await documentService.create({
+      type: "STOCKTAKE",
+      supplierId: null,
+      customerId: null,
+      sourceWarehouseId: null,
+      targetWarehouseId: null,
+      warehouseId: "warehouse-1",
+      lines: [{ itemId: "item-1", quantity: "1", unitPrice: null, amount: null }],
+    });
+    return { applied, documentService, ledger, postingService, document };
+  };
+
+  it("同一阶段重复过账幂等短路，不同阶段各能过账一次，首次过账把单据变为已过账、后续阶段不再改状态", async () => {
+    const { applied, documentService, ledger, postingService, document } =
+      await createPhaseFixture();
+
+    const first = await postingService.post(document.id, undefined, "OUT");
+    const repeated = await postingService.post(document.id, undefined, "OUT");
+    const second = await postingService.post(document.id, undefined, "IN");
+    const repeatedSecond = await postingService.post(document.id, undefined, "IN");
+
+    expect(first.status).toBe("POSTED");
+    expect(repeated.status).toBe("POSTED");
+    expect(second.status).toBe("POSTED");
+    expect(repeatedSecond.status).toBe("POSTED");
+    expect([...applied]).toEqual([`${document.id}:OUT`, `${document.id}:IN`]);
+    expect(await ledger.listEntriesByDocumentNo(document.documentNo)).toHaveLength(2);
+    expect((await documentService.get(document.id)).status).toBe("POSTED");
+  });
+
+  it("过账阶段不被类型处理器支持时请求被拒绝", async () => {
+    const { postingService, document } = await createPhaseFixture();
+
+    await expect(postingService.post(document.id, undefined, "SIDEWAYS")).rejects.toThrow(
+      "不支持的过账阶段",
+    );
   });
 });
