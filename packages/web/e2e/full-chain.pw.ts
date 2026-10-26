@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -133,11 +133,11 @@ test("主线：登录 → 建商品（条码与 1 箱 = 12 瓶换算）→ 建�
   const beforeInbound = await documentNumbersOf("PURCHASE_INBOUND");
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-supplier").selectOption(master.supplierId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
-  await page.getByTestId("document-line-unit").first().selectOption("箱");
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-supplier"), master.supplierId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
+  await pickOption(page.getByTestId("document-line-unit").first(), "箱");
   await page.getByTestId("document-line-quantity").first().fill("1");
   await page.getByTestId("document-line-unit-price").first().fill("2");
   await expect(page.getByTestId("document-line-amount").first()).toHaveText("24.00");
@@ -156,10 +156,10 @@ test("主线：登录 → 建商品（条码与 1 箱 = 12 瓶换算）→ 建�
   const beforeOutbound = await documentNumbersOf("SALE_OUTBOUND");
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("SALE_OUTBOUND");
-  await page.getByTestId("document-customer").selectOption(master.customerId);
-  await page.getByTestId("document-source-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
+  await pickOption(page.getByTestId("document-type"), "SALE_OUTBOUND");
+  await pickOption(page.getByTestId("document-customer"), master.customerId);
+  await pickOption(page.getByTestId("document-source-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
   await page.getByTestId("document-line-quantity").first().fill("5");
   await page.getByTestId("document-line-unit-price").first().fill("3.5");
   await expect(page.getByTestId("document-line-amount").first()).toHaveText("17.50");
@@ -177,8 +177,8 @@ test("主线：登录 → 建商品（条码与 1 箱 = 12 瓶换算）→ 建�
 
   await page.goto("/inventory");
   await waitForDebugHandles(page);
-  await page.getByTestId("stock-warehouse-filter").selectOption(master.warehouseId);
-  await page.getByTestId("stock-item-filter").selectOption(master.itemId);
+  await pickOption(page.getByTestId("stock-warehouse-filter"), master.warehouseId);
+  await pickOption(page.getByTestId("stock-item-filter"), master.itemId);
   const stockRow = page.getByTestId("stock-row");
   await expect(stockRow).toHaveCount(1);
   await expect(stockRow.first().getByTestId("stock-on-hand")).toHaveText("7.000");
@@ -188,8 +188,8 @@ test("主线：登录 → 建商品（条码与 1 箱 = 12 瓶换算）→ 建�
 
   await page.goto("/inventory/movements");
   await waitForDebugHandles(page);
-  await page.getByTestId("movement-warehouse-filter").selectOption(master.warehouseId);
-  await page.getByTestId("movement-item-filter").selectOption(master.itemId);
+  await pickOption(page.getByTestId("movement-warehouse-filter"), master.warehouseId);
+  await pickOption(page.getByTestId("movement-item-filter"), master.itemId);
   const movementRows = page.getByTestId("movement-row");
   await expect(movementRows).toHaveCount(2);
 

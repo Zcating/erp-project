@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -113,9 +113,9 @@ test("盘点单在单据列表页复用通用过账与作废按钮，不新建�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("STOCKTAKE");
-  await page.getByTestId("document-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
+  await pickOption(page.getByTestId("document-type"), "STOCKTAKE");
+  await pickOption(page.getByTestId("document-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
   await page.getByTestId("document-line-quantity").first().fill("9");
   await page.getByTestId("document-submit").click();
   await expect(page).toHaveURL(/\/documents$/);

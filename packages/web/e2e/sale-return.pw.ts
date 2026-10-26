@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -145,8 +145,8 @@ test("销售退货单能在新建页选择原销售出库行，过账后库存�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("SALE_RETURN");
-  await page.getByTestId("document-line-original").first().selectOption(outbound.lineId);
+  await pickOption(page.getByTestId("document-type"), "SALE_RETURN");
+  await pickOption(page.getByTestId("document-line-original").first(), outbound.lineId);
   await page.getByTestId("document-line-quantity").first().fill("2");
   await expect(page.getByTestId("document-source-warehouse")).toHaveValue(master.warehouseId);
   await page.getByTestId("document-submit").click();
@@ -188,7 +188,7 @@ test("销售退货单不选原销售出库行时保存失败，界面显示后�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("SALE_RETURN");
+  await pickOption(page.getByTestId("document-type"), "SALE_RETURN");
   await page.getByTestId("document-line-quantity").first().fill("2");
   await page.getByTestId("document-submit").click();
 

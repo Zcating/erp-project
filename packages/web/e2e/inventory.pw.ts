@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -118,7 +118,7 @@ test("库存页分别显示账面、可用、在途三列，三列各取查询�
 
   await page.goto("/inventory");
   await waitForDebugHandles(page);
-  await page.getByTestId("stock-warehouse-filter").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("stock-warehouse-filter"), master.warehouseId);
 
   const row = stockRowOf(page).first();
   await expect(row.getByTestId("stock-on-hand")).toHaveText("12.000");
@@ -136,12 +136,12 @@ test("切换仓库筛选后三列各自显示该仓库该商品的对应口径�
 
   await page.goto("/inventory");
   await waitForDebugHandles(page);
-  await page.getByTestId("stock-warehouse-filter").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("stock-warehouse-filter"), master.warehouseId);
   await expect(stockRowOf(page).first().getByTestId("stock-on-hand")).toHaveText("12.000");
   await expect(stockRowOf(page).first().getByTestId("stock-available")).toHaveText("12.000");
   await expect(stockRowOf(page).first().getByTestId("stock-in-transit")).toHaveText("0.000");
 
-  await page.getByTestId("stock-warehouse-filter").selectOption(master.otherWarehouseId);
+  await pickOption(page.getByTestId("stock-warehouse-filter"), master.otherWarehouseId);
   await expect(stockRowOf(page)).toHaveCount(1);
   await expect(stockRowOf(page).first().getByTestId("stock-on-hand")).toHaveText("5.000");
   await expect(stockRowOf(page).first().getByTestId("stock-available")).toHaveText("5.000");
@@ -181,7 +181,7 @@ test("库存页的筛选条件放在 jotai，服务端数据留在 TanStack Quer
 
   await page.goto("/inventory");
   await waitForDebugHandles(page);
-  await page.getByTestId("stock-warehouse-filter").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("stock-warehouse-filter"), master.warehouseId);
   await expect(stockRowOf(page).first().getByTestId("stock-on-hand")).toHaveText("12.000");
 
   const uiState = await page.evaluate(() => window.__erpDebug!.readUiState());

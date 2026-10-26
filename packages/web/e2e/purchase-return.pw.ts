@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -128,10 +128,10 @@ test("采购退货单能在新建页选择原采购入库行，过账后库存�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_RETURN");
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_RETURN");
   const option = page.getByTestId("document-line-original").first().locator("option");
   await expect(option.filter({ hasText: `${inbound.documentNo} 第 1 行` })).toHaveCount(1);
-  await page.getByTestId("document-line-original").first().selectOption(inbound.lineId);
+  await pickOption(page.getByTestId("document-line-original").first(), inbound.lineId);
   await page.getByTestId("document-line-quantity").first().fill("4");
   await expect(page.getByTestId("document-source-warehouse")).toHaveValue(master.warehouseId);
   await expect(page.getByTestId("document-source-warehouse")).toBeDisabled();
@@ -174,7 +174,7 @@ test("采购退货单不选原采购入库行时保存失败，界面显示后�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_RETURN");
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_RETURN");
   await page.getByTestId("document-line-quantity").first().fill("4");
   await page.getByTestId("document-submit").click();
 

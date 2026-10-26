@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -122,10 +122,10 @@ const createSaleOutbound = async (
 ): Promise<string> => {
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("SALE_OUTBOUND");
-  await page.getByTestId("document-customer").selectOption(master.customerId);
-  await page.getByTestId("document-source-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
+  await pickOption(page.getByTestId("document-type"), "SALE_OUTBOUND");
+  await pickOption(page.getByTestId("document-customer"), master.customerId);
+  await pickOption(page.getByTestId("document-source-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
   await page.getByTestId("document-line-quantity").first().fill(quantity);
   await page.getByTestId("document-line-unit-price").first().fill("3.5");
   await page.getByTestId("document-submit").click();
