@@ -2,15 +2,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import { AdminShell } from "@/components/admin-shell";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Picker } from "@/components/ui/picker";
 import {
   deleteDocument,
   DOCUMENT_STATUS_LABELS,
-  DOCUMENT_STATUS_OPTIONS,
   DOCUMENT_TYPE_LABELS,
-  DRAFT_DOCUMENT_TYPES,
   documentListQueryOptions,
   documentStatusFilterAtom,
+  documentStatusFilterOptions,
   documentTypeFilterAtom,
+  documentTypeFilterOptions,
+  DRAFT_DOCUMENT_TYPES,
   PostingActions,
   TRANSFER_POSTING_PHASES,
 } from "@/features/documents";
@@ -78,41 +82,42 @@ function DocumentListPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-end gap-4">
-        <label className="block text-sm" htmlFor="document-type-filter">
-          单据类型
-          <select
+        <div>
+          <Label
+            id="document-type-filter-label"
+            htmlFor="document-type-filter"
+            className="block text-sm"
+          >
+            单据类型
+          </Label>
+          <Picker
             id="document-type-filter"
-            data-testid="document-type-filter"
-            className="mt-1 block w-48 rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-48"
             value={typeFilter}
-            onChange={(event) => setTypeFilter(event.target.value)}
+            onValueChange={setTypeFilter}
+            options={documentTypeFilterOptions(DRAFT_DOCUMENT_TYPES)}
+            data-testid="document-type-filter"
+            aria-labelledby="document-type-filter-label"
+          />
+        </div>
+        <div>
+          <Label
+            id="document-status-filter-label"
+            htmlFor="document-status-filter"
+            className="block text-sm"
           >
-            <option value="">全部类型</option>
-            {DRAFT_DOCUMENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {DOCUMENT_TYPE_LABELS[type]}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block text-sm" htmlFor="document-status-filter">
-          单据状态
-          <select
+            单据状态
+          </Label>
+          <Picker
             id="document-status-filter"
-            data-testid="document-status-filter"
-            className="mt-1 block w-48 rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-48"
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
-            <option value="">全部状态</option>
-            {DOCUMENT_STATUS_OPTIONS.map((status) => (
-              <option key={status} value={status}>
-                {DOCUMENT_STATUS_LABELS[status]}
-              </option>
-            ))}
-          </select>
-        </label>
+            onValueChange={setStatusFilter}
+            options={documentStatusFilterOptions()}
+            data-testid="document-status-filter"
+            aria-labelledby="document-status-filter-label"
+          />
+        </div>
       </div>
 
       <table className="w-full border-collapse text-sm" data-testid="document-table">
@@ -153,14 +158,15 @@ function DocumentListPage() {
                     >
                       编辑
                     </Link>
-                    <button
+                    <Button
                       type="button"
-                      className="rounded-md px-2 py-1 text-destructive hover:bg-muted"
+                      variant="destructive"
+                      size="sm"
                       data-testid="document-delete"
                       onClick={() => removeMutation.mutate(document.id)}
                     >
                       删除
-                    </button>
+                    </Button>
                   </div>
                   <PostingActions
                     documentId={document.id}

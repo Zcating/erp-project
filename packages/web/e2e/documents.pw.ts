@@ -126,7 +126,8 @@ test("单据新建入口提供采购入库单、销售出库单、销售退货�
   await waitForDebugHandles(page);
   await expect(page.getByTestId("document-type")).toBeVisible();
 
-  const options = await page.getByTestId("document-type").locator("option").allTextContents();
+  await page.getByTestId("document-type").click();
+  const options = await page.getByRole("option").allTextContents();
   expect(options).toEqual([
     "采购入库单",
     "销售出库单",
@@ -317,6 +318,7 @@ test("按单据类型筛选时列表里只剩该类型的单据", async ({ page 
   const rows = page.getByTestId("document-row");
   await expect(rows.first()).toBeVisible();
   await expect(rows).not.toHaveCount(0);
+  await expect(rows.first()).toContainText("盘点单");
   for (const text of await rows.allTextContents()) {
     expect(text).toContain("盘点单");
   }

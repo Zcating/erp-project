@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Picker } from "@/components/ui/picker";
 import { itemListQueryOptions } from "@/features/items";
 import type { ItemMaster } from "@/features/items";
 import {
@@ -11,7 +13,17 @@ import {
 } from "@/features/parties";
 import type { Document, DocumentInput, DraftDocumentType, FormSubmitResult } from "../lib/api";
 import { DRAFT_DOCUMENT_TYPES } from "../lib/api";
-import { computeLineAmount, DOCUMENT_TYPE_LABELS } from "../lib/format";
+import { computeLineAmount } from "../lib/format";
+import {
+  customerOptions,
+  documentTypeOptions,
+  itemOptions,
+  originalLineChoices,
+  supplierOptions,
+  unitNames,
+  unitOptions,
+  warehouseOptions,
+} from "../lib/options";
 import { documentListQueryOptions } from "../lib/queries";
 
 export type DocumentFormProps = {
@@ -37,13 +49,6 @@ const emptyLine = (): LineDraft => ({
   unit: "",
   originalLineId: "",
 });
-
-const unitOptionsOf = (item: ItemMaster | undefined): string[] => {
-  if (item === undefined) {
-    return [];
-  }
-  return [item.baseUnit, ...item.auxiliaryUnits.map((auxiliaryUnit) => auxiliaryUnit.unit)];
-};
 
 const conversionRateOf = (item: ItemMaster | undefined, unit: string): string => {
   if (item === undefined || unit === "" || unit === item.baseUnit) {
@@ -100,30 +105,27 @@ export function DocumentForm({
     enabled: isPurchaseReturn,
   });
 
-  const itemLabel = (itemId: string): string => {
-    const item = (items ?? []).find((candidate) => candidate.id === itemId);
-    return item === undefined ? itemId : `${item.code} ${item.name}`;
-  };
+  const originalChoices = isPurchaseReturn
+    ? originalLineChoices(
+        inboundDocuments ?? [],
+        items ?? [],
+        "已入",
+        (document) => document.targetWarehouseId ?? "",
+      )
+    : originalLineChoices(
+        outboundDocuments ?? [],
+        items ?? [],
+        "已出",
+        (document) => document.sourceWarehouseId ?? "",
+      );
 
-  const originalLineOptions = (outboundDocuments ?? []).flatMap((document) =>
-    document.lines.map((line) => ({
-      id: line.id,
-      label: `${document.documentNo} 第 ${line.lineNo} 行 ${itemLabel(line.itemId)}（已出 ${line.quantity}）`,
-      itemId: line.itemId,
-      warehouseId: document.sourceWarehouseId ?? "",
-    })),
-  );
-
-  const inboundLineOptions = (inboundDocuments ?? []).flatMap((document) =>
-    document.lines.map((line) => ({
-      id: line.id,
-      label: `${document.documentNo} 第 ${line.lineNo} 行 ${itemLabel(line.itemId)}（已入 ${line.quantity}）`,
-      itemId: line.itemId,
-      warehouseId: document.targetWarehouseId ?? "",
-    })),
-  );
-
-  const originalOptions = isPurchaseReturn ? inboundLineOptions : originalLineOptions;
+  const originalLinePickerOptions = [
+    {
+      value: "",
+      label: isPurchaseReturn ? "请选择原采购入库单的行" : "请选择原销售出库单的行",
+    },
+    ...originalChoices.map((choice) => ({ value: choice.value, label: choice.label })),
+  ];
 
   const updateLine = (index: number, patch: Partial<LineDraft>): void => {
     setLines((current) =>
@@ -132,14 +134,14 @@ export function DocumentForm({
   };
 
   const selectOriginalLine = (index: number, originalLineId: string): void => {
-    const option = originalOptions.find((candidate) => candidate.id === originalLineId);
+    const choice = originalChoices.find((candidate) => candidate.value === originalLineId);
     updateLine(index, {
       originalLineId,
-      itemId: option?.itemId ?? "",
+      itemId: choice?.itemId ?? "",
       unit: "",
     });
-    if (option !== undefined) {
-      setSourceWarehouseId(option.warehouseId);
+    if (choice !== undefined) {
+      setSourceWarehouseId(choice.warehouseId);
     }
   };
 
@@ -187,199 +189,194 @@ export function DocumentForm({
   return (
     <form data-testid="document-form" className="max-w-3xl space-y-4" onSubmit={handleSubmit}>
       {onDocumentTypeChange === undefined ? null : (
-        <label className="block text-sm" htmlFor="document-type">
-          单据类型
-          <select
+        <div>
+          <Label id="document-type-label" htmlFor="document-type" className="block text-sm">
+            单据类型
+          </Label>
+          <Picker
             id="document-type"
-            data-testid="document-type"
-            className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-full"
             value={documentType}
-            onChange={(event) => onDocumentTypeChange(event.target.value as DraftDocumentType)}
-          >
-            {DRAFT_DOCUMENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {DOCUMENT_TYPE_LABELS[type]}
-              </option>
-            ))}
-          </select>
-        </label>
+            onValueChange={(value) => onDocumentTypeChange(value as DraftDocumentType)}
+            options={documentTypeOptions(DRAFT_DOCUMENT_TYPES)}
+            data-testid="document-type"
+            aria-labelledby="document-type-label"
+          />
+        </div>
       )}
 
       {needsSupplier ? (
-        <label className="block text-sm" htmlFor="document-supplier">
-          供应商
-          <select
+        <div>
+          <Label id="document-supplier-label" htmlFor="document-supplier" className="block text-sm">
+            供应商
+          </Label>
+          <Picker
             id="document-supplier"
-            data-testid="document-supplier"
-            className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-full"
             value={supplierId}
-            onChange={(event) => setSupplierId(event.target.value)}
-          >
-            <option value="">请选择供应商</option>
-            {(suppliers ?? []).map((supplier) => (
-              <option key={supplier.id} value={supplier.id}>
-                {supplier.code} {supplier.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            onValueChange={setSupplierId}
+            options={supplierOptions(suppliers ?? [])}
+            data-testid="document-supplier"
+            aria-labelledby="document-supplier-label"
+          />
+        </div>
       ) : null}
 
       {needsCustomer ? (
-        <label className="block text-sm" htmlFor="document-customer">
-          客户
-          <select
+        <div>
+          <Label id="document-customer-label" htmlFor="document-customer" className="block text-sm">
+            客户
+          </Label>
+          <Picker
             id="document-customer"
-            data-testid="document-customer"
-            className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-full"
             value={customerId}
-            onChange={(event) => setCustomerId(event.target.value)}
-          >
-            <option value="">请选择客户</option>
-            {(customers ?? []).map((customer) => (
-              <option key={customer.id} value={customer.id}>
-                {customer.code} {customer.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            onValueChange={setCustomerId}
+            options={customerOptions(customers ?? [])}
+            data-testid="document-customer"
+            aria-labelledby="document-customer-label"
+          />
+        </div>
       ) : null}
 
       {needsSourceWarehouse ? (
-        <label className="block text-sm" htmlFor="document-source-warehouse">
-          {isSaleReturn
-            ? "退货入库仓（取自原销售出库单）"
-            : isPurchaseReturn
-              ? "退货出库仓（取自原采购入库单）"
-              : documentType === "TRANSFER"
-                ? "源仓"
-                : "来源仓库"}
-          <select
-            id="document-source-warehouse"
-            data-testid="document-source-warehouse"
-            className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            value={sourceWarehouseId}
-            disabled={isReturn}
-            onChange={(event) => setSourceWarehouseId(event.target.value)}
+        <div>
+          <Label
+            id="document-source-warehouse-label"
+            htmlFor="document-source-warehouse"
+            className="block text-sm"
           >
-            <option value="">请选择仓库</option>
-            {(warehouses ?? []).map((warehouse) => (
-              <option key={warehouse.id} value={warehouse.id}>
-                {warehouse.code} {warehouse.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            {isSaleReturn
+              ? "退货入库仓（取自原销售出库单）"
+              : isPurchaseReturn
+                ? "退货出库仓（取自原采购入库单）"
+                : documentType === "TRANSFER"
+                  ? "源仓"
+                  : "来源仓库"}
+          </Label>
+          <Picker
+            id="document-source-warehouse"
+            className="mt-1 w-full"
+            value={sourceWarehouseId}
+            onValueChange={setSourceWarehouseId}
+            options={warehouseOptions(warehouses ?? [])}
+            disabled={isReturn}
+            data-testid="document-source-warehouse"
+            aria-labelledby="document-source-warehouse-label"
+          />
+        </div>
       ) : null}
 
       {needsTargetWarehouse ? (
-        <label className="block text-sm" htmlFor="document-target-warehouse">
-          {documentType === "TRANSFER" ? "目标仓" : "目标仓库"}
-          <select
-            id="document-target-warehouse"
-            data-testid="document-target-warehouse"
-            className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            value={targetWarehouseId}
-            onChange={(event) => setTargetWarehouseId(event.target.value)}
+        <div>
+          <Label
+            id="document-target-warehouse-label"
+            htmlFor="document-target-warehouse"
+            className="block text-sm"
           >
-            <option value="">请选择仓库</option>
-            {(warehouses ?? []).map((warehouse) => (
-              <option key={warehouse.id} value={warehouse.id}>
-                {warehouse.code} {warehouse.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            {documentType === "TRANSFER" ? "目标仓" : "目标仓库"}
+          </Label>
+          <Picker
+            id="document-target-warehouse"
+            className="mt-1 w-full"
+            value={targetWarehouseId}
+            onValueChange={setTargetWarehouseId}
+            options={warehouseOptions(warehouses ?? [])}
+            data-testid="document-target-warehouse"
+            aria-labelledby="document-target-warehouse-label"
+          />
+        </div>
       ) : null}
 
       {needsWarehouse ? (
-        <label className="block text-sm" htmlFor="document-warehouse">
-          仓库
-          <select
-            id="document-warehouse"
-            data-testid="document-warehouse"
-            className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-            value={warehouseId}
-            onChange={(event) => setWarehouseId(event.target.value)}
+        <div>
+          <Label
+            id="document-warehouse-label"
+            htmlFor="document-warehouse"
+            className="block text-sm"
           >
-            <option value="">请选择仓库</option>
-            {(warehouses ?? []).map((warehouse) => (
-              <option key={warehouse.id} value={warehouse.id}>
-                {warehouse.code} {warehouse.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            仓库
+          </Label>
+          <Picker
+            id="document-warehouse"
+            className="mt-1 w-full"
+            value={warehouseId}
+            onValueChange={setWarehouseId}
+            options={warehouseOptions(warehouses ?? [])}
+            data-testid="document-warehouse"
+            aria-labelledby="document-warehouse-label"
+          />
+        </div>
       ) : null}
 
       <fieldset className="space-y-2" data-testid="document-lines">
         <legend className="text-sm">单据行</legend>
         {lines.map((line, index) => {
           const item = (items ?? []).find((candidate) => candidate.id === line.itemId);
-          const unitOptions = unitOptionsOf(item);
+          const units = unitNames(item);
+          const unitChoices = unitOptions(item);
           const rate = conversionRateOf(item, line.unit);
           return (
             <div key={index} className="flex items-end gap-2" data-testid="document-line">
               {isReturn ? (
-                <label className="block text-sm" htmlFor={`document-line-original-${index}`}>
-                  {isPurchaseReturn ? "原采购入库行" : "原销售出库行"}
-                  <select
-                    id={`document-line-original-${index}`}
-                    data-testid="document-line-original"
-                    className="mt-1 block w-96 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    value={line.originalLineId}
-                    onChange={(event) => selectOriginalLine(index, event.target.value)}
+                <div>
+                  <Label
+                    id={`document-line-original-label-${index}`}
+                    htmlFor={`document-line-original-${index}`}
+                    className="block text-sm"
                   >
-                    <option value="">
-                      {isPurchaseReturn ? "请选择原采购入库单的行" : "请选择原销售出库单的行"}
-                    </option>
-                    {originalOptions.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    {isPurchaseReturn ? "原采购入库行" : "原销售出库行"}
+                  </Label>
+                  <Picker
+                    id={`document-line-original-${index}`}
+                    className="mt-1 w-96"
+                    value={line.originalLineId}
+                    onValueChange={(value) => selectOriginalLine(index, value)}
+                    options={originalLinePickerOptions}
+                    data-testid="document-line-original"
+                    aria-labelledby={`document-line-original-label-${index}`}
+                  />
+                </div>
               ) : null}
-              <label className="block text-sm" htmlFor={`document-line-item-${index}`}>
-                商品
-                <select
+              <div>
+                <Label
+                  id={`document-line-item-label-${index}`}
+                  htmlFor={`document-line-item-${index}`}
+                  className="block text-sm"
+                >
+                  商品
+                </Label>
+                <Picker
                   id={`document-line-item-${index}`}
-                  data-testid="document-line-item"
-                  className="mt-1 block w-56 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  className="mt-1 w-56"
                   value={line.itemId}
+                  onValueChange={(value) => updateLine(index, { itemId: value, unit: "" })}
+                  options={itemOptions(items ?? [])}
                   disabled={isReturn}
-                  onChange={(event) => updateLine(index, { itemId: event.target.value, unit: "" })}
+                  data-testid="document-line-item"
+                  aria-labelledby={`document-line-item-label-${index}`}
+                />
+              </div>
+              <div>
+                <Label
+                  id={`document-line-unit-label-${index}`}
+                  htmlFor={`document-line-unit-${index}`}
+                  className="block text-sm"
                 >
-                  <option value="">请选择商品</option>
-                  {(items ?? []).map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>
-                      {candidate.code} {candidate.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-sm" htmlFor={`document-line-unit-${index}`}>
-                单位
-                <select
+                  单位
+                </Label>
+                <Picker
                   id={`document-line-unit-${index}`}
-                  data-testid="document-line-unit"
-                  className="mt-1 block w-24 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  className="mt-1 w-24"
                   value={line.unit}
-                  disabled={unitOptions.length === 0 || isReturn}
-                  onChange={(event) => updateLine(index, { unit: event.target.value })}
-                >
-                  {unitOptions.length === 0 ? (
-                    <option value="">—</option>
-                  ) : (
-                    unitOptions.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {unit}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </label>
+                  onValueChange={(value) => updateLine(index, { unit: value })}
+                  options={unitChoices}
+                  placeholder=""
+                  disabled={units.length === 0 || isReturn}
+                  data-testid="document-line-unit"
+                  aria-labelledby={`document-line-unit-label-${index}`}
+                />
+              </div>
               <label className="block text-sm" htmlFor={`document-line-quantity-${index}`}>
                 {priced ? "数量" : isReturn ? "退货数量" : "实盘数量"}
                 <input

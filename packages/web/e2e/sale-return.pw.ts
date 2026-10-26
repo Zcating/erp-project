@@ -50,6 +50,7 @@ type MasterData = {
   supplierId: string;
   customerId: string;
   warehouseId: string;
+  warehouseCode: string;
   itemId: string;
 };
 
@@ -64,8 +65,9 @@ const createMasterData = async (): Promise<MasterData> => {
     name: "杭州百货大楼",
     contact: null,
   });
+  const warehouseCode = uniqueCode("PW-SRET-WH");
   const warehouse = await api("POST", "/api/warehouses", {
-    code: uniqueCode("PW-SRET-WH"),
+    code: warehouseCode,
     name: "杭州总仓",
     purpose: null,
   });
@@ -83,6 +85,7 @@ const createMasterData = async (): Promise<MasterData> => {
     supplierId: supplier.payload.data.id as string,
     customerId: customer.payload.data.id as string,
     warehouseId: warehouse.payload.data.id as string,
+    warehouseCode,
     itemId: item.payload.data.id as string,
   };
 };
@@ -148,7 +151,9 @@ test("销售退货单能在新建页选择原销售出库行，过账后库存�
   await pickOption(page.getByTestId("document-type"), "SALE_RETURN");
   await pickOption(page.getByTestId("document-line-original").first(), outbound.lineId);
   await page.getByTestId("document-line-quantity").first().fill("2");
-  await expect(page.getByTestId("document-source-warehouse")).toHaveValue(master.warehouseId);
+  await expect(page.getByTestId("document-source-warehouse")).toHaveText(
+    `${master.warehouseCode} 杭州总仓`,
+  );
   await page.getByTestId("document-submit").click();
   await expect(page).toHaveURL(/\/documents$/);
 
