@@ -1,5 +1,13 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
+import {
+  expect,
+  countSubmitRequests,
+  loginAsAdmin,
+  pickOption,
+  pickOptionLabels,
+  test,
+  waitForDebugHandles,
+} from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -126,8 +134,7 @@ test("单据新建入口提供采购入库单、销售出库单、销售退货�
   await waitForDebugHandles(page);
   await expect(page.getByTestId("document-type")).toBeVisible();
 
-  await page.getByTestId("document-type").click();
-  const options = await page.getByRole("option").allTextContents();
+  const options = await pickOptionLabels(page.getByTestId("document-type"));
   expect(options).toEqual([
     "采购入库单",
     "销售出库单",
@@ -250,12 +257,7 @@ test("单据行金额按金额精度回显：单价 1.115、数量 3 得 3.35，
 test("缺少供应商时表单显示客户端给出的错误消息且不发出提交请求", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
-  const submitted: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() === "POST") {
-      submitted.push(request.url());
-    }
-  });
+  const submitCount = countSubmitRequests(page);
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
@@ -265,18 +267,13 @@ test("缺少供应商时表单显示客户端给出的错误消息且不发出�
   await page.getByTestId("document-submit").click();
 
   await expect(page.getByTestId("document-form-error")).toHaveText("缺少供应商");
-  expect(submitted).toEqual([]);
+  expect(submitCount()).toBe(0);
 });
 
 test("源仓与目标仓相同的调拨单提交前被拦下并给出明确提示", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
-  const submitted: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() === "POST") {
-      submitted.push(request.url());
-    }
-  });
+  const submitCount = countSubmitRequests(page);
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
@@ -287,7 +284,7 @@ test("源仓与目标仓相同的调拨单提交前被拦下并给出明确提�
   await page.getByTestId("document-submit").click();
 
   await expect(page.getByTestId("document-form-error")).toHaveText("源仓与目标仓必须不同");
-  expect(submitted).toEqual([]);
+  expect(submitCount()).toBe(0);
 });
 
 test("删除草稿后单据列表里不再显示该条草稿", async ({ page }) => {

@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { countSubmitRequests, expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
 
 const uniqueCode = (prefix: string): string =>
   `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
@@ -143,12 +143,7 @@ test("编辑名称与辅助单位换算率后保存成功，列表页与编辑�
 
 test("缺少名称或基本计量单位时表单显示客户端给出的错误消息且不发出提交请求", async ({ page }) => {
   await loginAsAdmin(page);
-  const submitted: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() === "POST") {
-      submitted.push(request.url());
-    }
-  });
+  const submitCount = countSubmitRequests(page);
 
   await page.goto("/items/new");
   await waitForDebugHandles(page);
@@ -164,13 +159,13 @@ test("缺少名称或基本计量单位时表单显示客户端给出的错误�
   await page.getByTestId("item-name").fill("");
   await page.getByTestId("item-submit").click();
   await expect(page.getByTestId("item-form-error")).toHaveText("缺少商品名称");
-  expect(submitted).toEqual([]);
+  expect(submitCount()).toBe(0);
 
   await page.getByTestId("item-name").fill("可口可乐");
   await page.getByTestId("item-base-unit").fill("");
   await page.getByTestId("item-submit").click();
   await expect(page.getByTestId("item-form-error")).toHaveText("缺少基本计量单位");
-  expect(submitted).toEqual([]);
+  expect(submitCount()).toBe(0);
 });
 
 test("换算率非法时表单显示后端给出的错误消息", async ({ page }) => {

@@ -1,5 +1,14 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
+import {
+  countSubmitRequests,
+  expect,
+  loginAsAdmin,
+  pickOption,
+  pickOptionByLabel,
+  pickOptionLabels,
+  test,
+  waitForDebugHandles,
+} from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -135,12 +144,14 @@ test("采购退货单能在新建页选择原采购入库行，过账后库存�
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
   await pickOption(page.getByTestId("document-type"), "PURCHASE_RETURN");
-  await page.getByTestId("document-line-original").first().click();
-  await expect(
-    page.getByRole("option").filter({ hasText: `${inbound.documentNo} 第 1 行` }),
-  ).toHaveCount(1);
-  await page.keyboard.press("Escape");
-  await pickOption(page.getByTestId("document-line-original").first(), inbound.lineId);
+  const originalLabels = await pickOptionLabels(page.getByTestId("document-line-original").first());
+  expect(
+    originalLabels.filter((label) => label.includes(`${inbound.documentNo} 第 1 行`)),
+  ).toHaveLength(1);
+  await pickOptionByLabel(
+    page.getByTestId("document-line-original").first(),
+    `${inbound.documentNo} 第 1 行`,
+  );
   await page.getByTestId("document-line-quantity").first().fill("4");
   await expect(page.getByTestId("document-source-warehouse")).toHaveText(
     `${master.warehouseCode} 杭州总仓`,
@@ -184,12 +195,7 @@ test("采购退货单不选原采购入库行时提交前被拦下，界面显�
   await loginAsAdmin(page);
   const master = await createMasterData();
   await createPostedInbound(master);
-  const submitted: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() === "POST") {
-      submitted.push(request.url());
-    }
-  });
+  const submitCount = countSubmitRequests(page);
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
@@ -199,5 +205,5 @@ test("采购退货单不选原采购入库行时提交前被拦下，界面显�
 
   await expect(page.getByTestId("document-form-error")).toBeVisible();
   await expect(page.getByTestId("document-form-error")).toContainText("缺少原单据行引用");
-  expect(submitted).toEqual([]);
+  expect(submitCount()).toBe(0);
 });

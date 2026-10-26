@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAtom } from "jotai";
 import { AdminShell } from "@/components/admin-shell";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Picker } from "@/components/ui/picker";
 import {
@@ -154,7 +154,7 @@ function DocumentListPage() {
                       to="/documents/$documentId/edit"
                       params={{ documentId: document.id }}
                       data-testid="document-edit"
-                      className="rounded-md px-2 py-1 hover:bg-muted"
+                      className={buttonVariants({ variant: "ghost", size: "sm" })}
                     >
                       编辑
                     </Link>

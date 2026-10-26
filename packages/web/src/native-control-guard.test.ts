@@ -3,7 +3,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const webSrcDir = path.resolve(import.meta.dirname);
-const exemptComponentDir = path.join(webSrcDir, "components", "ui");
+
+const EXEMPT_NATIVE_CONTROL_FILES = new Set([path.join("components", "ui", "input.tsx")]);
 
 const NATIVE_CONTROL_TAGS = ["select", "input", "button"] as const;
 
@@ -35,15 +36,16 @@ function collectGuardedFiles(dir: string): Array<string> {
   for (const entry of readdirSync(dir)) {
     const fullPath = path.join(dir, entry);
     if (statSync(fullPath).isDirectory()) {
-      if (fullPath === exemptComponentDir) {
-        continue;
-      }
       files.push(...collectGuardedFiles(fullPath));
       continue;
     }
-    if (/\.(ts|tsx)$/.test(entry)) {
-      files.push(fullPath);
+    if (!/\.(ts|tsx)$/.test(entry)) {
+      continue;
     }
+    if (EXEMPT_NATIVE_CONTROL_FILES.has(path.relative(webSrcDir, fullPath))) {
+      continue;
+    }
+    files.push(fullPath);
   }
   return files;
 }
@@ -65,6 +67,13 @@ describe("零原生控件守卫", () => {
     expect(collectGuardedFiles(webSrcDir)).toContain(
       path.join(webSrcDir, "native-control-guard.test.ts"),
     );
+  });
+
+  it("组件实现目录里只有真正含原生标签的组件文件被豁免", () => {
+    const guarded = collectGuardedFiles(webSrcDir);
+
+    expect(guarded).not.toContain(path.join(webSrcDir, "components", "ui", "input.tsx"));
+    expect(guarded).toContain(path.join(webSrcDir, "components", "ui", "picker.tsx"));
   });
 
   it("前端源码里没有原生下拉、原生输入或原生按钮", () => {

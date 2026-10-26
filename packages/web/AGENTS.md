@@ -5,6 +5,7 @@
 ## 组件
 
 - 不得直接写原生 `<select>`、`<input>`、`<button>`。输入框用 `Input`，标签用 `Label`，按钮用 `Button`（均在 `components/ui` 下）。
+- 「不得直接写原生控件」这条约束有自动检查：`vp test` 会扫描前端源码，命中原生下拉、原生输入或原生按钮就让验证命令变红；检查只豁免 shadcn 组件内部确实需要的原生标签。
 - 选择类控件（取值下拉、筛选项、单据行的取值）一律走 `<Picker options>`（`@/components/ui/picker`），不要在业务页面里直接用 `Select`。
   - `Picker` 的对外接口固定为 `value`、`onValueChange`、`options`、`placeholder`、`disabled`、`id`、`className`、`aria-label`、`aria-labelledby`、`data-testid`；不要在调用处发明别的参数名。
   - 选项形状固定为 `{ value: string; label: string; disabled?: boolean }`；`value` 为空字符串表示「未选择／全部」。
@@ -27,4 +28,4 @@
 ## 端到端
 
 - 选值动作统一走 `e2e/fixtures.ts` 里的选值助手，按取值选中；不要直接调用原生下拉的选值接口。
-- 选值助手冻结：发现它不够用时改助手本身，不要在用例里另写一套分支。
+- 选值助手冻结：它不够用时改助手本身（`e2e/fixtures.ts`），不要在用例里另写一套分支。

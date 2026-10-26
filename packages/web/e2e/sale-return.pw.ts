@@ -1,5 +1,12 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
+import {
+  countSubmitRequests,
+  expect,
+  loginAsAdmin,
+  pickOption,
+  test,
+  waitForDebugHandles,
+} from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -190,12 +197,7 @@ test("销售退货单不选原销售出库行时提交前被拦下，界面显�
   const master = await createMasterData();
   await seedStock(master);
   await createPostedOutbound(master);
-  const submitted: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() === "POST") {
-      submitted.push(request.url());
-    }
-  });
+  const submitCount = countSubmitRequests(page);
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
@@ -205,5 +207,5 @@ test("销售退货单不选原销售出库行时提交前被拦下，界面显�
 
   await expect(page.getByTestId("document-form-error")).toBeVisible();
   await expect(page.getByTestId("document-form-error")).toContainText("缺少原单据行引用");
-  expect(submitted).toEqual([]);
+  expect(submitCount()).toBe(0);
 });
