@@ -7,7 +7,7 @@ export default defineConfig({
       "**/dist/**",
       ".scratch/**",
       "**/routeTree.gen.ts",
-      "**/drizzle/**",
+      "**/drizzle/meta/**",
     ],
   },
   lint: {
@@ -16,11 +16,14 @@ export default defineConfig({
       "**/dist/**",
       ".scratch/**",
       "**/routeTree.gen.ts",
-      "**/drizzle/**",
+      "**/drizzle/meta/**",
     ],
     options: {
       typeAware: true,
       typeCheck: true,
     },
+  },
+  test: {
+    exclude: ["**/node_modules/**", "**/dist/**", "**/.worktrees/**"],
   },
 });
