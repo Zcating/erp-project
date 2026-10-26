@@ -102,6 +102,16 @@ pnpm --filter @erp-inventory-sales/app start
 
 默认监听 `http://localhost:3000`，端口用 `PORT` 覆盖。
 
+启动命令会自动加载仓库根目录的 `.env`（文件不存在时忽略，不影响 CI 与生产环境）：
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/erp
+ADMIN_USERNAME=erp_admin
+ADMIN_PASSWORD=换成你自己的口令
+```
+
+`.env` 已在 `.gitignore` 里，不进版本库；`.env.example` 是它的模板。
+
 ```bash
 curl http://localhost:3000/api/health
 # {"data":{"status":"ok"}}
@@ -110,6 +120,8 @@ curl http://localhost:3000/api/health
 ### 管理员账号
 
 管理员账号只有一份，由环境变量提供；系统不开放注册接口，也没有管理员表。
+
+除下面的 shell 写法外，也可以直接写进仓库根目录的 `.env`（启动命令自动加载，`.env` 不进版本库）。
 
 ```bash
 # PowerShell
