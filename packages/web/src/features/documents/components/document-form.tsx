@@ -1,7 +1,8 @@
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Picker } from "@/components/ui/picker";
 import { itemListQueryOptions } from "@/features/items";
@@ -24,6 +25,7 @@ import {
   unitOptions,
   warehouseOptions,
 } from "../lib/options";
+import { buildDocumentInput, type DocumentLineDraft } from "../lib/payload";
 import { documentListQueryOptions } from "../lib/queries";
 
 export type DocumentFormProps = {
@@ -34,15 +36,7 @@ export type DocumentFormProps = {
   onSubmit: (input: DocumentInput) => Promise<FormSubmitResult>;
 };
 
-type LineDraft = {
-  itemId: string;
-  quantity: string;
-  unitPrice: string;
-  unit: string;
-  originalLineId: string;
-};
-
-const emptyLine = (): LineDraft => ({
+const emptyLine = (): DocumentLineDraft => ({
   itemId: "",
   quantity: "",
   unitPrice: "",
@@ -65,32 +59,40 @@ export function DocumentForm({
   submitLabel,
   onSubmit,
 }: DocumentFormProps) {
+  const [error, setError] = useState<string | null>(null);
+  const form = useForm({
+    defaultValues: {
+      supplierId: initialDocument?.supplierId ?? "",
+      customerId: initialDocument?.customerId ?? "",
+      sourceWarehouseId: initialDocument?.sourceWarehouseId ?? "",
+      targetWarehouseId: initialDocument?.targetWarehouseId ?? "",
+      warehouseId: initialDocument?.warehouseId ?? "",
+      lines:
+        initialDocument === undefined
+          ? [emptyLine()]
+          : initialDocument.lines.map((line) => ({
+              itemId: line.itemId,
+              quantity: line.quantity,
+              unitPrice: line.unitPrice ?? "",
+              unit: "",
+              originalLineId: line.originalLineId ?? "",
+            })),
+    },
+    onSubmit: async ({ value }) => {
+      setError(null);
+      const result = await onSubmit(buildDocumentInput(value, documentType));
+      if (!result.ok) {
+        setError(result.message);
+      }
+    },
+  });
+  const values = useSelector(form.store, (state) => state.values);
+  const isSubmitting = useSelector(form.store, (state) => state.isSubmitting);
+
   const isSaleReturn = documentType === "SALE_RETURN";
   const isPurchaseReturn = documentType === "PURCHASE_RETURN";
   const isReturn = isSaleReturn || isPurchaseReturn;
   const priced = documentType !== "STOCKTAKE" && !isReturn;
-  const [supplierId, setSupplierId] = useState(initialDocument?.supplierId ?? "");
-  const [customerId, setCustomerId] = useState(initialDocument?.customerId ?? "");
-  const [sourceWarehouseId, setSourceWarehouseId] = useState(
-    initialDocument?.sourceWarehouseId ?? "",
-  );
-  const [targetWarehouseId, setTargetWarehouseId] = useState(
-    initialDocument?.targetWarehouseId ?? "",
-  );
-  const [warehouseId, setWarehouseId] = useState(initialDocument?.warehouseId ?? "");
-  const [lines, setLines] = useState<LineDraft[]>(
-    initialDocument === undefined
-      ? [emptyLine()]
-      : initialDocument.lines.map((line) => ({
-          itemId: line.itemId,
-          quantity: line.quantity,
-          unitPrice: line.unitPrice ?? "",
-          unit: "",
-          originalLineId: line.originalLineId ?? "",
-        })),
-  );
-  const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
 
   const { data: items } = useQuery(itemListQueryOptions());
   const { data: suppliers } = useQuery(supplierListQueryOptions());
@@ -127,9 +129,9 @@ export function DocumentForm({
     ...originalChoices.map((choice) => ({ value: choice.value, label: choice.label })),
   ];
 
-  const updateLine = (index: number, patch: Partial<LineDraft>): void => {
-    setLines((current) =>
-      current.map((line, position) => (position === index ? { ...line, ...patch } : line)),
+  const updateLine = (index: number, patch: Partial<DocumentLineDraft>): void => {
+    form.setFieldValue("lines", (lines) =>
+      lines.map((line, position) => (position === index ? { ...line, ...patch } : line)),
     );
   };
 
@@ -141,41 +143,7 @@ export function DocumentForm({
       unit: "",
     });
     if (choice !== undefined) {
-      setSourceWarehouseId(choice.warehouseId);
-    }
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setPending(true);
-    setError(null);
-    const result = await onSubmit({
-      type: documentType,
-      supplierId: documentType === "PURCHASE_INBOUND" && supplierId !== "" ? supplierId : null,
-      customerId: documentType === "SALE_OUTBOUND" && customerId !== "" ? customerId : null,
-      sourceWarehouseId:
-        (documentType === "SALE_OUTBOUND" || documentType === "TRANSFER" || isReturn) &&
-        sourceWarehouseId !== ""
-          ? sourceWarehouseId
-          : null,
-      targetWarehouseId:
-        (documentType === "PURCHASE_INBOUND" || documentType === "TRANSFER") &&
-        targetWarehouseId !== ""
-          ? targetWarehouseId
-          : null,
-      warehouseId: documentType === "STOCKTAKE" && warehouseId !== "" ? warehouseId : null,
-      lines: lines.map((line) => ({
-        itemId: line.itemId,
-        quantity: line.quantity,
-        unitPrice: priced && line.unitPrice !== "" ? line.unitPrice : null,
-        amount: null,
-        unit: line.unit === "" ? null : line.unit,
-        originalLineId: line.originalLineId === "" ? null : line.originalLineId,
-      })),
-    });
-    setPending(false);
-    if (!result.ok) {
-      setError(result.message);
+      form.setFieldValue("sourceWarehouseId", choice.warehouseId);
     }
   };
 
@@ -187,7 +155,15 @@ export function DocumentForm({
   const needsWarehouse = documentType === "STOCKTAKE";
 
   return (
-    <form data-testid="document-form" className="max-w-3xl space-y-4" onSubmit={handleSubmit}>
+    <form
+      data-testid="document-form"
+      className="max-w-3xl space-y-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void form.handleSubmit();
+      }}
+    >
       {onDocumentTypeChange === undefined ? null : (
         <div>
           <Label id="document-type-label" htmlFor="document-type" className="block text-sm">
@@ -213,8 +189,8 @@ export function DocumentForm({
           <Picker
             id="document-supplier"
             className="mt-1 w-full"
-            value={supplierId}
-            onValueChange={setSupplierId}
+            value={values.supplierId}
+            onValueChange={(value) => form.setFieldValue("supplierId", value)}
             options={supplierOptions(suppliers ?? [])}
             data-testid="document-supplier"
             aria-labelledby="document-supplier-label"
@@ -230,8 +206,8 @@ export function DocumentForm({
           <Picker
             id="document-customer"
             className="mt-1 w-full"
-            value={customerId}
-            onValueChange={setCustomerId}
+            value={values.customerId}
+            onValueChange={(value) => form.setFieldValue("customerId", value)}
             options={customerOptions(customers ?? [])}
             data-testid="document-customer"
             aria-labelledby="document-customer-label"
@@ -257,8 +233,8 @@ export function DocumentForm({
           <Picker
             id="document-source-warehouse"
             className="mt-1 w-full"
-            value={sourceWarehouseId}
-            onValueChange={setSourceWarehouseId}
+            value={values.sourceWarehouseId}
+            onValueChange={(value) => form.setFieldValue("sourceWarehouseId", value)}
             options={warehouseOptions(warehouses ?? [])}
             disabled={isReturn}
             data-testid="document-source-warehouse"
@@ -279,8 +255,8 @@ export function DocumentForm({
           <Picker
             id="document-target-warehouse"
             className="mt-1 w-full"
-            value={targetWarehouseId}
-            onValueChange={setTargetWarehouseId}
+            value={values.targetWarehouseId}
+            onValueChange={(value) => form.setFieldValue("targetWarehouseId", value)}
             options={warehouseOptions(warehouses ?? [])}
             data-testid="document-target-warehouse"
             aria-labelledby="document-target-warehouse-label"
@@ -300,8 +276,8 @@ export function DocumentForm({
           <Picker
             id="document-warehouse"
             className="mt-1 w-full"
-            value={warehouseId}
-            onValueChange={setWarehouseId}
+            value={values.warehouseId}
+            onValueChange={(value) => form.setFieldValue("warehouseId", value)}
             options={warehouseOptions(warehouses ?? [])}
             data-testid="document-warehouse"
             aria-labelledby="document-warehouse-label"
@@ -311,7 +287,7 @@ export function DocumentForm({
 
       <fieldset className="space-y-2" data-testid="document-lines">
         <legend className="text-sm">单据行</legend>
-        {lines.map((line, index) => {
+        {values.lines.map((line, index) => {
           const item = (items ?? []).find((candidate) => candidate.id === line.itemId);
           const units = unitNames(item);
           const unitChoices = unitOptions(item);
@@ -377,27 +353,31 @@ export function DocumentForm({
                   aria-labelledby={`document-line-unit-label-${index}`}
                 />
               </div>
-              <label className="block text-sm" htmlFor={`document-line-quantity-${index}`}>
-                {priced ? "数量" : isReturn ? "退货数量" : "实盘数量"}
-                <input
+              <div>
+                <Label htmlFor={`document-line-quantity-${index}`} className="block text-sm">
+                  {priced ? "数量" : isReturn ? "退货数量" : "实盘数量"}
+                </Label>
+                <Input
                   id={`document-line-quantity-${index}`}
                   data-testid="document-line-quantity"
-                  className="mt-1 block w-28 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  className="mt-1 w-28"
                   value={line.quantity}
                   onChange={(event) => updateLine(index, { quantity: event.target.value })}
                 />
-              </label>
+              </div>
               {priced ? (
-                <label className="block text-sm" htmlFor={`document-line-unit-price-${index}`}>
-                  单价
-                  <input
+                <div>
+                  <Label htmlFor={`document-line-unit-price-${index}`} className="block text-sm">
+                    单价
+                  </Label>
+                  <Input
                     id={`document-line-unit-price-${index}`}
                     data-testid="document-line-unit-price"
-                    className="mt-1 block w-28 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    className="mt-1 w-28"
                     value={line.unitPrice}
                     onChange={(event) => updateLine(index, { unitPrice: event.target.value })}
                   />
-                </label>
+                </div>
               ) : null}
               <span className="text-sm" data-testid="document-line-amount">
                 {priced ? (computeLineAmount(line.quantity, line.unitPrice, rate) ?? "—") : "—"}
@@ -406,9 +386,7 @@ export function DocumentForm({
                 type="button"
                 variant="outline"
                 data-testid="document-line-remove"
-                onClick={() =>
-                  setLines((current) => current.filter((_, position) => position !== index))
-                }
+                onClick={() => void form.removeFieldValue("lines", index)}
               >
                 移除
               </Button>
@@ -419,7 +397,7 @@ export function DocumentForm({
           type="button"
           variant="outline"
           data-testid="document-line-add"
-          onClick={() => setLines((current) => [...current, emptyLine()])}
+          onClick={() => form.pushFieldValue("lines", emptyLine())}
         >
           添加单据行
         </Button>
@@ -431,7 +409,7 @@ export function DocumentForm({
         </p>
       )}
 
-      <Button type="submit" data-testid="document-submit" disabled={pending}>
+      <Button type="submit" data-testid="document-submit" disabled={isSubmitting}>
         {submitLabel}
       </Button>
     </form>
