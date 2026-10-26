@@ -82,10 +82,7 @@ export function validateDocumentLine(
     throw new ValidationError(`第 ${lineNo} 行缺少商品`);
   }
   const quantityRaw = line.quantity;
-  if (isBlank(quantityRaw)) {
-    throw new ValidationError(`第 ${lineNo} 行缺少数量`);
-  }
-  assertDecimal(quantityRaw, "数量", lineNo, QUANTITY_SCALE);
+  assertQuantityText(quantityRaw, lineNo);
   const quantityValue = quantity(quantityRaw);
   if (rule.priced) {
     if (!quantityValue.greaterThan(0)) {
@@ -126,6 +123,13 @@ export function validateDocumentLine(
 
 export function isBlank(value: string | null | undefined): boolean {
   return value === null || value === undefined || value.trim() === "";
+}
+
+export function assertQuantityText(raw: string, lineNo: number): void {
+  if (isBlank(raw)) {
+    throw new ValidationError(`第 ${lineNo} 行缺少数量`);
+  }
+  assertDecimal(raw, "数量", lineNo, QUANTITY_SCALE);
 }
 
 function hasValue(value: string | null | undefined): value is string {

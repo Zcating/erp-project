@@ -17,6 +17,7 @@ import {
   type ItemMasterInput,
 } from "./model.js";
 import type { ItemMasterRepository } from "./ports.js";
+import { baseQuantityOf } from "./units.js";
 import {
   createItemMasterService,
   type ItemBatchRow,
@@ -33,6 +34,7 @@ export const itemMaster = {
   CONVERSION_RATE_SCALE,
   ITEM_IMPORT_COLUMNS,
   ITEM_IMPORT_JSON_FIELDS,
+  baseQuantityOf,
   createInMemoryItemMasterRepository,
   createItemImportService,
   createItemMasterService,
@@ -50,6 +52,7 @@ export {
   ITEM_IMPORT_COLUMNS,
   ITEM_IMPORT_JSON_FIELDS,
   ItemBatchError,
+  baseQuantityOf,
   createInMemoryItemMasterRepository,
   createItemImportService,
   createItemMasterService,

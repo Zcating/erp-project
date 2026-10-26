@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { itemListQueryOptions } from "@/features/items";
+import type { ItemMaster } from "@/features/items";
 import {
   customerListQueryOptions,
   supplierListQueryOptions,
@@ -24,9 +25,25 @@ type LineDraft = {
   itemId: string;
   quantity: string;
   unitPrice: string;
+  unit: string;
 };
 
-const emptyLine = (): LineDraft => ({ itemId: "", quantity: "", unitPrice: "" });
+const emptyLine = (): LineDraft => ({ itemId: "", quantity: "", unitPrice: "", unit: "" });
+
+const unitOptionsOf = (item: ItemMaster | undefined): string[] => {
+  if (item === undefined) {
+    return [];
+  }
+  return [item.baseUnit, ...item.auxiliaryUnits.map((auxiliaryUnit) => auxiliaryUnit.unit)];
+};
+
+const conversionRateOf = (item: ItemMaster | undefined, unit: string): string => {
+  if (item === undefined || unit === "" || unit === item.baseUnit) {
+    return "1";
+  }
+  const auxiliary = item.auxiliaryUnits.find((candidate) => candidate.unit === unit);
+  return auxiliary?.conversionRate ?? "1";
+};
 
 export function DocumentForm({
   documentType,
@@ -52,6 +69,7 @@ export function DocumentForm({
           itemId: line.itemId,
           quantity: line.quantity,
           unitPrice: line.unitPrice ?? "",
+          unit: "",
         })),
   );
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +110,7 @@ export function DocumentForm({
         quantity: line.quantity,
         unitPrice: priced && line.unitPrice !== "" ? line.unitPrice : null,
         amount: null,
+        unit: line.unit === "" ? null : line.unit,
       })),
     });
     setPending(false);
@@ -229,62 +248,88 @@ export function DocumentForm({
 
       <fieldset className="space-y-2" data-testid="document-lines">
         <legend className="text-sm">单据行</legend>
-        {lines.map((line, index) => (
-          <div key={index} className="flex items-end gap-2" data-testid="document-line">
-            <label className="block text-sm" htmlFor={`document-line-item-${index}`}>
-              商品
-              <select
-                id={`document-line-item-${index}`}
-                data-testid="document-line-item"
-                className="mt-1 block w-56 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={line.itemId}
-                onChange={(event) => updateLine(index, { itemId: event.target.value })}
-              >
-                <option value="">请选择商品</option>
-                {(items ?? []).map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.code} {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm" htmlFor={`document-line-quantity-${index}`}>
-              {priced ? "数量" : "实盘数量"}
-              <input
-                id={`document-line-quantity-${index}`}
-                data-testid="document-line-quantity"
-                className="mt-1 block w-28 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={line.quantity}
-                onChange={(event) => updateLine(index, { quantity: event.target.value })}
-              />
-            </label>
-            {priced ? (
-              <label className="block text-sm" htmlFor={`document-line-unit-price-${index}`}>
-                单价
+        {lines.map((line, index) => {
+          const item = (items ?? []).find((candidate) => candidate.id === line.itemId);
+          const unitOptions = unitOptionsOf(item);
+          const rate = conversionRateOf(item, line.unit);
+          return (
+            <div key={index} className="flex items-end gap-2" data-testid="document-line">
+              <label className="block text-sm" htmlFor={`document-line-item-${index}`}>
+                商品
+                <select
+                  id={`document-line-item-${index}`}
+                  data-testid="document-line-item"
+                  className="mt-1 block w-56 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  value={line.itemId}
+                  onChange={(event) => updateLine(index, { itemId: event.target.value, unit: "" })}
+                >
+                  <option value="">请选择商品</option>
+                  {(items ?? []).map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.code} {candidate.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm" htmlFor={`document-line-unit-${index}`}>
+                单位
+                <select
+                  id={`document-line-unit-${index}`}
+                  data-testid="document-line-unit"
+                  className="mt-1 block w-24 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  value={line.unit}
+                  disabled={unitOptions.length === 0}
+                  onChange={(event) => updateLine(index, { unit: event.target.value })}
+                >
+                  {unitOptions.length === 0 ? (
+                    <option value="">—</option>
+                  ) : (
+                    unitOptions.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
+              <label className="block text-sm" htmlFor={`document-line-quantity-${index}`}>
+                {priced ? "数量" : "实盘数量"}
                 <input
-                  id={`document-line-unit-price-${index}`}
-                  data-testid="document-line-unit-price"
+                  id={`document-line-quantity-${index}`}
+                  data-testid="document-line-quantity"
                   className="mt-1 block w-28 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  value={line.unitPrice}
-                  onChange={(event) => updateLine(index, { unitPrice: event.target.value })}
+                  value={line.quantity}
+                  onChange={(event) => updateLine(index, { quantity: event.target.value })}
                 />
               </label>
-            ) : null}
-            <span className="text-sm" data-testid="document-line-amount">
-              {priced ? (computeLineAmount(line.quantity, line.unitPrice) ?? "—") : "—"}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="document-line-remove"
-              onClick={() =>
-                setLines((current) => current.filter((_, position) => position !== index))
-              }
-            >
-              移除
-            </Button>
-          </div>
-        ))}
+              {priced ? (
+                <label className="block text-sm" htmlFor={`document-line-unit-price-${index}`}>
+                  单价
+                  <input
+                    id={`document-line-unit-price-${index}`}
+                    data-testid="document-line-unit-price"
+                    className="mt-1 block w-28 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    value={line.unitPrice}
+                    onChange={(event) => updateLine(index, { unitPrice: event.target.value })}
+                  />
+                </label>
+              ) : null}
+              <span className="text-sm" data-testid="document-line-amount">
+                {priced ? (computeLineAmount(line.quantity, line.unitPrice, rate) ?? "—") : "—"}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                data-testid="document-line-remove"
+                onClick={() =>
+                  setLines((current) => current.filter((_, position) => position !== index))
+                }
+              >
+                移除
+              </Button>
+            </div>
+          );
+        })}
         <Button
           type="button"
           variant="outline"

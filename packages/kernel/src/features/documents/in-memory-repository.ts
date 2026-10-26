@@ -1,6 +1,6 @@
 import { DuplicateError } from "../../shared/errors/index.js";
 import type { MasterDataReference } from "../../shared/ports/index.js";
-import type { Document, DocumentFilter, DocumentType } from "./model.js";
+import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model.js";
 import type { DocumentRepository } from "./ports.js";
 
 export function createInMemoryDocumentRepository(): DocumentRepository {
@@ -49,6 +49,11 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
       return document === undefined ? null : copy(document);
     },
 
+    async findByIdForUpdate(id: string): Promise<Document | null> {
+      const document = stored.get(id);
+      return document === undefined ? null : copy(document);
+    },
+
     async findByDocumentNo(documentNo: string): Promise<Document | null> {
       const document = findByDocumentNo(documentNo);
       return document === null ? null : copy(document);
@@ -65,6 +70,15 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
       stored.set(document.id, copy(document));
     },
 
+    async updateStatus(id: string, from: DocumentStatus, to: DocumentStatus): Promise<boolean> {
+      const document = stored.get(id);
+      if (document === undefined || document.status !== from) {
+        return false;
+      }
+      stored.set(id, { ...document, status: to });
+      return true;
+    },
+
     async remove(id: string): Promise<boolean> {
       return stored.delete(id);
     },
@@ -78,6 +92,15 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
 
     async findMasterDataReferences(masterDataId: string): Promise<MasterDataReference[]> {
       return referencesOf(masterDataId);
+    },
+
+    async findPostedItemReferences(itemId: string): Promise<MasterDataReference[]> {
+      return [...stored.values()]
+        .filter(
+          (document) =>
+            document.status !== "DRAFT" && document.lines.some((line) => line.itemId === itemId),
+        )
+        .map((document) => ({ documentNo: document.documentNo }));
     },
   };
 }

@@ -8,6 +8,8 @@ import {
   documentLines,
   documentNumberCounters,
   documents,
+  inventoryBalances,
+  inventoryLedgerEntries,
   itemAuxiliaryUnits,
   items,
   kernelPg,
@@ -24,6 +26,7 @@ describe("kernel-pg package", () => {
       "createDatabase",
       "createDocumentRepository",
       "createItemMasterRepository",
+      "createStockLedgerRepository",
       "createSupplierRepository",
       "createTransactionRunner",
       "createWarehouseRepository",
@@ -92,6 +95,30 @@ describe("kernel-pg package", () => {
     ]);
     expect(indexNamesOf(getTableConfig(documentLines))).toEqual([
       "document_lines_document_line_no_key",
+    ]);
+  });
+
+  it("库存台账与库存流水两张表落在 erp schema，数量、单价、金额分别用 erp 三个十进制域承载", () => {
+    expect(getTableConfig(inventoryBalances).schema).toBe("erp");
+    expect(getTableConfig(inventoryBalances).name).toBe("inventory_balances");
+    expect(getTableConfig(inventoryLedgerEntries).schema).toBe("erp");
+    expect(getTableConfig(inventoryLedgerEntries).name).toBe("inventory_ledger_entries");
+
+    expect(inventoryBalances.quantity.getSQLType()).toBe("erp.quantity");
+    expect(inventoryBalances.unitCost.getSQLType()).toBe("erp.unit_price");
+    expect(inventoryLedgerEntries.quantityBefore.getSQLType()).toBe("erp.quantity");
+    expect(inventoryLedgerEntries.quantityAfter.getSQLType()).toBe("erp.quantity");
+    expect(inventoryLedgerEntries.costBefore.getSQLType()).toBe("erp.unit_price");
+    expect(inventoryLedgerEntries.costAfter.getSQLType()).toBe("erp.unit_price");
+    expect(inventoryLedgerEntries.unitPrice.getSQLType()).toBe("erp.unit_price");
+    expect(inventoryLedgerEntries.amount.getSQLType()).toBe("erp.amount");
+
+    const indexNamesOf = (table: ReturnType<typeof getTableConfig>): string[] =>
+      table.indexes.map((index) => index.config.name ?? "");
+
+    expect(indexNamesOf(getTableConfig(inventoryLedgerEntries))).toEqual([
+      "inventory_ledger_entries_document_idx",
+      "inventory_ledger_entries_document_no_idx",
     ]);
   });
 });

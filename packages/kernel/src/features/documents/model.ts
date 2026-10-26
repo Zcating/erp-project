@@ -63,6 +63,7 @@ export type DocumentLineInput = {
   quantity: string;
   unitPrice: string | null;
   amount: string | null;
+  unit?: string | null;
 };
 
 export type DocumentInput = {

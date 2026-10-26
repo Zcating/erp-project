@@ -5,6 +5,7 @@ import type { DatabaseConnection, KernelDatabase } from "./db/client.js";
 import { createTransactionRunner } from "./db/transactions.js";
 import type { PgTransaction } from "./db/transactions.js";
 import { createDocumentRepository } from "./features/documents/repository.js";
+import { createStockLedgerRepository } from "./features/inventory/repository.js";
 import { createItemMasterRepository } from "./features/item-master/repository.js";
 import {
   createCustomerRepository,
@@ -20,6 +21,8 @@ export {
   documentLines,
   documentNumberCounters,
   documents,
+  inventoryBalances,
+  inventoryLedgerEntries,
   quantityType,
   unitPriceType,
   type DecimalText,
@@ -38,6 +41,7 @@ export const kernelPg = {
   createCustomerRepository,
   createDocumentRepository,
   createItemMasterRepository,
+  createStockLedgerRepository,
   createSupplierRepository,
   createTransactionRunner,
   createWarehouseRepository,
@@ -48,6 +52,7 @@ export {
   createCustomerRepository,
   createDocumentRepository,
   createItemMasterRepository,
+  createStockLedgerRepository,
   createSupplierRepository,
   createTransactionRunner,
   createWarehouseRepository,

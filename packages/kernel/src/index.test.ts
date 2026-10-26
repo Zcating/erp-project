@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { inventory, itemMaster, parties, ports, purchasing, selling } from "./index.js";
+import { inventory, itemMaster, parties, ports, posting, purchasing, selling } from "./index.js";
 
 describe("kernel package", () => {
   it("exposes its public surface", () => {
-    expect({ inventory, ports, purchasing, selling }).toEqual({
-      inventory: {},
+    expect({ ports, selling }).toEqual({
       ports: {},
-      purchasing: {},
       selling: {},
     });
   });
@@ -16,6 +14,7 @@ describe("kernel package", () => {
       "CONVERSION_RATE_SCALE",
       "ITEM_IMPORT_COLUMNS",
       "ITEM_IMPORT_JSON_FIELDS",
+      "baseQuantityOf",
       "createInMemoryItemMasterRepository",
       "createItemImportService",
       "createItemMasterService",
@@ -56,5 +55,22 @@ describe("kernel package", () => {
       "validateSupplierInput",
       "validateWarehouseInput",
     ]);
+  });
+
+  it("库存 feature 的公开面带库存台账与库存流水的端口实现、成本结转与查询服务", () => {
+    expect(Object.keys(inventory).sort()).toEqual([
+      "STOCK_LEDGER_DIRECTIONS",
+      "createInMemoryStockLedgerRepository",
+      "createInventoryQueryService",
+      "weightedAverageUnitCost",
+    ]);
+  });
+
+  it("过账 feature 的公开面带过账服务与扩展点类型", () => {
+    expect(Object.keys(posting).sort()).toEqual(["POSTING_DIRECTIONS", "createPostingService"]);
+  });
+
+  it("采购 feature 的公开面带采购入库的过账类型实现", () => {
+    expect(Object.keys(purchasing).sort()).toEqual(["createPurchaseInboundPostingHandler"]);
   });
 });

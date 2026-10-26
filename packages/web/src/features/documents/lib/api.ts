@@ -39,6 +39,7 @@ export type DocumentLineInput = {
   quantity: string;
   unitPrice: string | null;
   amount: string | null;
+  unit?: string | null;
 };
 
 export type DocumentInput = {
@@ -142,6 +143,26 @@ export const deleteDocument = createServerFn({ method: "POST" })
       return { ok: false, code: body.code, message: body.message };
     }
     return { ok: true };
+  });
+
+export const postDocument = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => ({ id: data.id }))
+  .handler(async ({ data }): Promise<DocumentMutationResult> => {
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    const response = await fetchApi(`/api/documents/${data.id}/post`, getRequestHeader("cookie"), {
+      method: "POST",
+    });
+    return readMutationResult(response);
+  });
+
+export const voidDocument = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => ({ id: data.id }))
+  .handler(async ({ data }): Promise<DocumentMutationResult> => {
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    const response = await fetchApi(`/api/documents/${data.id}/void`, getRequestHeader("cookie"), {
+      method: "POST",
+    });
+    return readMutationResult(response);
   });
 
 export async function toFormSubmitResult(

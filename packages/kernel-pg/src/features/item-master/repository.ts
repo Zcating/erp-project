@@ -3,7 +3,7 @@ import type {
   ItemMasterRepository,
   TransactionContext,
 } from "@erp-inventory-sales/kernel";
-import { DuplicateError } from "@erp-inventory-sales/kernel";
+import { ConflictError, DuplicateError } from "@erp-inventory-sales/kernel";
 import { randomUUID } from "node:crypto";
 import type { InferSelectModel } from "drizzle-orm";
 import { asc, eq, inArray } from "drizzle-orm";
@@ -198,6 +198,12 @@ function translateWriteError(error: unknown, item: ItemMaster): unknown {
       return new DuplicateError(`商品条码重复：${item.barcode ?? ""}`);
     }
     return new DuplicateError(`商品档案重复：${item.code}`);
+  }
+  if (
+    source.code === "23503" &&
+    source.constraint === "inventory_ledger_entries_item_id_items_id_fk"
+  ) {
+    return new ConflictError("商品已被已过账单据引用，不能删除");
   }
   return error;
 }

@@ -5,6 +5,7 @@ export const documentLineBodySchema = z.object({
   quantity: z.string().optional(),
   unitPrice: z.string().nullish(),
   amount: z.string().nullish(),
+  unit: z.string().nullish(),
 });
 
 export const documentBodySchema = z.object({

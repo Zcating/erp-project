@@ -2,6 +2,7 @@ import type {
   CustomerRepository,
   DocumentRepository,
   ItemMasterRepository,
+  StockLedgerRepository,
   SupplierRepository,
   TransactionRunner,
   WarehouseRepository,
@@ -10,9 +11,13 @@ import {
   createCustomerService,
   createDocumentService,
   createInMemoryDocumentRepository,
+  createInMemoryStockLedgerRepository,
   createInMemoryTransactionRunner,
+  createInventoryQueryService,
   createItemImportService,
   createItemMasterService,
+  createPostingService,
+  createPurchaseInboundPostingHandler,
   createSupplierService,
   createWarehouseService,
 } from "@erp-inventory-sales/kernel";
@@ -21,6 +26,7 @@ import {
   createDatabase,
   createDocumentRepository,
   createItemMasterRepository,
+  createStockLedgerRepository,
   createSupplierRepository,
   createTransactionRunner,
   createWarehouseRepository,
@@ -31,6 +37,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { registerDecimalRoutes } from "./features/decimals/index.js";
 import { registerDocumentRoutes, resolveDocumentTimeZone } from "./features/documents/index.js";
 import { registerHealthRoutes } from "./features/health/index.js";
+import { registerInventoryRoutes } from "./features/inventory/index.js";
 import { registerItemMasterRoutes } from "./features/item-master/index.js";
 import {
   registerCustomerRoutes,
@@ -60,6 +67,7 @@ export type BuildAppOptions = {
   customerRepository?: CustomerRepository;
   warehouseRepository?: WarehouseRepository;
   documentRepository?: DocumentRepository;
+  stockLedgerRepository?: StockLedgerRepository;
   transactionRunner?: TransactionRunner;
   documentTimeZone?: string;
 };
@@ -99,9 +107,6 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     (options.itemMasterRepository === undefined
       ? createTransactionRunner(database())
       : createInMemoryTransactionRunner());
-  const itemMasterService = createItemMasterService(itemMasterRepository, {
-    runner: transactionRunner,
-  });
   const supplierRepository = options.supplierRepository ?? createSupplierRepository(database());
   const customerRepository = options.customerRepository ?? createCustomerRepository(database());
   const warehouseRepository = options.warehouseRepository ?? createWarehouseRepository(database());
@@ -110,15 +115,32 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     (options.itemMasterRepository === undefined
       ? createDocumentRepository(database())
       : createInMemoryDocumentRepository());
+  const stockLedgerRepository =
+    options.stockLedgerRepository ??
+    (options.itemMasterRepository === undefined
+      ? createStockLedgerRepository(database())
+      : createInMemoryStockLedgerRepository());
   const documentService = createDocumentService(documentRepository, {
     runner: transactionRunner,
     timeZone: options.documentTimeZone ?? resolveDocumentTimeZone(),
+    itemLookup: itemMasterRepository,
+  });
+  const itemMasterService = createItemMasterService(itemMasterRepository, {
+    runner: transactionRunner,
+    referenceChecker: documentService,
+  });
+  const postingService = createPostingService({
+    documents: documentRepository,
+    ledger: stockLedgerRepository,
+    handlers: [createPurchaseInboundPostingHandler(stockLedgerRepository)],
+    runner: transactionRunner,
   });
   registerItemMasterRoutes(app, {
     service: itemMasterService,
     importService: createItemImportService({ items: itemMasterService, runner: transactionRunner }),
   });
-  registerDocumentRoutes(app, { service: documentService });
+  registerDocumentRoutes(app, { service: documentService, postingService });
+  registerInventoryRoutes(app, { service: createInventoryQueryService(stockLedgerRepository) });
   registerSupplierRoutes(app, {
     service: createSupplierService(supplierRepository, {
       referenceChecker: documentService,

@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
 import {
+  ConflictError,
   DuplicateError,
   KernelError,
   NotFoundError,
   ValidationError,
 } from "../../shared/errors/index.js";
+import type { PostedItemReferenceChecker } from "../../shared/ports/index.js";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
 import { itemBatchErrorFromDetails } from "./errors.js";
 import type { ItemBatchErrorDetail } from "./errors.js";
@@ -30,6 +32,7 @@ export type ItemMasterService = {
 export type ItemMasterServiceOptions = {
   idGenerator?: () => string;
   runner?: TransactionRunner;
+  referenceChecker?: PostedItemReferenceChecker;
 };
 
 export function createItemMasterService(
@@ -78,6 +81,21 @@ export function createItemMasterService(
       if (sameBarcode !== null && sameBarcode.id !== ignoredId) {
         throw new DuplicateError(`商品条码重复：${candidate.barcode}`);
       }
+    }
+  };
+
+  const ensureNotPostedReferenced = async (id: string): Promise<void> => {
+    const checker = options.referenceChecker;
+    if (checker === undefined) {
+      return;
+    }
+    const references = await checker.findPostedItemReferences(id);
+    if (references.length > 0) {
+      throw new ConflictError(
+        `商品已被已过账单据 ${references
+          .map((reference) => reference.documentNo)
+          .join("、")} 引用，不能删除`,
+      );
     }
   };
 
@@ -184,6 +202,7 @@ export function createItemMasterService(
       if (existing === null) {
         throw new NotFoundError(`商品档案不存在：${id}`);
       }
+      await ensureNotPostedReferenced(id);
       await repository.remove(id, context);
     },
   };

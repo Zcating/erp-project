@@ -1,4 +1,5 @@
 import type { DocumentFilter, DocumentInput, DocumentService } from "@erp-inventory-sales/kernel";
+import type { PostingService } from "@erp-inventory-sales/kernel";
 import { ValidationError, isDocumentStatus, isDocumentType } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
 import { success } from "../../shared/envelope.js";
@@ -6,6 +7,7 @@ import { documentBodySchema, type DocumentBody } from "./schema.js";
 
 export type DocumentRouteDeps = {
   service: DocumentService;
+  postingService: PostingService;
 };
 
 export function registerDocumentRoutes(app: FastifyInstance, deps: DocumentRouteDeps): void {
@@ -42,6 +44,16 @@ export function registerDocumentRoutes(app: FastifyInstance, deps: DocumentRoute
     await deps.service.remove(params.id);
     return success({ id: params.id });
   });
+
+  app.post("/api/documents/:id/post", async (request) => {
+    const params = request.params as { id: string };
+    return success(await deps.postingService.post(params.id));
+  });
+
+  app.post("/api/documents/:id/void", async (request) => {
+    const params = request.params as { id: string };
+    return success(await deps.postingService.void(params.id));
+  });
 }
 
 function toDocumentInput(body: DocumentBody): DocumentInput {
@@ -64,6 +76,7 @@ function toDocumentInput(body: DocumentBody): DocumentInput {
       quantity: line.quantity ?? "",
       unitPrice: line.unitPrice ?? null,
       amount: line.amount ?? null,
+      unit: line.unit ?? null,
     })),
   };
 }

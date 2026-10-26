@@ -11,6 +11,7 @@ import {
   documentListQueryOptions,
   documentStatusFilterAtom,
   documentTypeFilterAtom,
+  PostingActions,
 } from "@/features/documents";
 
 export const Route = createFileRoute("/documents/")({
@@ -117,23 +118,30 @@ function DocumentListPage() {
                   : document.lines.map((line) => line.amount ?? "—").join("、")}
               </td>
               <td className="py-2">
-                <div className="flex gap-2">
-                  <Link
-                    to="/documents/$documentId/edit"
-                    params={{ documentId: document.id }}
-                    data-testid="document-edit"
-                    className="rounded-md px-2 py-1 hover:bg-muted"
-                  >
-                    编辑
-                  </Link>
-                  <button
-                    type="button"
-                    className="rounded-md px-2 py-1 text-destructive hover:bg-muted"
-                    data-testid="document-delete"
-                    onClick={() => removeMutation.mutate(document.id)}
-                  >
-                    删除
-                  </button>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Link
+                      to="/documents/$documentId/edit"
+                      params={{ documentId: document.id }}
+                      data-testid="document-edit"
+                      className="rounded-md px-2 py-1 hover:bg-muted"
+                    >
+                      编辑
+                    </Link>
+                    <button
+                      type="button"
+                      className="rounded-md px-2 py-1 text-destructive hover:bg-muted"
+                      data-testid="document-delete"
+                      onClick={() => removeMutation.mutate(document.id)}
+                    >
+                      删除
+                    </button>
+                  </div>
+                  <PostingActions
+                    documentId={document.id}
+                    documentNo={document.documentNo}
+                    status={document.status}
+                  />
                 </div>
               </td>
             </tr>

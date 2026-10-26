@@ -203,6 +203,22 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
       return toDomain(row, grouped.get(row.id) ?? []);
     },
 
+    async findByIdForUpdate(id: string, context?: TransactionContext): Promise<Document | null> {
+      const executor = executorOf(context);
+      const rows = await executor
+        .select(documentColumns)
+        .from(documents)
+        .where(eq(documents.id, id))
+        .limit(1)
+        .for("update");
+      const row = rows[0];
+      if (row === undefined) {
+        return null;
+      }
+      const grouped = await linesOf(executor, [row.id]);
+      return toDomain(row, grouped.get(row.id) ?? []);
+    },
+
     async findByDocumentNo(
       documentNo: string,
       context?: TransactionContext,
@@ -244,6 +260,21 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
       } catch (error) {
         throw translateWriteError(error);
       }
+    },
+
+    async updateStatus(
+      id: string,
+      from: DocumentStatus,
+      to: DocumentStatus,
+      context?: TransactionContext,
+    ): Promise<boolean> {
+      const executor = executorOf(context);
+      const updated = await executor
+        .update(documents)
+        .set({ status: to })
+        .where(and(eq(documents.id, id), eq(documents.status, from)))
+        .returning({ id: documents.id });
+      return updated.length > 0;
     },
 
     async remove(id: string, context?: TransactionContext): Promise<boolean> {
@@ -292,6 +323,22 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
             eq(documents.targetWarehouseId, masterDataId),
             eq(documents.warehouseId, masterDataId),
           ),
+        )
+        .limit(50);
+      return rows.map((row) => ({ documentNo: row.documentNo }));
+    },
+
+    async findPostedItemReferences(
+      itemId: string,
+      context?: TransactionContext,
+    ): Promise<MasterDataReference[]> {
+      const executor = executorOf(context);
+      const rows = await executor
+        .selectDistinct({ documentNo: documents.documentNo })
+        .from(documents)
+        .innerJoin(documentLines, eq(documentLines.documentId, documents.id))
+        .where(
+          and(eq(documentLines.itemId, itemId), inArray(documents.status, ["POSTED", "VOIDED"])),
         )
         .limit(50);
       return rows.map((row) => ({ documentNo: row.documentNo }));

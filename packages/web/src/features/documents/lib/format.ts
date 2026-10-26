@@ -18,14 +18,24 @@ export const DOCUMENT_STATUS_OPTIONS = ["DRAFT", "POSTED", "VOIDED"] as const;
 const QUANTITY_SCALE = 3;
 const UNIT_PRICE_SCALE = 6;
 const AMOUNT_SCALE = 2;
+const CONVERSION_RATE_SCALE = 6;
 
-export function computeLineAmount(quantityRaw: string, unitPriceRaw: string): string | null {
+export function computeLineAmount(
+  quantityRaw: string,
+  unitPriceRaw: string,
+  conversionRateRaw = "1",
+): string | null {
   const quantity = toScaledInteger(quantityRaw, QUANTITY_SCALE);
   const unitPrice = toScaledInteger(unitPriceRaw, UNIT_PRICE_SCALE);
-  if (quantity === null || unitPrice === null) {
+  const conversionRate = toScaledInteger(conversionRateRaw, CONVERSION_RATE_SCALE);
+  if (quantity === null || unitPrice === null || conversionRate === null) {
     return null;
   }
-  const product = quantity * unitPrice;
+  const baseQuantity = divideHalfUp(
+    quantity * conversionRate,
+    10n ** BigInt(CONVERSION_RATE_SCALE),
+  );
+  const product = baseQuantity * unitPrice;
   const divisor = 10n ** BigInt(QUANTITY_SCALE + UNIT_PRICE_SCALE - AMOUNT_SCALE);
   return formatScaledInteger(divideHalfUp(product, divisor), AMOUNT_SCALE);
 }

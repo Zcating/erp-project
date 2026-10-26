@@ -26,7 +26,7 @@ import type {
   DocumentType,
   DraftDocumentType,
 } from "./model.js";
-import type { DocumentRepository } from "./ports.js";
+import type { DocumentItemLookup, DocumentRepository } from "./ports.js";
 import { DOCUMENT_TYPE_RULES } from "./rules.js";
 import type { DocumentPartyRole, DocumentTypeRule, DocumentWarehouseRole } from "./rules.js";
 import { createDocumentService } from "./service.js";
@@ -39,6 +39,7 @@ import {
 } from "./state-machine.js";
 import {
   assertDraftDocumentType,
+  assertQuantityText,
   validateDocumentInput,
   validateDocumentLine,
 } from "./validation.js";
@@ -56,6 +57,7 @@ export const documents = {
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
   assertDraftDocumentType,
+  assertQuantityText,
   buildDocumentLines,
   canTransitionDocumentStatus,
   computeLineAmount,
@@ -83,6 +85,7 @@ export {
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
   assertDraftDocumentType,
+  assertQuantityText,
   buildDocumentLines,
   canTransitionDocumentStatus,
   computeLineAmount,
@@ -101,6 +104,7 @@ export type {
   Document,
   DocumentFilter,
   DocumentInput,
+  DocumentItemLookup,
   DocumentLine,
   DocumentLineInput,
   DocumentPartyRole,

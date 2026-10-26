@@ -1,12 +1,15 @@
 export { DocumentForm, type DocumentFormProps } from "./components/document-form";
+export { PostingActions, type PostingActionsProps } from "./components/posting-actions";
 export {
   createDocument,
   deleteDocument,
   DRAFT_DOCUMENT_TYPES,
   getDocument,
   listDocuments,
+  postDocument,
   toFormSubmitResult,
   updateDocument,
+  voidDocument,
   type Document,
   type DocumentDeleteResult,
   type DocumentFailure,

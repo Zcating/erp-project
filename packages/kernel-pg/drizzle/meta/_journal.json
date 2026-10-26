@@ -29,6 +29,13 @@
       "when": 1792974579539,
       "tag": "0003_legal_wolverine",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792976764967,
+      "tag": "0004_safe_cyclops",
+      "breakpoints": true
     }
   ]
 }

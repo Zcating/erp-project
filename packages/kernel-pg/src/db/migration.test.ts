@@ -46,6 +46,8 @@ describe("数据库迁移", () => {
         { table_schema: "erp", table_name: "document_lines" },
         { table_schema: "erp", table_name: "document_number_counters" },
         { table_schema: "erp", table_name: "documents" },
+        { table_schema: "erp", table_name: "inventory_balances" },
+        { table_schema: "erp", table_name: "inventory_ledger_entries" },
         { table_schema: "erp", table_name: "item_auxiliary_units" },
         { table_schema: "erp", table_name: "items" },
         { table_schema: "erp", table_name: "suppliers" },
@@ -228,6 +230,143 @@ describe("数据库迁移", () => {
 
     const after = await listSchema();
     expect(after).toEqual(before);
+  });
+
+  it("库存台账按仓库与商品唯一，库存流水的数量、单价、金额分别用 erp 三个十进制域承载", async () => {
+    const client = await connectToTestDatabase();
+    try {
+      const columns = await client.query(
+        `select c.relname as table_name, a.attname as column_name, format_type(a.atttypid, a.atttypmod) as column_type
+         from pg_attribute a
+         join pg_class c on c.oid = a.attrelid
+         join pg_namespace n on n.oid = c.relnamespace
+         where n.nspname = 'erp' and c.relname in ('inventory_balances', 'inventory_ledger_entries') and a.attnum > 0
+         order by c.relname, a.attname`,
+      );
+      expect(columns.rows).toEqual([
+        { table_name: "inventory_balances", column_name: "item_id", column_type: "uuid" },
+        {
+          table_name: "inventory_balances",
+          column_name: "quantity",
+          column_type: "erp.quantity",
+        },
+        {
+          table_name: "inventory_balances",
+          column_name: "unit_cost",
+          column_type: "erp.unit_price",
+        },
+        {
+          table_name: "inventory_balances",
+          column_name: "warehouse_id",
+          column_type: "uuid",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "amount",
+          column_type: "erp.amount",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "cost_after",
+          column_type: "erp.unit_price",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "cost_before",
+          column_type: "erp.unit_price",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "created_at",
+          column_type: "timestamp with time zone",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "direction",
+          column_type: "text",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "document_id",
+          column_type: "uuid",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "document_no",
+          column_type: "text",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "item_id",
+          column_type: "uuid",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "line_no",
+          column_type: "integer",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "quantity_after",
+          column_type: "erp.quantity",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "quantity_before",
+          column_type: "erp.quantity",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "seq",
+          column_type: "integer",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "unit_price",
+          column_type: "erp.unit_price",
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          column_name: "warehouse_id",
+          column_type: "uuid",
+        },
+      ]);
+
+      const constraints = await client.query(
+        `select conname, pg_get_constraintdef(oid) as definition
+         from pg_constraint
+         where conrelid in (
+           'erp.inventory_balances'::regclass,
+           'erp.inventory_ledger_entries'::regclass
+         )
+         order by conname`,
+      );
+      const definitions = constraints.rows.map((row) => row.definition as string);
+      expect(
+        definitions.some((definition) =>
+          definition.includes("PRIMARY KEY (warehouse_id, item_id)"),
+        ),
+      ).toBe(true);
+      expect(
+        definitions.some((definition) =>
+          definition.includes("FOREIGN KEY (item_id) REFERENCES erp.items(id)"),
+        ),
+      ).toBe(true);
+
+      const indexes = await client.query(
+        `select indexname from pg_indexes
+         where schemaname = 'erp' and tablename in ('inventory_balances', 'inventory_ledger_entries')
+         order by indexname`,
+      );
+      expect(indexes.rows.map((row) => row.indexname)).toEqual([
+        "inventory_balances_warehouse_id_item_id_pk",
+        "inventory_ledger_entries_document_idx",
+        "inventory_ledger_entries_document_no_idx",
+        "inventory_ledger_entries_pkey",
+      ]);
+    } finally {
+      await client.end();
+    }
   });
 });
 

@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { NotFoundError } from "../../shared/errors/index.js";
+import { NotFoundError, ValidationError } from "../../shared/errors/index.js";
 import type { MasterDataReference, MasterDataReferenceChecker } from "../../shared/ports/index.js";
+import type { PostedItemReferenceChecker } from "../../shared/ports/index.js";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
+import { baseQuantityOf } from "../item-master/units.js";
 import { buildDocumentLines } from "./lines.js";
 import type { Document, DocumentFilter, DocumentInput, DraftDocumentType } from "./model.js";
 import {
@@ -9,23 +11,25 @@ import {
   formatDocumentDate,
   formatDocumentNumber,
 } from "./numbering.js";
-import type { DocumentRepository } from "./ports.js";
+import type { DocumentItemLookup, DocumentRepository } from "./ports.js";
 import { assertDocumentIsDraft } from "./state-machine.js";
-import { validateDocumentInput } from "./validation.js";
+import { assertQuantityText, validateDocumentInput } from "./validation.js";
 
-export type DocumentService = MasterDataReferenceChecker & {
-  list(filter?: DocumentFilter): Promise<Document[]>;
-  get(id: string): Promise<Document>;
-  create(input: DocumentInput, context?: TransactionContext): Promise<Document>;
-  update(id: string, input: DocumentInput, context?: TransactionContext): Promise<Document>;
-  remove(id: string, context?: TransactionContext): Promise<void>;
-};
+export type DocumentService = MasterDataReferenceChecker &
+  PostedItemReferenceChecker & {
+    list(filter?: DocumentFilter): Promise<Document[]>;
+    get(id: string): Promise<Document>;
+    create(input: DocumentInput, context?: TransactionContext): Promise<Document>;
+    update(id: string, input: DocumentInput, context?: TransactionContext): Promise<Document>;
+    remove(id: string, context?: TransactionContext): Promise<void>;
+  };
 
 export type DocumentServiceOptions = {
   idGenerator?: () => string;
   runner?: TransactionRunner;
   clock?: () => Date;
   timeZone?: string;
+  itemLookup?: DocumentItemLookup;
 };
 
 export function createDocumentService(
@@ -45,6 +49,31 @@ export function createDocumentService(
       return work(context);
     }
     return runner.run((outer) => work(outer));
+  };
+
+  const toBaseUnitLines = async (
+    lines: DocumentInput["lines"],
+    context: TransactionContext | undefined,
+  ): Promise<DocumentInput["lines"]> => {
+    const converted: DocumentInput["lines"] = [];
+    for (const [index, line] of lines.entries()) {
+      const unit = (line.unit ?? "").trim();
+      if (unit === "") {
+        converted.push(line);
+        continue;
+      }
+      const lookup = options.itemLookup;
+      if (lookup === undefined) {
+        throw new ValidationError("缺少商品档案查询，无法折算辅助计量单位");
+      }
+      assertQuantityText(line.quantity, index + 1);
+      const item = await lookup.findById(line.itemId.trim(), context);
+      if (item === null) {
+        throw new NotFoundError(`商品档案不存在：${line.itemId.trim()}`);
+      }
+      converted.push({ ...line, quantity: baseQuantityOf(item, line.quantity, unit), unit: null });
+    }
+    return converted;
   };
 
   const normalize = (
@@ -79,7 +108,11 @@ export function createDocumentService(
 
     async create(input: DocumentInput, context?: TransactionContext): Promise<Document> {
       return inTransaction(context, async (ctx) => {
-        const validated = validateDocumentInput(input);
+        const converted: DocumentInput = {
+          ...input,
+          lines: await toBaseUnitLines(input.lines, ctx),
+        };
+        const validated = validateDocumentInput(converted);
         const dateKey = formatDocumentDate(clock(), timeZone);
         const sequence = await repository.nextSequence(validated.type, dateKey, ctx);
         const documentNo = formatDocumentNumber(validated.type, dateKey, sequence);
@@ -100,7 +133,11 @@ export function createDocumentService(
           throw new NotFoundError(`单据不存在：${id}`);
         }
         assertDocumentIsDraft(existing.status, existing.documentNo);
-        const validated = validateDocumentInput(input);
+        const converted: DocumentInput = {
+          ...input,
+          lines: await toBaseUnitLines(input.lines, ctx),
+        };
+        const validated = validateDocumentInput(converted);
         const updated: Document = {
           ...normalize(validated, existing.id, existing.documentNo),
           status: existing.status,
@@ -121,6 +158,10 @@ export function createDocumentService(
 
     async findMasterDataReferences(masterDataId: string): Promise<MasterDataReference[]> {
       return repository.findMasterDataReferences(masterDataId);
+    },
+
+    async findPostedItemReferences(itemId: string): Promise<MasterDataReference[]> {
+      return repository.findPostedItemReferences(itemId);
     },
   };
 }
