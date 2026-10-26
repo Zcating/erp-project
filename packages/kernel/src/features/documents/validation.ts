@@ -26,7 +26,7 @@ export function assertDraftDocumentType(
     throw new ValidationError("缺少单据类型");
   }
   if (!isDraftDocumentType(input.type)) {
-    throw new ValidationError(`单据类型暂不支持创建草稿：${input.type}`);
+    throw new ValidationError(`单据类型暂不支持创建草稿：${String(input.type)}`);
   }
 }
 
@@ -74,7 +74,7 @@ export function validateDocumentLine(
   lineNo: number,
 ): void {
   if (!isDraftDocumentType(type)) {
-    throw new ValidationError(`单据类型暂不支持创建草稿：${type}`);
+    throw new ValidationError(`单据类型暂不支持创建草稿：${String(type)}`);
   }
   const rule = DOCUMENT_TYPE_RULES[type];
 

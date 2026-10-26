@@ -18,6 +18,7 @@ import {
   createItemMasterService,
   createPostingService,
   createPurchaseInboundPostingHandler,
+  createPurchaseReturnPostingHandler,
   createSaleOutboundPostingHandler,
   createSaleReturnPostingHandler,
   createSupplierService,
@@ -138,6 +139,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       createPurchaseInboundPostingHandler(stockLedgerRepository),
       createSaleOutboundPostingHandler(stockLedgerRepository),
       createSaleReturnPostingHandler(stockLedgerRepository, documentRepository),
+      createPurchaseReturnPostingHandler(stockLedgerRepository, documentRepository),
     ],
     runner: transactionRunner,
   });

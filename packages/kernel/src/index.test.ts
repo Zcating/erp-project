@@ -5,6 +5,7 @@ import {
   parties,
   ports,
   posting,
+  purchaseReturn,
   purchasing,
   salesReturn,
   selling,
@@ -86,5 +87,9 @@ describe("kernel package", () => {
 
   it("销售退货 feature 的公开面带销售退货的过账类型实现", () => {
     expect(Object.keys(salesReturn).sort()).toEqual(["createSaleReturnPostingHandler"]);
+  });
+
+  it("采购退货 feature 的公开面带采购退货的过账类型实现", () => {
+    expect(Object.keys(purchaseReturn).sort()).toEqual(["createPurchaseReturnPostingHandler"]);
   });
 });

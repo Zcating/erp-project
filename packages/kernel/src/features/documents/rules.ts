@@ -38,6 +38,14 @@ export const DOCUMENT_TYPE_RULES: Record<DraftDocumentType, DocumentTypeRule> = 
     originalType: "SALE_OUTBOUND",
     originalWarehouseRole: "SOURCE",
   },
+  PURCHASE_RETURN: {
+    party: null,
+    warehouses: ["SOURCE"],
+    priced: false,
+    positiveQuantity: true,
+    originalType: "PURCHASE_INBOUND",
+    originalWarehouseRole: "TARGET",
+  },
   STOCKTAKE: {
     party: null,
     warehouses: ["COUNT"],
