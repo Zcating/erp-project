@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { inventory, itemMaster, parties, ports, posting, purchasing, selling } from "./index.js";
+import {
+  inventory,
+  itemMaster,
+  parties,
+  ports,
+  posting,
+  purchasing,
+  salesReturn,
+  selling,
+} from "./index.js";
 
 describe("kernel package", () => {
   it("exposes its public surface", () => {
@@ -73,5 +82,9 @@ describe("kernel package", () => {
 
   it("销售 feature 的公开面带销售出库的过账类型实现", () => {
     expect(Object.keys(selling).sort()).toEqual(["createSaleOutboundPostingHandler"]);
+  });
+
+  it("销售退货 feature 的公开面带销售退货的过账类型实现", () => {
+    expect(Object.keys(salesReturn).sort()).toEqual(["createSaleReturnPostingHandler"]);
   });
 });

@@ -175,6 +175,11 @@ describe("数据库迁移", () => {
         { table_name: "document_lines", column_name: "id", column_type: "uuid" },
         { table_name: "document_lines", column_name: "item_id", column_type: "uuid" },
         { table_name: "document_lines", column_name: "line_no", column_type: "integer" },
+        {
+          table_name: "document_lines",
+          column_name: "original_line_id",
+          column_type: "uuid",
+        },
         { table_name: "document_lines", column_name: "quantity", column_type: "erp.quantity" },
         { table_name: "document_lines", column_name: "unit_price", column_type: "erp.unit_price" },
         {
@@ -217,6 +222,18 @@ describe("数据库迁移", () => {
         "documents_pkey",
         "documents_type_status_idx",
       ]);
+
+      const constraints = await client.query(
+        `select conname, pg_get_constraintdef(oid) as definition
+         from pg_constraint
+         where conrelid = 'erp.document_lines'::regclass
+         order by conname`,
+      );
+      expect(
+        constraints.rows.find(
+          (row) => row.conname === "document_lines_original_line_id_document_lines_id_fk",
+        )?.definition,
+      ).toContain("FOREIGN KEY (original_line_id) REFERENCES erp.document_lines(id)");
     } finally {
       await client.end();
     }

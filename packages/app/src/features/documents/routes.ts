@@ -77,6 +77,7 @@ function toDocumentInput(body: DocumentBody): DocumentInput {
       unitPrice: line.unitPrice ?? null,
       amount: line.amount ?? null,
       unit: line.unit ?? null,
+      originalLineId: line.originalLineId ?? null,
     })),
   };
 }

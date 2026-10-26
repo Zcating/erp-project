@@ -117,7 +117,9 @@ test("未登录访问单据列表页被送到登录页且看不到业务数据",
   await expect(page.getByTestId("document-table")).toHaveCount(0);
 });
 
-test("单据新建入口只提供采购入库单、销售出库单、盘点单、调拨单四种类型", async ({ page }) => {
+test("单据新建入口提供采购入库单、销售出库单、销售退货单、盘点单、调拨单五种类型", async ({
+  page,
+}) => {
   await loginAsAdmin(page);
 
   await page.goto("/documents/new");
@@ -125,8 +127,7 @@ test("单据新建入口只提供采购入库单、销售出库单、盘点单�
   await expect(page.getByTestId("document-type")).toBeVisible();
 
   const options = await page.getByTestId("document-type").locator("option").allTextContents();
-  expect(options).toEqual(["采购入库单", "销售出库单", "盘点单", "调拨单"]);
-  expect(options).not.toContain("销售退货单");
+  expect(options).toEqual(["采购入库单", "销售出库单", "销售退货单", "盘点单", "调拨单"]);
   expect(options).not.toContain("采购退货单");
 });
 

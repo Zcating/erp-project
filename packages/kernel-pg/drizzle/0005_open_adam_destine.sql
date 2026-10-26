@@ -1,0 +1,2 @@
+ALTER TABLE "erp"."document_lines" ADD COLUMN "original_line_id" uuid;--> statement-breakpoint
+ALTER TABLE "erp"."document_lines" ADD CONSTRAINT "document_lines_original_line_id_document_lines_id_fk" FOREIGN KEY ("original_line_id") REFERENCES "erp"."document_lines"("id") ON DELETE no action ON UPDATE no action;

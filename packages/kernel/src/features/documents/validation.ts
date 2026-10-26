@@ -15,7 +15,7 @@ import {
   type DocumentLineInput,
   type DraftDocumentType,
 } from "./model.js";
-import { DOCUMENT_TYPE_RULES } from "./rules.js";
+import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES } from "./rules.js";
 
 const DECIMAL_PATTERN = /^-?\d+(?:\.\d+)?$/;
 
@@ -84,7 +84,7 @@ export function validateDocumentLine(
   const quantityRaw = line.quantity;
   assertQuantityText(quantityRaw, lineNo);
   const quantityValue = quantity(quantityRaw);
-  if (rule.priced) {
+  if (rule.positiveQuantity) {
     if (!quantityValue.greaterThan(0)) {
       throw new ValidationError(`第 ${lineNo} 行数量必须大于 0：${quantityRaw}`);
     }
@@ -95,7 +95,8 @@ export function validateDocumentLine(
   const unitPriceRaw = line.unitPrice;
   if (!rule.priced) {
     if (hasValue(unitPriceRaw) || hasValue(line.amount)) {
-      throw new ValidationError(`第 ${lineNo} 行盘点行不含单价与金额`);
+      const label = type === "STOCKTAKE" ? "盘点行" : `${DOCUMENT_TYPE_LABELS[type]}行`;
+      throw new ValidationError(`第 ${lineNo} 行${label}不含单价与金额`);
     }
     return;
   }

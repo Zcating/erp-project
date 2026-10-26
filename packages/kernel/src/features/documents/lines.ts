@@ -22,13 +22,16 @@ export function computeLineAmount(quantityRaw: string, unitPriceRaw: string): st
 export function buildDocumentLines(
   type: DocumentType,
   inputs: DocumentLineInput[],
+  generateId: () => string,
 ): DocumentLine[] {
   const priced = isDraftDocumentType(type) && DOCUMENT_TYPE_RULES[type].priced;
   return inputs.map((line, index) => ({
+    id: generateId(),
     lineNo: index + 1,
     itemId: line.itemId.trim(),
     quantity: toFixedString(quantity(line.quantity), QUANTITY_SCALE),
     unitPrice: priced ? toFixedString(unitPrice(line.unitPrice ?? ""), UNIT_PRICE_SCALE) : null,
     amount: priced ? computeLineAmount(line.quantity, line.unitPrice ?? "") : null,
+    originalLineId: line.originalLineId ?? null,
   }));
 }

@@ -19,6 +19,7 @@ import {
   createPostingService,
   createPurchaseInboundPostingHandler,
   createSaleOutboundPostingHandler,
+  createSaleReturnPostingHandler,
   createSupplierService,
   createWarehouseService,
 } from "@erp-inventory-sales/kernel";
@@ -136,6 +137,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     handlers: [
       createPurchaseInboundPostingHandler(stockLedgerRepository),
       createSaleOutboundPostingHandler(stockLedgerRepository),
+      createSaleReturnPostingHandler(stockLedgerRepository, documentRepository),
     ],
     runner: transactionRunner,
   });

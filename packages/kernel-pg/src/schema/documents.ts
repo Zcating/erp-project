@@ -7,6 +7,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { erpSchema } from "./erp-schema.js";
 import { amountType, quantityType, unitPriceType } from "./numeric-types.js";
 import { customers, suppliers, warehouses } from "./parties.js";
@@ -43,6 +44,7 @@ export const documentLines = erpSchema.table(
     quantity: quantityType("quantity").notNull(),
     unitPrice: unitPriceType("unit_price"),
     amount: amountType("amount"),
+    originalLineId: uuid("original_line_id").references((): AnyPgColumn => documentLines.id),
   },
   (table) => [
     uniqueIndex("document_lines_document_line_no_key").on(table.documentId, table.lineNo),

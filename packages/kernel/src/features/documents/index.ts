@@ -27,7 +27,7 @@ import type {
   DraftDocumentType,
 } from "./model.js";
 import type { DocumentItemLookup, DocumentRepository } from "./ports.js";
-import { DOCUMENT_TYPE_RULES } from "./rules.js";
+import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES, WAREHOUSE_ROLE_LABELS } from "./rules.js";
 import type { DocumentPartyRole, DocumentTypeRule, DocumentWarehouseRole } from "./rules.js";
 import { createDocumentService } from "./service.js";
 import type { DocumentService, DocumentServiceOptions } from "./service.js";
@@ -51,9 +51,11 @@ export const documents = {
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_TRANSITIONS,
+  DOCUMENT_TYPE_LABELS,
   DOCUMENT_TYPE_RULES,
   DOCUMENT_TYPES,
   DRAFT_DOCUMENT_TYPES,
+  WAREHOUSE_ROLE_LABELS,
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
   assertDraftDocumentType,
@@ -79,9 +81,11 @@ export {
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_TRANSITIONS,
+  DOCUMENT_TYPE_LABELS,
   DOCUMENT_TYPE_RULES,
   DOCUMENT_TYPES,
   DRAFT_DOCUMENT_TYPES,
+  WAREHOUSE_ROLE_LABELS,
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
   assertDraftDocumentType,

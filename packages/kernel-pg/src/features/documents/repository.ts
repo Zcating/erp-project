@@ -9,7 +9,6 @@ import type {
   TransactionContext,
 } from "@erp-inventory-sales/kernel";
 import { DuplicateError, ValidationError } from "@erp-inventory-sales/kernel";
-import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { KernelDatabase } from "../../db/client.js";
 import type { PgTransaction } from "../../db/transactions.js";
@@ -30,12 +29,14 @@ type DocumentRow = {
 };
 
 type DocumentLineRow = {
+  id: string;
   documentId: string;
   lineNo: number;
   itemId: string;
   quantity: string;
   unitPrice: string | null;
   amount: string | null;
+  originalLineId: string | null;
 };
 
 const documentColumns = {
@@ -51,12 +52,14 @@ const documentColumns = {
 };
 
 const documentLineColumns = {
+  id: documentLines.id,
   documentId: documentLines.documentId,
   lineNo: documentLines.lineNo,
   itemId: documentLines.itemId,
   quantity: documentLines.quantity,
   unitPrice: documentLines.unitPrice,
   amount: documentLines.amount,
+  originalLineId: documentLines.originalLineId,
 };
 
 const FOREIGN_KEY_LABELS: Record<string, string> = {
@@ -65,6 +68,7 @@ const FOREIGN_KEY_LABELS: Record<string, string> = {
   documents_source_warehouse_id_warehouses_id_fk: "来源仓库",
   documents_target_warehouse_id_warehouses_id_fk: "目标仓库",
   documents_warehouse_id_warehouses_id_fk: "仓库",
+  document_lines_original_line_id_document_lines_id_fk: "原单据行",
 };
 
 export function createDocumentRepository(db: KernelDatabase): DocumentRepository {
@@ -90,11 +94,13 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
     targetWarehouseId: row.targetWarehouseId,
     warehouseId: row.warehouseId,
     lines: lines.map((line) => ({
+      id: line.id,
       lineNo: line.lineNo,
       itemId: line.itemId,
       quantity: line.quantity,
       unitPrice: line.unitPrice,
       amount: line.amount,
+      originalLineId: line.originalLineId,
     })),
   });
 
@@ -121,13 +127,14 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
 
   const lineValues = (document: Document) =>
     document.lines.map((line) => ({
-      id: randomUUID(),
+      id: line.id,
       documentId: document.id,
       lineNo: line.lineNo,
       itemId: line.itemId,
       quantity: line.quantity,
       unitPrice: line.unitPrice,
       amount: line.amount,
+      originalLineId: line.originalLineId,
     }));
 
   const applyInsert = async (executor: DocumentExecutor, document: Document): Promise<void> => {
@@ -235,6 +242,45 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
       }
       const grouped = await linesOf(executor, [row.id]);
       return toDomain(row, grouped.get(row.id) ?? []);
+    },
+
+    async findByLineId(lineId: string, context?: TransactionContext): Promise<Document | null> {
+      const executor = executorOf(context);
+      const rows = await executor
+        .select({ documentId: documentLines.documentId })
+        .from(documentLines)
+        .where(eq(documentLines.id, lineId))
+        .limit(1);
+      const documentId = rows[0]?.documentId;
+      if (documentId === undefined) {
+        return null;
+      }
+      const documentRows = await executor
+        .select(documentColumns)
+        .from(documents)
+        .where(eq(documents.id, documentId))
+        .limit(1);
+      const row = documentRows[0];
+      if (row === undefined) {
+        return null;
+      }
+      const grouped = await linesOf(executor, [row.id]);
+      return toDomain(row, grouped.get(row.id) ?? []);
+    },
+
+    async sumPostedReturnedQuantity(
+      originalLineId: string,
+      context?: TransactionContext,
+    ): Promise<string> {
+      const executor = executorOf(context);
+      const rows = await executor
+        .select({ total: sql<string>`coalesce(sum(${documentLines.quantity}), 0)::text` })
+        .from(documentLines)
+        .innerJoin(documents, eq(documents.id, documentLines.documentId))
+        .where(
+          and(eq(documentLines.originalLineId, originalLineId), eq(documents.status, "POSTED")),
+        );
+      return rows[0]?.total ?? "0";
     },
 
     async insert(document: Document, context?: TransactionContext): Promise<void> {

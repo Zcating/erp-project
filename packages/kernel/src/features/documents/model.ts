@@ -12,6 +12,7 @@ export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 export const DRAFT_DOCUMENT_TYPES = [
   "PURCHASE_INBOUND",
   "SALE_OUTBOUND",
+  "SALE_RETURN",
   "STOCKTAKE",
   "TRANSFER",
 ] as const;
@@ -38,11 +39,13 @@ export const DOCUMENT_NUMBER_PREFIXES: Record<DocumentType, string> = {
 };
 
 export type DocumentLine = {
+  id: string;
   lineNo: number;
   itemId: string;
   quantity: string;
   unitPrice: string | null;
   amount: string | null;
+  originalLineId: string | null;
 };
 
 export type Document = {
@@ -64,6 +67,7 @@ export type DocumentLineInput = {
   unitPrice: string | null;
   amount: string | null;
   unit?: string | null;
+  originalLineId?: string | null;
 };
 
 export type DocumentInput = {

@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { NotFoundError, StateConflictError, ValidationError } from "../../shared/errors/index.js";
 import { createInMemoryDocumentRepository } from "./in-memory-repository.js";
-import {
-  DOCUMENT_NUMBER_PREFIXES,
-  type Document,
-  type DocumentInput,
-  type DocumentType,
-} from "./model.js";
+import { DOCUMENT_NUMBER_PREFIXES, type Document, type DocumentInput } from "./model.js";
 import { formatDocumentDate, formatDocumentNumber } from "./numbering.js";
 import { createDocumentService } from "./service.js";
 import { assertDocumentStatusTransition, canTransitionDocumentStatus } from "./state-machine.js";
@@ -342,12 +337,12 @@ describe("单据参与方与仓库校验", () => {
     ).rejects.toThrow("源仓与目标仓必须不同");
   });
 
-  it("退货类型的草稿暂不支持创建，错误消息指出类型暂不支持", async () => {
+  it("销售退货单不给原单行引用时保存失败，错误消息指出缺少原单据行引用", async () => {
     const { service } = createService();
 
-    await expect(
-      service.create(baseInput({ type: "SALE_RETURN" as DocumentType })),
-    ).rejects.toThrow("单据类型暂不支持创建草稿：SALE_RETURN");
+    await expect(service.create(baseInput({ type: "SALE_RETURN" }))).rejects.toThrow(
+      "第 1 行缺少原单据行引用",
+    );
   });
 });
 

@@ -5,6 +5,7 @@ import { fetchApi } from "@/lib/api-client";
 export const DRAFT_DOCUMENT_TYPES = [
   "PURCHASE_INBOUND",
   "SALE_OUTBOUND",
+  "SALE_RETURN",
   "STOCKTAKE",
   "TRANSFER",
 ] as const;
@@ -14,11 +15,13 @@ export type DraftDocumentType = (typeof DRAFT_DOCUMENT_TYPES)[number];
 export type DocumentStatus = "DRAFT" | "POSTED" | "VOIDED";
 
 export type DocumentLine = {
+  id: string;
   lineNo: number;
   itemId: string;
   quantity: string;
   unitPrice: string | null;
   amount: string | null;
+  originalLineId: string | null;
 };
 
 export type Document = {
@@ -40,6 +43,7 @@ export type DocumentLineInput = {
   unitPrice: string | null;
   amount: string | null;
   unit?: string | null;
+  originalLineId?: string | null;
 };
 
 export type DocumentInput = {

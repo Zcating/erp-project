@@ -5,15 +5,27 @@ import type { PostedItemReferenceChecker } from "../../shared/ports/index.js";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions/index.js";
 import { baseQuantityOf } from "../item-master/units.js";
 import { buildDocumentLines } from "./lines.js";
-import type { Document, DocumentFilter, DocumentInput, DraftDocumentType } from "./model.js";
+import type {
+  Document,
+  DocumentFilter,
+  DocumentInput,
+  DocumentLineInput,
+  DraftDocumentType,
+} from "./model.js";
 import {
   DEFAULT_DOCUMENT_TIME_ZONE,
   formatDocumentDate,
   formatDocumentNumber,
 } from "./numbering.js";
 import type { DocumentItemLookup, DocumentRepository } from "./ports.js";
+import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES, WAREHOUSE_ROLE_LABELS } from "./rules.js";
+import type { DocumentTypeRule } from "./rules.js";
 import { assertDocumentIsDraft } from "./state-machine.js";
-import { assertQuantityText, validateDocumentInput } from "./validation.js";
+import {
+  assertDraftDocumentType,
+  assertQuantityText,
+  validateDocumentInput,
+} from "./validation.js";
 
 export type DocumentService = MasterDataReferenceChecker &
   PostedItemReferenceChecker & {
@@ -76,6 +88,91 @@ export function createDocumentService(
     return converted;
   };
 
+  const warehouseOfRole = (
+    document: Document,
+    role: DocumentTypeRule["originalWarehouseRole"],
+  ): string | null => {
+    if (role === "SOURCE") {
+      return document.sourceWarehouseId;
+    }
+    if (role === "TARGET") {
+      return document.targetWarehouseId;
+    }
+    if (role === "COUNT") {
+      return document.warehouseId;
+    }
+    return null;
+  };
+
+  const resolveOriginalLines = async (
+    input: DocumentInput & { type: DraftDocumentType },
+    context: TransactionContext | undefined,
+  ): Promise<DocumentInput & { type: DraftDocumentType }> => {
+    const rule = DOCUMENT_TYPE_RULES[input.type];
+    if (rule.originalType === null) {
+      return input;
+    }
+    const originalLabel = DOCUMENT_TYPE_LABELS[rule.originalType];
+    const warehouseLabel = WAREHOUSE_ROLE_LABELS[rule.originalWarehouseRole ?? "COUNT"];
+    const lines: DocumentLineInput[] = [];
+    let warehouseId: string | null = null;
+
+    for (const [index, line] of input.lines.entries()) {
+      const originalLineId = (line.originalLineId ?? "").trim();
+      if (originalLineId === "") {
+        throw new ValidationError(`第 ${index + 1} 行缺少原单据行引用`);
+      }
+      const original = await repository.findByLineId(originalLineId, context);
+      if (original === null) {
+        throw new ValidationError(`第 ${index + 1} 行引用的原单据行不存在：${originalLineId}`);
+      }
+      if (original.type !== rule.originalType) {
+        throw new ValidationError(
+          `第 ${index + 1} 行引用的原单据行不属于${originalLabel}：${original.documentNo}`,
+        );
+      }
+      if (original.status !== "POSTED") {
+        throw new ValidationError(
+          `第 ${index + 1} 行引用的原单据行尚未过账：${original.documentNo}`,
+        );
+      }
+      const originalLine = original.lines.find((candidate) => candidate.id === originalLineId);
+      if (originalLine === undefined) {
+        throw new ValidationError(`第 ${index + 1} 行引用的原单据行不存在：${originalLineId}`);
+      }
+      const originalWarehouseId = warehouseOfRole(original, rule.originalWarehouseRole);
+      if (originalWarehouseId === null) {
+        throw new ValidationError(
+          `原单据 ${original.documentNo} 没有${warehouseLabel}，无法确定退货单仓库`,
+        );
+      }
+      if (warehouseId !== null && warehouseId !== originalWarehouseId) {
+        throw new ValidationError(
+          `退货单不能引用不同${warehouseLabel}的原单据行：${original.documentNo}`,
+        );
+      }
+      warehouseId = originalWarehouseId;
+      lines.push({ ...line, itemId: originalLine.itemId, originalLineId });
+    }
+
+    const submitted = [input.sourceWarehouseId, input.targetWarehouseId, input.warehouseId]
+      .map((value) => (value ?? "").trim())
+      .filter((value) => value !== "");
+    if (submitted.some((value) => value !== warehouseId)) {
+      throw new ValidationError(
+        `退货单的仓库必须取自原单据的${warehouseLabel}：${warehouseId ?? "无"}`,
+      );
+    }
+
+    return {
+      ...input,
+      lines,
+      sourceWarehouseId: warehouseId,
+      targetWarehouseId: null,
+      warehouseId: null,
+    };
+  };
+
   const normalize = (
     input: DocumentInput & { type: DraftDocumentType },
     id: string,
@@ -90,7 +187,7 @@ export function createDocumentService(
     sourceWarehouseId: normalizeId(input.sourceWarehouseId),
     targetWarehouseId: normalizeId(input.targetWarehouseId),
     warehouseId: normalizeId(input.warehouseId),
-    lines: buildDocumentLines(input.type, input.lines),
+    lines: buildDocumentLines(input.type, input.lines, generateId),
   });
 
   return {
@@ -112,7 +209,9 @@ export function createDocumentService(
           ...input,
           lines: await toBaseUnitLines(input.lines, ctx),
         };
-        const validated = validateDocumentInput(converted);
+        assertDraftDocumentType(converted);
+        const resolved = await resolveOriginalLines(converted, ctx);
+        const validated = validateDocumentInput(resolved);
         const dateKey = formatDocumentDate(clock(), timeZone);
         const sequence = await repository.nextSequence(validated.type, dateKey, ctx);
         const documentNo = formatDocumentNumber(validated.type, dateKey, sequence);
@@ -137,7 +236,9 @@ export function createDocumentService(
           ...input,
           lines: await toBaseUnitLines(input.lines, ctx),
         };
-        const validated = validateDocumentInput(converted);
+        assertDraftDocumentType(converted);
+        const resolved = await resolveOriginalLines(converted, ctx);
+        const validated = validateDocumentInput(resolved);
         const updated: Document = {
           ...normalize(validated, existing.id, existing.documentNo),
           status: existing.status,

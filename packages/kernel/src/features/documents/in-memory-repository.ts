@@ -1,3 +1,4 @@
+import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-inventory-sales/shared";
 import { DuplicateError } from "../../shared/errors/index.js";
 import type { MasterDataReference } from "../../shared/ports/index.js";
 import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model.js";
@@ -57,6 +58,30 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
     async findByDocumentNo(documentNo: string): Promise<Document | null> {
       const document = findByDocumentNo(documentNo);
       return document === null ? null : copy(document);
+    },
+
+    async findByLineId(lineId: string): Promise<Document | null> {
+      for (const document of stored.values()) {
+        if (document.lines.some((line) => line.id === lineId)) {
+          return copy(document);
+        }
+      }
+      return null;
+    },
+
+    async sumPostedReturnedQuantity(originalLineId: string): Promise<string> {
+      let total = "0.000";
+      for (const document of stored.values()) {
+        if (document.status !== "POSTED") {
+          continue;
+        }
+        for (const line of document.lines) {
+          if (line.originalLineId === originalLineId) {
+            total = toFixedString(quantity(total).plus(quantity(line.quantity)), QUANTITY_SCALE);
+          }
+        }
+      }
+      return total;
     },
 
     async insert(document: Document): Promise<void> {

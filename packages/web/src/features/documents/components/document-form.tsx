@@ -12,6 +12,7 @@ import {
 import type { Document, DocumentInput, DraftDocumentType, FormSubmitResult } from "../lib/api";
 import { DRAFT_DOCUMENT_TYPES } from "../lib/api";
 import { computeLineAmount, DOCUMENT_TYPE_LABELS } from "../lib/format";
+import { documentListQueryOptions } from "../lib/queries";
 
 export type DocumentFormProps = {
   documentType: DraftDocumentType;
@@ -26,9 +27,16 @@ type LineDraft = {
   quantity: string;
   unitPrice: string;
   unit: string;
+  originalLineId: string;
 };
 
-const emptyLine = (): LineDraft => ({ itemId: "", quantity: "", unitPrice: "", unit: "" });
+const emptyLine = (): LineDraft => ({
+  itemId: "",
+  quantity: "",
+  unitPrice: "",
+  unit: "",
+  originalLineId: "",
+});
 
 const unitOptionsOf = (item: ItemMaster | undefined): string[] => {
   if (item === undefined) {
@@ -52,7 +60,8 @@ export function DocumentForm({
   submitLabel,
   onSubmit,
 }: DocumentFormProps) {
-  const priced = documentType !== "STOCKTAKE";
+  const isSaleReturn = documentType === "SALE_RETURN";
+  const priced = documentType !== "STOCKTAKE" && !isSaleReturn;
   const [supplierId, setSupplierId] = useState(initialDocument?.supplierId ?? "");
   const [customerId, setCustomerId] = useState(initialDocument?.customerId ?? "");
   const [sourceWarehouseId, setSourceWarehouseId] = useState(
@@ -70,6 +79,7 @@ export function DocumentForm({
           quantity: line.quantity,
           unitPrice: line.unitPrice ?? "",
           unit: "",
+          originalLineId: line.originalLineId ?? "",
         })),
   );
   const [error, setError] = useState<string | null>(null);
@@ -79,11 +89,41 @@ export function DocumentForm({
   const { data: suppliers } = useQuery(supplierListQueryOptions());
   const { data: customers } = useQuery(customerListQueryOptions());
   const { data: warehouses } = useQuery(warehouseListQueryOptions());
+  const { data: outboundDocuments } = useQuery({
+    ...documentListQueryOptions("SALE_OUTBOUND", "POSTED"),
+    enabled: isSaleReturn,
+  });
+
+  const itemLabel = (itemId: string): string => {
+    const item = (items ?? []).find((candidate) => candidate.id === itemId);
+    return item === undefined ? itemId : `${item.code} ${item.name}`;
+  };
+
+  const originalLineOptions = (outboundDocuments ?? []).flatMap((document) =>
+    document.lines.map((line) => ({
+      id: line.id,
+      label: `${document.documentNo} 第 ${line.lineNo} 行 ${itemLabel(line.itemId)}（已出 ${line.quantity}）`,
+      itemId: line.itemId,
+      warehouseId: document.sourceWarehouseId ?? "",
+    })),
+  );
 
   const updateLine = (index: number, patch: Partial<LineDraft>): void => {
     setLines((current) =>
       current.map((line, position) => (position === index ? { ...line, ...patch } : line)),
     );
+  };
+
+  const selectOriginalLine = (index: number, originalLineId: string): void => {
+    const option = originalLineOptions.find((candidate) => candidate.id === originalLineId);
+    updateLine(index, {
+      originalLineId,
+      itemId: option?.itemId ?? "",
+      unit: "",
+    });
+    if (option !== undefined) {
+      setSourceWarehouseId(option.warehouseId);
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -95,7 +135,9 @@ export function DocumentForm({
       supplierId: documentType === "PURCHASE_INBOUND" && supplierId !== "" ? supplierId : null,
       customerId: documentType === "SALE_OUTBOUND" && customerId !== "" ? customerId : null,
       sourceWarehouseId:
-        (documentType === "SALE_OUTBOUND" || documentType === "TRANSFER") &&
+        (documentType === "SALE_OUTBOUND" ||
+          documentType === "TRANSFER" ||
+          documentType === "SALE_RETURN") &&
         sourceWarehouseId !== ""
           ? sourceWarehouseId
           : null,
@@ -111,6 +153,7 @@ export function DocumentForm({
         unitPrice: priced && line.unitPrice !== "" ? line.unitPrice : null,
         amount: null,
         unit: line.unit === "" ? null : line.unit,
+        originalLineId: line.originalLineId === "" ? null : line.originalLineId,
       })),
     });
     setPending(false);
@@ -121,7 +164,8 @@ export function DocumentForm({
 
   const needsSupplier = documentType === "PURCHASE_INBOUND";
   const needsCustomer = documentType === "SALE_OUTBOUND";
-  const needsSourceWarehouse = documentType === "SALE_OUTBOUND" || documentType === "TRANSFER";
+  const needsSourceWarehouse =
+    documentType === "SALE_OUTBOUND" || documentType === "TRANSFER" || isSaleReturn;
   const needsTargetWarehouse = documentType === "PURCHASE_INBOUND" || documentType === "TRANSFER";
   const needsWarehouse = documentType === "STOCKTAKE";
 
@@ -188,12 +232,17 @@ export function DocumentForm({
 
       {needsSourceWarehouse ? (
         <label className="block text-sm" htmlFor="document-source-warehouse">
-          {documentType === "TRANSFER" ? "源仓" : "来源仓库"}
+          {isSaleReturn
+            ? "退货入库仓（取自原销售出库单）"
+            : documentType === "TRANSFER"
+              ? "源仓"
+              : "来源仓库"}
           <select
             id="document-source-warehouse"
             data-testid="document-source-warehouse"
             className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
             value={sourceWarehouseId}
+            disabled={isSaleReturn}
             onChange={(event) => setSourceWarehouseId(event.target.value)}
           >
             <option value="">请选择仓库</option>
@@ -254,6 +303,25 @@ export function DocumentForm({
           const rate = conversionRateOf(item, line.unit);
           return (
             <div key={index} className="flex items-end gap-2" data-testid="document-line">
+              {isSaleReturn ? (
+                <label className="block text-sm" htmlFor={`document-line-original-${index}`}>
+                  原销售出库行
+                  <select
+                    id={`document-line-original-${index}`}
+                    data-testid="document-line-original"
+                    className="mt-1 block w-96 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    value={line.originalLineId}
+                    onChange={(event) => selectOriginalLine(index, event.target.value)}
+                  >
+                    <option value="">请选择原销售出库单的行</option>
+                    {originalLineOptions.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               <label className="block text-sm" htmlFor={`document-line-item-${index}`}>
                 商品
                 <select
@@ -261,6 +329,7 @@ export function DocumentForm({
                   data-testid="document-line-item"
                   className="mt-1 block w-56 rounded-md border border-border bg-background px-3 py-2 text-sm"
                   value={line.itemId}
+                  disabled={isSaleReturn}
                   onChange={(event) => updateLine(index, { itemId: event.target.value, unit: "" })}
                 >
                   <option value="">请选择商品</option>
@@ -278,7 +347,7 @@ export function DocumentForm({
                   data-testid="document-line-unit"
                   className="mt-1 block w-24 rounded-md border border-border bg-background px-3 py-2 text-sm"
                   value={line.unit}
-                  disabled={unitOptions.length === 0}
+                  disabled={unitOptions.length === 0 || isSaleReturn}
                   onChange={(event) => updateLine(index, { unit: event.target.value })}
                 >
                   {unitOptions.length === 0 ? (
@@ -293,7 +362,7 @@ export function DocumentForm({
                 </select>
               </label>
               <label className="block text-sm" htmlFor={`document-line-quantity-${index}`}>
-                {priced ? "数量" : "实盘数量"}
+                {priced ? "数量" : isSaleReturn ? "退货数量" : "实盘数量"}
                 <input
                   id={`document-line-quantity-${index}`}
                   data-testid="document-line-quantity"
