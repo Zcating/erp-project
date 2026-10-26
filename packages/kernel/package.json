@@ -11,6 +11,9 @@
   "scripts": {
     "build": "vp pack"
   },
+  "dependencies": {
+    "@erp-inventory-sales/shared": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^26.6.5"
   }

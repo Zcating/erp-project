@@ -5,6 +5,9 @@ import {
   amountType,
   conversionRateType,
   customers,
+  documentLines,
+  documentNumberCounters,
+  documents,
   itemAuxiliaryUnits,
   items,
   kernelPg,
@@ -19,6 +22,7 @@ describe("kernel-pg package", () => {
     expect(Object.keys(kernelPg).sort()).toEqual([
       "createCustomerRepository",
       "createDatabase",
+      "createDocumentRepository",
       "createItemMasterRepository",
       "createSupplierRepository",
       "createTransactionRunner",
@@ -65,5 +69,29 @@ describe("kernel-pg package", () => {
     expect(indexNamesOf(getTableConfig(suppliers))).toEqual(["suppliers_code_key"]);
     expect(indexNamesOf(getTableConfig(customers))).toEqual(["customers_code_key"]);
     expect(indexNamesOf(getTableConfig(warehouses))).toEqual(["warehouses_code_key"]);
+  });
+
+  it("单据、单据行与单据序号计数器三张表落在 erp schema，单据行的数量、单价、金额用 erp 三个十进制域承载", () => {
+    expect(getTableConfig(documents).schema).toBe("erp");
+    expect(getTableConfig(documents).name).toBe("documents");
+    expect(getTableConfig(documentLines).schema).toBe("erp");
+    expect(getTableConfig(documentLines).name).toBe("document_lines");
+    expect(getTableConfig(documentNumberCounters).schema).toBe("erp");
+    expect(getTableConfig(documentNumberCounters).name).toBe("document_number_counters");
+
+    expect(documentLines.quantity.getSQLType()).toBe("erp.quantity");
+    expect(documentLines.unitPrice.getSQLType()).toBe("erp.unit_price");
+    expect(documentLines.amount.getSQLType()).toBe("erp.amount");
+
+    const indexNamesOf = (table: ReturnType<typeof getTableConfig>): string[] =>
+      table.indexes.map((index) => index.config.name ?? "");
+
+    expect(indexNamesOf(getTableConfig(documents))).toEqual([
+      "documents_document_no_key",
+      "documents_type_status_idx",
+    ]);
+    expect(indexNamesOf(getTableConfig(documentLines))).toEqual([
+      "document_lines_document_line_no_key",
+    ]);
   });
 });

@@ -43,6 +43,9 @@ describe("数据库迁移", () => {
       );
       expect(tables.rows).toEqual([
         { table_schema: "erp", table_name: "customers" },
+        { table_schema: "erp", table_name: "document_lines" },
+        { table_schema: "erp", table_name: "document_number_counters" },
+        { table_schema: "erp", table_name: "documents" },
         { table_schema: "erp", table_name: "item_auxiliary_units" },
         { table_schema: "erp", table_name: "items" },
         { table_schema: "erp", table_name: "suppliers" },
@@ -147,6 +150,70 @@ describe("数据库迁移", () => {
           amount: "0.10",
           conversion_rate: "0.100000",
         },
+      ]);
+    } finally {
+      await client.end();
+    }
+  });
+
+  it("单据与单据行两张表落在 erp schema，单据行的数量、单价、金额分别用 erp 三个十进制域承载", async () => {
+    const client = await connectToTestDatabase();
+    try {
+      const columns = await client.query(
+        `select c.relname as table_name, a.attname as column_name, format_type(a.atttypid, a.atttypmod) as column_type
+         from pg_attribute a
+         join pg_class c on c.oid = a.attrelid
+         join pg_namespace n on n.oid = c.relnamespace
+         where n.nspname = 'erp' and c.relname in ('documents', 'document_lines', 'document_number_counters') and a.attnum > 0
+         order by c.relname, a.attname`,
+      );
+      expect(columns.rows).toEqual([
+        { table_name: "document_lines", column_name: "amount", column_type: "erp.amount" },
+        { table_name: "document_lines", column_name: "document_id", column_type: "uuid" },
+        { table_name: "document_lines", column_name: "id", column_type: "uuid" },
+        { table_name: "document_lines", column_name: "item_id", column_type: "uuid" },
+        { table_name: "document_lines", column_name: "line_no", column_type: "integer" },
+        { table_name: "document_lines", column_name: "quantity", column_type: "erp.quantity" },
+        { table_name: "document_lines", column_name: "unit_price", column_type: "erp.unit_price" },
+        {
+          table_name: "document_number_counters",
+          column_name: "date_key",
+          column_type: "text",
+        },
+        {
+          table_name: "document_number_counters",
+          column_name: "next_value",
+          column_type: "integer",
+        },
+        { table_name: "document_number_counters", column_name: "type", column_type: "text" },
+        {
+          table_name: "documents",
+          column_name: "created_at",
+          column_type: "timestamp with time zone",
+        },
+        { table_name: "documents", column_name: "customer_id", column_type: "uuid" },
+        { table_name: "documents", column_name: "document_no", column_type: "text" },
+        { table_name: "documents", column_name: "id", column_type: "uuid" },
+        { table_name: "documents", column_name: "source_warehouse_id", column_type: "uuid" },
+        { table_name: "documents", column_name: "status", column_type: "text" },
+        { table_name: "documents", column_name: "supplier_id", column_type: "uuid" },
+        { table_name: "documents", column_name: "target_warehouse_id", column_type: "uuid" },
+        { table_name: "documents", column_name: "type", column_type: "text" },
+        { table_name: "documents", column_name: "warehouse_id", column_type: "uuid" },
+      ]);
+
+      const indexes = await client.query(
+        `select indexname from pg_indexes
+         where schemaname = 'erp' and tablename in ('documents', 'document_lines', 'document_number_counters')
+         order by indexname`,
+      );
+      expect(indexes.rows.map((row) => row.indexname)).toEqual([
+        "document_lines_document_line_no_key",
+        "document_lines_pkey",
+        "document_number_counters_type_date_key_pk",
+        "documents_document_no_key",
+        "documents_pkey",
+        "documents_type_status_idx",
       ]);
     } finally {
       await client.end();

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { DuplicateError, NotFoundError, ValidationError } from "../../shared/errors/index.js";
+import {
+  ConflictError,
+  DuplicateError,
+  NotFoundError,
+  ValidationError,
+} from "../../shared/errors/index.js";
 import {
   createInMemoryCustomerRepository,
   createInMemorySupplierRepository,
@@ -241,5 +246,66 @@ describe("参与方与仓库领域规则", () => {
     const warehouses = await service.list();
 
     expect(warehouses.map((warehouse) => warehouse.code)).toEqual(["WH-001", "WH-002"]);
+  });
+});
+
+describe("被单据引用的主数据不可删除", () => {
+  const referencingChecker = (referencedId: string) => ({
+    findMasterDataReferences: async (masterDataId: string) =>
+      masterDataId === referencedId ? [{ documentNo: "PIN-20260102-001" }] : [],
+  });
+
+  it("供应商被单据引用时删除被拒，错误消息指出被哪张单据引用，记录仍在", async () => {
+    const repository = createInMemorySupplierRepository();
+    const service = createSupplierService(repository, {
+      idGenerator: () => "supplier-1",
+      referenceChecker: referencingChecker("supplier-1"),
+    });
+    const created = await service.create(supplierInput());
+
+    await expect(service.remove(created.id)).rejects.toThrow(ConflictError);
+    await expect(service.remove(created.id)).rejects.toThrow(
+      "供应商已被单据 PIN-20260102-001 引用，不能删除",
+    );
+    await expect(service.get(created.id)).resolves.toBeDefined();
+  });
+
+  it("客户被单据引用时删除被拒", async () => {
+    const repository = createInMemoryCustomerRepository();
+    const service = createCustomerService(repository, {
+      idGenerator: () => "customer-1",
+      referenceChecker: referencingChecker("customer-1"),
+    });
+    const created = await service.create(customerInput());
+
+    await expect(service.remove(created.id)).rejects.toThrow(
+      "客户已被单据 PIN-20260102-001 引用，不能删除",
+    );
+  });
+
+  it("仓库被单据引用时删除被拒", async () => {
+    const repository = createInMemoryWarehouseRepository();
+    const service = createWarehouseService(repository, {
+      idGenerator: () => "warehouse-1",
+      referenceChecker: referencingChecker("warehouse-1"),
+    });
+    const created = await service.create(warehouseInput());
+
+    await expect(service.remove(created.id)).rejects.toThrow(
+      "仓库已被单据 PIN-20260102-001 引用，不能删除",
+    );
+  });
+
+  it("没有被单据引用的主数据仍可删除", async () => {
+    const repository = createInMemorySupplierRepository();
+    const service = createSupplierService(repository, {
+      idGenerator: () => "supplier-1",
+      referenceChecker: referencingChecker("supplier-2"),
+    });
+    const created = await service.create(supplierInput());
+
+    await service.remove(created.id);
+
+    await expect(service.list()).resolves.toEqual([]);
   });
 });

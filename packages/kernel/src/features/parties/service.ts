@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { DuplicateError, NotFoundError } from "../../shared/errors/index.js";
+import { ConflictError, DuplicateError, NotFoundError } from "../../shared/errors/index.js";
+import type { MasterDataReferenceChecker } from "../../shared/ports/index.js";
 import type {
   Customer,
   CustomerInput,
@@ -46,6 +47,7 @@ export type WarehouseService = {
 
 export type PartyServiceOptions = {
   idGenerator?: () => string;
+  referenceChecker?: MasterDataReferenceChecker;
 };
 
 export function createSupplierService(
@@ -134,6 +136,18 @@ function createPartyService<TRecord extends { id: string; code: string }, TInput
     }
   };
 
+  const ensureNotReferenced = async (id: string): Promise<void> => {
+    if (options.referenceChecker === undefined) {
+      return;
+    }
+    const references = await options.referenceChecker.findMasterDataReferences(id);
+    if (references.length > 0) {
+      throw new ConflictError(
+        `${config.label}已被单据 ${references.map((reference) => reference.documentNo).join("、")} 引用，不能删除`,
+      );
+    }
+  };
+
   return {
     async list(): Promise<TRecord[]> {
       return config.repository.list();
@@ -172,6 +186,7 @@ function createPartyService<TRecord extends { id: string; code: string }, TInput
       if (existing === null) {
         throw new NotFoundError(`${config.label}不存在：${id}`);
       }
+      await ensureNotReferenced(id);
       await config.repository.remove(id);
     },
   };

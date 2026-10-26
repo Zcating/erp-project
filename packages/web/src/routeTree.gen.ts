@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DocumentsIndexRouteImport } from './routes/documents/index'
+import { Route as DocumentsNewRouteImport } from './routes/documents/new'
 import { Route as ItemsIndexRouteImport } from './routes/items/index'
 import { Route as ItemsNewRouteImport } from './routes/items/new'
 import { Route as SystemRoutesRouteImport } from './routes/system/routes'
+import { Route as DocumentsDocumentIdEditRouteImport } from './routes/documents/$documentId/edit'
 import { Route as ItemsItemIdEditRouteImport } from './routes/items/$itemId/edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -24,6 +27,16 @@ const IndexRoute = IndexRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsIndexRoute = DocumentsIndexRouteImport.update({
+  id: '/documents/',
+  path: '/documents/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsNewRoute = DocumentsNewRouteImport.update({
+  id: '/documents/new',
+  path: '/documents/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ItemsIndexRoute = ItemsIndexRouteImport.update({
@@ -41,6 +54,11 @@ const SystemRoutesRoute = SystemRoutesRouteImport.update({
   path: '/system/routes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocumentsDocumentIdEditRoute = DocumentsDocumentIdEditRouteImport.update({
+  id: '/documents/$documentId/edit',
+  path: '/documents/$documentId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ItemsItemIdEditRoute = ItemsItemIdEditRouteImport.update({
   id: '/items/$itemId/edit',
   path: '/items/$itemId/edit',
@@ -50,26 +68,35 @@ const ItemsItemIdEditRoute = ItemsItemIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/documents/new': typeof DocumentsNewRoute
   '/items/new': typeof ItemsNewRoute
   '/system/routes': typeof SystemRoutesRoute
+  '/documents/': typeof DocumentsIndexRoute
   '/items/': typeof ItemsIndexRoute
+  '/documents/$documentId/edit': typeof DocumentsDocumentIdEditRoute
   '/items/$itemId/edit': typeof ItemsItemIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/documents/new': typeof DocumentsNewRoute
   '/items/new': typeof ItemsNewRoute
   '/system/routes': typeof SystemRoutesRoute
+  '/documents': typeof DocumentsIndexRoute
   '/items': typeof ItemsIndexRoute
+  '/documents/$documentId/edit': typeof DocumentsDocumentIdEditRoute
   '/items/$itemId/edit': typeof ItemsItemIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/documents/new': typeof DocumentsNewRoute
   '/items/new': typeof ItemsNewRoute
   '/system/routes': typeof SystemRoutesRoute
+  '/documents/': typeof DocumentsIndexRoute
   '/items/': typeof ItemsIndexRoute
+  '/documents/$documentId/edit': typeof DocumentsDocumentIdEditRoute
   '/items/$itemId/edit': typeof ItemsItemIdEditRoute
 }
 export interface FileRouteTypes {
@@ -77,34 +104,46 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/documents/new'
     | '/items/new'
     | '/system/routes'
+    | '/documents/'
     | '/items/'
+    | '/documents/$documentId/edit'
     | '/items/$itemId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
+    | '/documents/new'
     | '/items/new'
     | '/system/routes'
+    | '/documents'
     | '/items'
+    | '/documents/$documentId/edit'
     | '/items/$itemId/edit'
   id:
     | '__root__'
     | '/'
     | '/login'
+    | '/documents/new'
     | '/items/new'
     | '/system/routes'
+    | '/documents/'
     | '/items/'
+    | '/documents/$documentId/edit'
     | '/items/$itemId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  DocumentsNewRoute: typeof DocumentsNewRoute
   ItemsNewRoute: typeof ItemsNewRoute
   SystemRoutesRoute: typeof SystemRoutesRoute
+  DocumentsIndexRoute: typeof DocumentsIndexRoute
   ItemsIndexRoute: typeof ItemsIndexRoute
+  DocumentsDocumentIdEditRoute: typeof DocumentsDocumentIdEditRoute
   ItemsItemIdEditRoute: typeof ItemsItemIdEditRoute
 }
 
@@ -122,6 +161,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents/': {
+      id: '/documents/'
+      path: '/documents'
+      fullPath: '/documents/'
+      preLoaderRoute: typeof DocumentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents/new': {
+      id: '/documents/new'
+      path: '/documents/new'
+      fullPath: '/documents/new'
+      preLoaderRoute: typeof DocumentsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/items/': {
@@ -145,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SystemRoutesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/documents/$documentId/edit': {
+      id: '/documents/$documentId/edit'
+      path: '/documents/$documentId/edit'
+      fullPath: '/documents/$documentId/edit'
+      preLoaderRoute: typeof DocumentsDocumentIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/items/$itemId/edit': {
       id: '/items/$itemId/edit'
       path: '/items/$itemId/edit'
@@ -158,9 +218,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  DocumentsNewRoute: DocumentsNewRoute,
   ItemsNewRoute: ItemsNewRoute,
   SystemRoutesRoute: SystemRoutesRoute,
+  DocumentsIndexRoute: DocumentsIndexRoute,
   ItemsIndexRoute: ItemsIndexRoute,
+  DocumentsDocumentIdEditRoute: DocumentsDocumentIdEditRoute,
   ItemsItemIdEditRoute: ItemsItemIdEditRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { Store } from "jotai";
+import type { DocumentUiStateAtoms } from "@/features/documents/stores";
 import type { ItemUiStateAtoms } from "@/features/items/stores";
 import type { UiStateAtoms } from "@/features/system/stores";
 
@@ -16,6 +17,10 @@ export type UiStateSnapshot = {
   itemKeyword: string;
   selectedItemId: string | null;
   itemDetailOpen: boolean;
+  documentTypeFilter: string;
+  documentStatusFilter: string;
+  selectedDocumentId: string | null;
+  documentDetailOpen: boolean;
 };
 
 export type DebugHandles = {
@@ -38,6 +43,7 @@ export function readAtomValues(
   store: Store,
   atoms: UiStateAtoms,
   itemAtoms: ItemUiStateAtoms,
+  documentAtoms: DocumentUiStateAtoms,
 ): UiStateSnapshot {
   return {
     routeFilter: store.get(atoms.routeFilter),
@@ -46,6 +52,10 @@ export function readAtomValues(
     itemKeyword: store.get(itemAtoms.itemKeyword),
     selectedItemId: store.get(itemAtoms.selectedItemId),
     itemDetailOpen: store.get(itemAtoms.itemDetailOpen),
+    documentTypeFilter: store.get(documentAtoms.documentTypeFilter),
+    documentStatusFilter: store.get(documentAtoms.documentStatusFilter),
+    selectedDocumentId: store.get(documentAtoms.selectedDocumentId),
+    documentDetailOpen: store.get(documentAtoms.documentDetailOpen),
   };
 }
 

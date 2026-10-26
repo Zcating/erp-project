@@ -10,6 +10,7 @@ import { createStore, Provider } from "jotai";
 import { useEffect, useState } from "react";
 import { LOGIN_PATH, sessionQueryOptions } from "@/features/session";
 import { itemUiStateAtoms } from "@/features/items/stores";
+import { documentUiStateAtoms } from "@/features/documents/stores";
 import { uiStateAtoms } from "@/features/system/stores";
 import { installDebugHandles, readAtomValues, readQueryCache } from "@/lib/debug-handles";
 import type { WebRouterContext } from "@/router-context";
@@ -34,7 +35,8 @@ function RootLayout() {
 
   useEffect(() => {
     installDebugHandles({
-      readUiState: () => readAtomValues(store, uiStateAtoms, itemUiStateAtoms),
+      readUiState: () =>
+        readAtomValues(store, uiStateAtoms, itemUiStateAtoms, documentUiStateAtoms),
       readQueryCache: () => readQueryCache(queryClient),
     });
   }, [store, queryClient]);

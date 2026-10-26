@@ -1,0 +1,84 @@
+import type { DocumentFilter, DocumentInput, DocumentService } from "@erp-inventory-sales/kernel";
+import { ValidationError, isDocumentStatus, isDocumentType } from "@erp-inventory-sales/kernel";
+import type { FastifyInstance } from "fastify";
+import { success } from "../../shared/envelope.js";
+import { documentBodySchema, type DocumentBody } from "./schema.js";
+
+export type DocumentRouteDeps = {
+  service: DocumentService;
+};
+
+export function registerDocumentRoutes(app: FastifyInstance, deps: DocumentRouteDeps): void {
+  app.post("/api/documents", async (request) => {
+    const body = documentBodySchema.safeParse(request.body);
+    if (!body.success) {
+      throw new ValidationError("请求体必须是单据对象");
+    }
+    return success(await deps.service.create(toDocumentInput(body.data)));
+  });
+
+  app.get("/api/documents", async (request) => {
+    const query = request.query as { type?: string; status?: string };
+    const documents = await deps.service.list(toDocumentFilter(query));
+    return success({ documents });
+  });
+
+  app.get("/api/documents/:id", async (request) => {
+    const params = request.params as { id: string };
+    return success(await deps.service.get(params.id));
+  });
+
+  app.put("/api/documents/:id", async (request) => {
+    const params = request.params as { id: string };
+    const body = documentBodySchema.safeParse(request.body);
+    if (!body.success) {
+      throw new ValidationError("请求体必须是单据对象");
+    }
+    return success(await deps.service.update(params.id, toDocumentInput(body.data)));
+  });
+
+  app.delete("/api/documents/:id", async (request) => {
+    const params = request.params as { id: string };
+    await deps.service.remove(params.id);
+    return success({ id: params.id });
+  });
+}
+
+function toDocumentInput(body: DocumentBody): DocumentInput {
+  const type = (body.type ?? "").trim();
+  if (type === "") {
+    throw new ValidationError("缺少单据类型");
+  }
+  if (!isDocumentType(type)) {
+    throw new ValidationError(`未知单据类型：${type}`);
+  }
+  return {
+    type,
+    supplierId: body.supplierId ?? null,
+    customerId: body.customerId ?? null,
+    sourceWarehouseId: body.sourceWarehouseId ?? null,
+    targetWarehouseId: body.targetWarehouseId ?? null,
+    warehouseId: body.warehouseId ?? null,
+    lines: (body.lines ?? []).map((line) => ({
+      itemId: line.itemId ?? "",
+      quantity: line.quantity ?? "",
+      unitPrice: line.unitPrice ?? null,
+      amount: line.amount ?? null,
+    })),
+  };
+}
+
+function toDocumentFilter(query: { type?: string; status?: string }): DocumentFilter {
+  const type = (query.type ?? "").trim();
+  const status = (query.status ?? "").trim();
+  if (type !== "" && !isDocumentType(type)) {
+    throw new ValidationError(`未知单据类型：${type}`);
+  }
+  if (status !== "" && !isDocumentStatus(status)) {
+    throw new ValidationError(`未知单据状态：${status}`);
+  }
+  return {
+    type: type === "" ? null : type,
+    status: status === "" ? null : status,
+  };
+}

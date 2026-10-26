@@ -28,6 +28,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </li>
           <li>
             <Link
+              to="/documents"
+              className="block rounded-md px-2 py-1 hover:bg-muted"
+              activeProps={{ className: "bg-muted font-medium" }}
+            >
+              单据
+            </Link>
+          </li>
+          <li>
+            <Link
               to="/system/routes"
               className="block rounded-md px-2 py-1 hover:bg-muted"
               activeProps={{ className: "bg-muted font-medium" }}

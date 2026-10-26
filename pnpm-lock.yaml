@@ -205,6 +205,10 @@ importers:
         version: 4.23.15
 
   packages/kernel:
+    dependencies:
+      '@erp-inventory-sales/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       '@types/node':
         specifier: ^26.6.5

@@ -22,6 +22,13 @@
       "when": 1792950235328,
       "tag": "0002_parties",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792974579539,
+      "tag": "0003_legal_wolverine",
+      "breakpoints": true
     }
   ]
 }

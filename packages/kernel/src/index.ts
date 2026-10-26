@@ -1,3 +1,4 @@
+export * from "./features/documents/index.js";
 export * from "./features/inventory/index.js";
 export * from "./features/item-master/index.js";
 export * from "./features/parties/index.js";

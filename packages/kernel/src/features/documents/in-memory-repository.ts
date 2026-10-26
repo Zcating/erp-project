@@ -1,0 +1,83 @@
+import { DuplicateError } from "../../shared/errors/index.js";
+import type { MasterDataReference } from "../../shared/ports/index.js";
+import type { Document, DocumentFilter, DocumentType } from "./model.js";
+import type { DocumentRepository } from "./ports.js";
+
+export function createInMemoryDocumentRepository(): DocumentRepository {
+  const stored = new Map<string, Document>();
+  const counters = new Map<string, number>();
+
+  const copy = (document: Document): Document => ({
+    ...document,
+    lines: document.lines.map((line) => ({ ...line })),
+  });
+
+  const findByDocumentNo = (documentNo: string): Document | null => {
+    for (const document of stored.values()) {
+      if (document.documentNo === documentNo) {
+        return document;
+      }
+    }
+    return null;
+  };
+
+  const referencesOf = (masterDataId: string): MasterDataReference[] =>
+    [...stored.values()]
+      .filter(
+        (document) =>
+          document.supplierId === masterDataId ||
+          document.customerId === masterDataId ||
+          document.sourceWarehouseId === masterDataId ||
+          document.targetWarehouseId === masterDataId ||
+          document.warehouseId === masterDataId,
+      )
+      .map((document) => ({ documentNo: document.documentNo }));
+
+  return {
+    async list(filter: DocumentFilter): Promise<Document[]> {
+      return [...stored.values()]
+        .filter(
+          (document) =>
+            (filter.type === null || document.type === filter.type) &&
+            (filter.status === null || document.status === filter.status),
+        )
+        .map(copy);
+    },
+
+    async findById(id: string): Promise<Document | null> {
+      const document = stored.get(id);
+      return document === undefined ? null : copy(document);
+    },
+
+    async findByDocumentNo(documentNo: string): Promise<Document | null> {
+      const document = findByDocumentNo(documentNo);
+      return document === null ? null : copy(document);
+    },
+
+    async insert(document: Document): Promise<void> {
+      if (findByDocumentNo(document.documentNo) !== null) {
+        throw new DuplicateError(`单据号重复：${document.documentNo}`);
+      }
+      stored.set(document.id, copy(document));
+    },
+
+    async update(document: Document): Promise<void> {
+      stored.set(document.id, copy(document));
+    },
+
+    async remove(id: string): Promise<boolean> {
+      return stored.delete(id);
+    },
+
+    async nextSequence(type: DocumentType, dateKey: string): Promise<number> {
+      const key = `${type}-${dateKey}`;
+      const next = (counters.get(key) ?? 0) + 1;
+      counters.set(key, next);
+      return next;
+    },
+
+    async findMasterDataReferences(masterDataId: string): Promise<MasterDataReference[]> {
+      return referencesOf(masterDataId);
+    },
+  };
+}

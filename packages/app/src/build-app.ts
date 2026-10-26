@@ -1,5 +1,6 @@
 import type {
   CustomerRepository,
+  DocumentRepository,
   ItemMasterRepository,
   SupplierRepository,
   TransactionRunner,
@@ -7,6 +8,8 @@ import type {
 } from "@erp-inventory-sales/kernel";
 import {
   createCustomerService,
+  createDocumentService,
+  createInMemoryDocumentRepository,
   createInMemoryTransactionRunner,
   createItemImportService,
   createItemMasterService,
@@ -16,6 +19,7 @@ import {
 import {
   createCustomerRepository,
   createDatabase,
+  createDocumentRepository,
   createItemMasterRepository,
   createSupplierRepository,
   createTransactionRunner,
@@ -25,6 +29,7 @@ import {
 import type { DatabaseConnection, KernelDatabase } from "@erp-inventory-sales/kernel-pg";
 import Fastify, { type FastifyInstance } from "fastify";
 import { registerDecimalRoutes } from "./features/decimals/index.js";
+import { registerDocumentRoutes, resolveDocumentTimeZone } from "./features/documents/index.js";
 import { registerHealthRoutes } from "./features/health/index.js";
 import { registerItemMasterRoutes } from "./features/item-master/index.js";
 import {
@@ -54,7 +59,9 @@ export type BuildAppOptions = {
   supplierRepository?: SupplierRepository;
   customerRepository?: CustomerRepository;
   warehouseRepository?: WarehouseRepository;
+  documentRepository?: DocumentRepository;
   transactionRunner?: TransactionRunner;
+  documentTimeZone?: string;
 };
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
@@ -98,12 +105,34 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const supplierRepository = options.supplierRepository ?? createSupplierRepository(database());
   const customerRepository = options.customerRepository ?? createCustomerRepository(database());
   const warehouseRepository = options.warehouseRepository ?? createWarehouseRepository(database());
+  const documentRepository =
+    options.documentRepository ??
+    (options.itemMasterRepository === undefined
+      ? createDocumentRepository(database())
+      : createInMemoryDocumentRepository());
+  const documentService = createDocumentService(documentRepository, {
+    runner: transactionRunner,
+    timeZone: options.documentTimeZone ?? resolveDocumentTimeZone(),
+  });
   registerItemMasterRoutes(app, {
     service: itemMasterService,
     importService: createItemImportService({ items: itemMasterService, runner: transactionRunner }),
   });
-  registerSupplierRoutes(app, { service: createSupplierService(supplierRepository) });
-  registerCustomerRoutes(app, { service: createCustomerService(customerRepository) });
-  registerWarehouseRoutes(app, { service: createWarehouseService(warehouseRepository) });
+  registerDocumentRoutes(app, { service: documentService });
+  registerSupplierRoutes(app, {
+    service: createSupplierService(supplierRepository, {
+      referenceChecker: documentService,
+    }),
+  });
+  registerCustomerRoutes(app, {
+    service: createCustomerService(customerRepository, {
+      referenceChecker: documentService,
+    }),
+  });
+  registerWarehouseRoutes(app, {
+    service: createWarehouseService(warehouseRepository, {
+      referenceChecker: documentService,
+    }),
+  });
   return app;
 }
