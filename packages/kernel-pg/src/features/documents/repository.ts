@@ -8,13 +8,22 @@ import type {
   MasterDataReference,
   TransactionContext,
 } from "@erp-inventory-sales/kernel";
-import { DuplicateError, ValidationError } from "@erp-inventory-sales/kernel";
+import {
+  DRAFT_DOCUMENT_TYPES,
+  DOCUMENT_TYPE_RULES,
+  DuplicateError,
+  ValidationError,
+} from "@erp-inventory-sales/kernel";
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { KernelDatabase } from "../../db/client";
 import type { PgTransaction } from "../../db/transactions";
 import { documentLines, documentNumberCounters, documents } from "../../schema/documents";
 
 type DocumentExecutor = KernelDatabase | PgTransaction;
+
+const RETURN_DOCUMENT_TYPES = DRAFT_DOCUMENT_TYPES.filter(
+  (type) => DOCUMENT_TYPE_RULES[type].originalType !== null,
+);
 
 type DocumentRow = {
   id: string;
@@ -268,6 +277,34 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
       return toDomain(row, grouped.get(row.id) ?? []);
     },
 
+    async findByLineIdForUpdate(
+      lineId: string,
+      context?: TransactionContext,
+    ): Promise<Document | null> {
+      const executor = executorOf(context);
+      const rows = await executor
+        .select({ documentId: documentLines.documentId })
+        .from(documentLines)
+        .where(eq(documentLines.id, lineId))
+        .limit(1);
+      const documentId = rows[0]?.documentId;
+      if (documentId === undefined) {
+        return null;
+      }
+      const documentRows = await executor
+        .select(documentColumns)
+        .from(documents)
+        .where(eq(documents.id, documentId))
+        .limit(1)
+        .for("update");
+      const row = documentRows[0];
+      if (row === undefined) {
+        return null;
+      }
+      const grouped = await linesOf(executor, [row.id]);
+      return toDomain(row, grouped.get(row.id) ?? []);
+    },
+
     async sumPostedReturnedQuantity(
       originalLineId: string,
       context?: TransactionContext,
@@ -296,6 +333,35 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
         .from(documentLines)
         .where(eq(documentLines.originalLineId, originalLineId));
       return rows.map((row) => ({ documentId: row.documentId, lineNo: row.lineNo }));
+    },
+
+    async listPostedReturnReferences(
+      originalDocumentId: string,
+      context?: TransactionContext,
+    ): Promise<Array<{ documentId: string; documentNo: string }>> {
+      const executor = executorOf(context);
+      const originalLines = await executor
+        .select({ id: documentLines.id })
+        .from(documentLines)
+        .where(eq(documentLines.documentId, originalDocumentId));
+      if (originalLines.length === 0) {
+        return [];
+      }
+      const rows = await executor
+        .selectDistinct({ documentId: documents.id, documentNo: documents.documentNo })
+        .from(documents)
+        .innerJoin(documentLines, eq(documentLines.documentId, documents.id))
+        .where(
+          and(
+            inArray(
+              documentLines.originalLineId,
+              originalLines.map((line) => line.id),
+            ),
+            inArray(documents.type, RETURN_DOCUMENT_TYPES),
+            eq(documents.status, "POSTED"),
+          ),
+        );
+      return rows.map((row) => ({ documentId: row.documentId, documentNo: row.documentNo }));
     },
 
     async insert(document: Document, context?: TransactionContext): Promise<void> {

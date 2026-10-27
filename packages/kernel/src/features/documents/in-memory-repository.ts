@@ -3,6 +3,7 @@ import { DuplicateError } from "../../shared/errors";
 import type { MasterDataReference } from "../../shared/ports";
 import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model";
 import type { DocumentRepository } from "./ports";
+import { DOCUMENT_TYPE_RULES } from "./rules";
 
 export function createInMemoryDocumentRepository(): DocumentRepository {
   const stored = new Map<string, Document>();
@@ -69,6 +70,15 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
       return null;
     },
 
+    async findByLineIdForUpdate(lineId: string): Promise<Document | null> {
+      for (const document of stored.values()) {
+        if (document.lines.some((line) => line.id === lineId)) {
+          return copy(document);
+        }
+      }
+      return null;
+    },
+
     async sumPostedReturnedQuantity(originalLineId: string): Promise<string> {
       let total = "0.000";
       for (const document of stored.values()) {
@@ -94,6 +104,31 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
             references.push({ documentId: document.id, lineNo: line.lineNo });
           }
         }
+      }
+      return references;
+    },
+
+    async listPostedReturnReferences(
+      originalDocumentId: string,
+    ): Promise<Array<{ documentId: string; documentNo: string }>> {
+      const originalLineIds = new Set(
+        (stored.get(originalDocumentId)?.lines ?? []).map((line) => line.id),
+      );
+      const references: Array<{ documentId: string; documentNo: string }> = [];
+      for (const document of stored.values()) {
+        if (document.status !== "POSTED") {
+          continue;
+        }
+        if (DOCUMENT_TYPE_RULES[document.type].originalType === null) {
+          continue;
+        }
+        const referencesOriginal = document.lines.some(
+          (line) => line.originalLineId !== null && originalLineIds.has(line.originalLineId),
+        );
+        if (!referencesOriginal) {
+          continue;
+        }
+        references.push({ documentId: document.id, documentNo: document.documentNo });
       }
       return references;
     },

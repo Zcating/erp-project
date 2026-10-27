@@ -123,6 +123,20 @@ export function createPostingService(options: PostingServiceOptions): PostingSer
     }
   };
 
+  const assertNotReferencedByPostedReturn = async (
+    document: Document,
+    context: TransactionContext | undefined,
+  ): Promise<void> => {
+    const references = await documents.listPostedReturnReferences(document.id, context);
+    const reference = references[0];
+    if (reference === undefined) {
+      return;
+    }
+    throw new StateConflictError(
+      `单据 ${document.documentNo} 已被过账的退货单引用：${reference.documentNo}，请先作废退货单 ${reference.documentNo}`,
+    );
+  };
+
   return {
     async post(
       documentId: string,
@@ -176,6 +190,7 @@ export function createPostingService(options: PostingServiceOptions): PostingSer
       return inTransaction(context, async (transaction) => {
         const document = await load(documentId, transaction);
         assertDocumentStatusTransition(document.status, "VOIDED");
+        await assertNotReferencedByPostedReturn(document, transaction);
         await assertVoidKeepsStockNonNegative(document, transaction);
         const handler = handlerOf(document);
         const phaseHandler = handler.phaseHandler;

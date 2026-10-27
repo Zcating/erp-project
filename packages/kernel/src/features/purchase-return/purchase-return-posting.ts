@@ -56,7 +56,11 @@ export function createPurchaseReturnPostingHandler(
     unitCost: EMPTY_UNIT_COST,
   });
 
-  const validate = async (document: Document): Promise<void> => {
+  const validate = async (
+    document: Document,
+    direction: PostingDirection,
+    context?: TransactionContext,
+  ): Promise<void> => {
     if (document.sourceWarehouseId === null) {
       throw new ValidationError("采购退货单缺少仓库，不能过账");
     }
@@ -71,6 +75,29 @@ export function createPurchaseReturnPostingHandler(
         throw new ValidationError(`第 ${line.lineNo} 行数量必须大于 0：${line.quantity}`);
       }
     });
+    if (direction !== "FORWARD") {
+      return;
+    }
+    for (const line of document.lines) {
+      await lockOriginalDocument(line.originalLineId as string, context);
+    }
+  };
+
+  const lockOriginalDocument = async (
+    originalLineId: string,
+    context: TransactionContext | undefined,
+  ): Promise<Document> => {
+    const original = await documents.findByLineIdForUpdate(originalLineId, context);
+    if (original === null) {
+      throw new ValidationError(`引用的原单据行不存在：${originalLineId}`);
+    }
+    if (original.type !== "PURCHASE_INBOUND") {
+      throw new ValidationError(`引用的原单据行不是采购入库单的行：${original.documentNo}`);
+    }
+    if (original.status !== "POSTED") {
+      throw new ValidationError(`引用的原单据行尚未过账：${original.documentNo}`);
+    }
+    return original;
   };
 
   const originalLineBasisOf = async (
@@ -207,7 +234,8 @@ export function createPurchaseReturnPostingHandler(
 
   return {
     type: "PURCHASE_RETURN",
-    validate: async (document) => validate(document),
+    validate: async (document, direction, transaction) =>
+      validate(document, direction, transaction),
     applyInventory: async (document, direction, transaction) =>
       direction === "FORWARD"
         ? applyForward(document, transaction)
