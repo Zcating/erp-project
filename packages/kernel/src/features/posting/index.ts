@@ -1,3 +1,5 @@
+import { availableDocumentActions } from "./actions";
+import type { AvailableDocumentActions, AvailablePostingAction } from "./actions";
 import { DEFAULT_POSTING_PHASE, isPostingPhase, POSTING_DIRECTIONS, POSTING_PHASES } from "./model";
 import type {
   InventoryMovement,
@@ -22,6 +24,7 @@ export const posting = {
   POSTING_PHASE_SEQUENCES,
   POSTING_PREREQUISITES,
   assertPostingPrerequisites,
+  availableDocumentActions,
   createPostingService,
   isPostingPhase,
   reverseDocumentPostings,
@@ -35,6 +38,7 @@ export {
   POSTING_PHASE_SEQUENCES,
   POSTING_PREREQUISITES,
   assertPostingPrerequisites,
+  availableDocumentActions,
   createPostingService,
   isPostingPhase,
   reverseDocumentPostings,
@@ -42,6 +46,8 @@ export {
 };
 
 export type {
+  AvailableDocumentActions,
+  AvailablePostingAction,
   InventoryMovement,
   PostingDirection,
   PostingPhase,

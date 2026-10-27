@@ -1,4 +1,5 @@
 import type {
+  AvailableDocumentActions,
   Document,
   DocumentFilter,
   DocumentInput,
@@ -7,15 +8,20 @@ import type {
 import type { PostingService, TransferQueryService } from "@erp-inventory-sales/kernel";
 import {
   ValidationError,
+  availableDocumentActions,
   isDocumentStatus,
   isDocumentType,
   isPostingPhase,
+  POSTED_DOCUMENT_STATUS,
 } from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
 import { success } from "../../shared/envelope";
 import { documentBodySchema, postingBodySchema, type DocumentBody } from "./schema";
 
-export type DocumentWithPhases = Document & { postedPhases?: string[] };
+export type DocumentWithActions = Document & {
+  postedPhases?: string[];
+  actions: AvailableDocumentActions;
+};
 
 export type DocumentRouteDeps = {
   service: DocumentService;
@@ -24,11 +30,15 @@ export type DocumentRouteDeps = {
 };
 
 export function registerDocumentRoutes(app: FastifyInstance, deps: DocumentRouteDeps): void {
-  const withPostedPhases = async (documents: Document[]): Promise<DocumentWithPhases[]> => {
+  const withActions = async (documents: Document[]): Promise<DocumentWithActions[]> => {
     const phases = await deps.transferService.listPostedPhasesOf(documents);
     return documents.map((document) => {
       const postedPhases = phases.get(document.id);
-      return postedPhases === undefined ? document : { ...document, postedPhases };
+      return {
+        ...document,
+        ...(postedPhases === undefined ? {} : { postedPhases }),
+        actions: availableDocumentActions(document, postedPhases ?? []),
+      };
     });
   };
 
@@ -43,13 +53,26 @@ export function registerDocumentRoutes(app: FastifyInstance, deps: DocumentRoute
   app.get("/api/documents", async (request) => {
     const query = request.query as { type?: string; status?: string };
     const documents = await deps.service.list(toDocumentFilter(query));
-    return success({ documents: await withPostedPhases(documents) });
+    return success({ documents: await withActions(documents) });
+  });
+
+  app.get("/api/documents/original-candidates", async (request) => {
+    const query = request.query as { type?: string };
+    const type = (query.type ?? "").trim();
+    if (type === "") {
+      throw new ValidationError("缺少原单据类型");
+    }
+    if (!isDocumentType(type)) {
+      throw new ValidationError(`未知单据类型：${type}`);
+    }
+    const documents = await deps.service.list({ type, status: POSTED_DOCUMENT_STATUS });
+    return success({ documents: await withActions(documents) });
   });
 
   app.get("/api/documents/:id", async (request) => {
     const params = request.params as { id: string };
     const document = await deps.service.get(params.id);
-    const [view] = await withPostedPhases([document]);
+    const [view] = await withActions([document]);
     return success(view);
   });
 
