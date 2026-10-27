@@ -15,6 +15,7 @@ export {
   type ItemMaster,
   type ItemMutationResult,
 } from "./lib/api";
+export { conversionRateOf } from "./lib/conversion";
 export { displayConversionRate } from "./lib/format";
 export { itemOptions, unitOptions } from "./lib/options";
 export { buildItemInput } from "./lib/payload";

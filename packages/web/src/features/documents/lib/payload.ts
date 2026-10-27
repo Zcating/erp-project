@@ -1,32 +1,32 @@
 import type { DocumentInput, DraftDocumentType } from "./api";
+import { DOCUMENT_FORM_RULES } from "./rules";
 import type { DocumentFormValues } from "./schema";
 
 export function buildDocumentInput(
   values: DocumentFormValues,
   documentType: DraftDocumentType,
 ): DocumentInput {
-  const isReturn = documentType === "SALE_RETURN" || documentType === "PURCHASE_RETURN";
-  const priced = documentType !== "STOCKTAKE" && !isReturn;
-  const needsSourceWarehouse =
-    documentType === "SALE_OUTBOUND" || documentType === "TRANSFER" || isReturn;
-  const needsTargetWarehouse = documentType === "PURCHASE_INBOUND" || documentType === "TRANSFER";
+  const rule = DOCUMENT_FORM_RULES[documentType];
+  const party = rule.party;
 
   return {
     type: documentType,
-    supplierId:
-      documentType === "PURCHASE_INBOUND" && values.supplierId !== "" ? values.supplierId : null,
-    customerId:
-      documentType === "SALE_OUTBOUND" && values.customerId !== "" ? values.customerId : null,
+    supplierId: party === "SUPPLIER" && values.supplierId !== "" ? values.supplierId : null,
+    customerId: party === "CUSTOMER" && values.customerId !== "" ? values.customerId : null,
     sourceWarehouseId:
-      needsSourceWarehouse && values.sourceWarehouseId !== "" ? values.sourceWarehouseId : null,
+      rule.warehouses.includes("SOURCE") && values.sourceWarehouseId !== ""
+        ? values.sourceWarehouseId
+        : null,
     targetWarehouseId:
-      needsTargetWarehouse && values.targetWarehouseId !== "" ? values.targetWarehouseId : null,
+      rule.warehouses.includes("TARGET") && values.targetWarehouseId !== ""
+        ? values.targetWarehouseId
+        : null,
     warehouseId:
-      documentType === "STOCKTAKE" && values.warehouseId !== "" ? values.warehouseId : null,
+      rule.warehouses.includes("COUNT") && values.warehouseId !== "" ? values.warehouseId : null,
     lines: values.lines.map((line) => ({
       itemId: line.itemId,
       quantity: line.quantity,
-      unitPrice: priced && line.unitPrice !== "" ? line.unitPrice : null,
+      unitPrice: rule.priced && line.unitPrice !== "" ? line.unitPrice : null,
       amount: null,
       unit: line.unit === "" ? null : line.unit,
       originalLineId: line.originalLineId === "" ? null : line.originalLineId,

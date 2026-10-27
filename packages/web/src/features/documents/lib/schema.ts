@@ -1,5 +1,15 @@
 import { z } from "zod";
 import type { DraftDocumentType } from "./api";
+import {
+  DOCUMENT_FORM_RULES,
+  missingPartyMessage,
+  missingWarehouseMessage,
+  partyFieldOf,
+  partyValueOf,
+  requiresDistinctWarehouses,
+  warehouseFieldOf,
+  warehouseValueOf,
+} from "./rules";
 
 export const documentLineDraftSchema = z.object({
   itemId: z.string(),
@@ -23,9 +33,9 @@ export type DocumentFormValues = z.infer<typeof documentFormValuesSchema>;
 
 export function documentFormSchema(documentType: DraftDocumentType) {
   return documentFormValuesSchema.superRefine((values, ctx) => {
-    const isReturn = documentType === "SALE_RETURN" || documentType === "PURCHASE_RETURN";
+    const rule = DOCUMENT_FORM_RULES[documentType];
 
-    if (isReturn) {
+    if (rule.requiresOriginalLine) {
       values.lines.forEach((line, index) => {
         if (line.originalLineId.trim() === "") {
           ctx.addIssue({
@@ -37,66 +47,37 @@ export function documentFormSchema(documentType: DraftDocumentType) {
       });
     }
 
-    if (documentType === "PURCHASE_INBOUND") {
-      if (values.supplierId.trim() === "") {
-        ctx.addIssue({ code: "custom", message: "缺少供应商", path: ["supplierId"] });
-      }
-      if (values.targetWarehouseId.trim() === "") {
+    if (rule.party !== null) {
+      if (partyValueOf(values, rule.party).trim() === "") {
         ctx.addIssue({
           code: "custom",
-          message: "缺少目标仓库",
-          path: ["targetWarehouseId"],
+          message: missingPartyMessage(rule.party),
+          path: [partyFieldOf(rule.party)],
         });
       }
     }
 
-    if (documentType === "SALE_OUTBOUND") {
-      if (values.customerId.trim() === "") {
-        ctx.addIssue({ code: "custom", message: "缺少客户", path: ["customerId"] });
-      }
-      if (values.sourceWarehouseId.trim() === "") {
+    for (const role of rule.warehouses) {
+      if (warehouseValueOf(values, role).trim() === "") {
         ctx.addIssue({
           code: "custom",
-          message: "缺少来源仓库",
-          path: ["sourceWarehouseId"],
+          message: missingWarehouseMessage(rule, role),
+          path: [warehouseFieldOf(role)],
         });
       }
     }
 
-    if (isReturn) {
-      if (values.sourceWarehouseId.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          message: "缺少来源仓库",
-          path: ["sourceWarehouseId"],
-        });
-      }
-    }
-
-    if (documentType === "TRANSFER") {
-      if (values.sourceWarehouseId.trim() === "") {
-        ctx.addIssue({ code: "custom", message: "缺少源仓", path: ["sourceWarehouseId"] });
-      }
-      if (values.targetWarehouseId.trim() === "") {
-        ctx.addIssue({ code: "custom", message: "缺少目标仓", path: ["targetWarehouseId"] });
-      }
-      if (
-        values.sourceWarehouseId.trim() !== "" &&
-        values.targetWarehouseId.trim() !== "" &&
-        values.sourceWarehouseId.trim() === values.targetWarehouseId.trim()
-      ) {
-        ctx.addIssue({
-          code: "custom",
-          message: "源仓与目标仓必须不同",
-          path: ["sourceWarehouseId"],
-        });
-      }
-    }
-
-    if (documentType === "STOCKTAKE") {
-      if (values.warehouseId.trim() === "") {
-        ctx.addIssue({ code: "custom", message: "缺少仓库", path: ["warehouseId"] });
-      }
+    if (
+      requiresDistinctWarehouses(rule) &&
+      values.sourceWarehouseId.trim() !== "" &&
+      values.targetWarehouseId.trim() !== "" &&
+      values.sourceWarehouseId.trim() === values.targetWarehouseId.trim()
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "源仓与目标仓必须不同",
+        path: ["sourceWarehouseId"],
+      });
     }
   });
 }

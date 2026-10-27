@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Picker } from "@/components/ui/picker";
-import { itemListQueryOptions, itemOptions, unitOptions } from "@/features/items";
-import type { ItemMaster } from "@/features/items";
+import { conversionRateOf, itemListQueryOptions, itemOptions, unitOptions } from "@/features/items";
 import {
   customerListQueryOptions,
   customerOptions,
@@ -17,10 +16,11 @@ import {
 } from "@/features/parties";
 import type { Document, DocumentInput, DraftDocumentType, FormSubmitResult } from "../lib/api";
 import { DRAFT_DOCUMENT_TYPES } from "../lib/api";
-import { computeLineAmount } from "../lib/format";
+import { computeLineAmount, DOCUMENT_TYPE_LABELS } from "../lib/format";
 import { documentTypeOptions, originalLineChoices } from "../lib/options";
 import { buildDocumentInput } from "../lib/payload";
 import { documentListQueryOptions } from "../lib/queries";
+import { DOCUMENT_FORM_RULES } from "../lib/rules";
 import { documentFormSchema, type DocumentLineDraft } from "../lib/schema";
 
 export type DocumentFormProps = {
@@ -39,12 +39,9 @@ const emptyLine = (): DocumentLineDraft => ({
   originalLineId: "",
 });
 
-const conversionRateOf = (item: ItemMaster | undefined, unit: string): string => {
-  if (item === undefined || unit === "" || unit === item.baseUnit) {
-    return "1";
-  }
-  const auxiliary = item.auxiliaryUnits.find((candidate) => candidate.unit === unit);
-  return auxiliary?.conversionRate ?? "1";
+const ORIGINAL_LINE_LABELS: Record<string, string> = {
+  SALE_OUTBOUND: "原销售出库行",
+  PURCHASE_INBOUND: "原采购入库行",
 };
 
 export function DocumentForm({
@@ -89,42 +86,35 @@ export function DocumentForm({
   const values = useSelector(form.store, (state) => state.values);
   const isSubmitting = useSelector(form.store, (state) => state.isSubmitting);
 
-  const isSaleReturn = documentType === "SALE_RETURN";
-  const isPurchaseReturn = documentType === "PURCHASE_RETURN";
-  const isReturn = isSaleReturn || isPurchaseReturn;
-  const priced = documentType !== "STOCKTAKE" && !isReturn;
+  const rule = DOCUMENT_FORM_RULES[documentType];
+  const priced = rule.priced;
+  const requiresOriginalLine = rule.requiresOriginalLine;
+  const originalDocumentLabel =
+    rule.originalType === null ? "" : DOCUMENT_TYPE_LABELS[rule.originalType];
 
   const { data: items } = useQuery(itemListQueryOptions());
   const { data: suppliers } = useQuery(supplierListQueryOptions());
   const { data: customers } = useQuery(customerListQueryOptions());
   const { data: warehouses } = useQuery(warehouseListQueryOptions());
-  const { data: outboundDocuments } = useQuery({
-    ...documentListQueryOptions("SALE_OUTBOUND", "POSTED"),
-    enabled: isSaleReturn,
-  });
-  const { data: inboundDocuments } = useQuery({
-    ...documentListQueryOptions("PURCHASE_INBOUND", "POSTED"),
-    enabled: isPurchaseReturn,
+  const { data: originalDocuments } = useQuery({
+    ...documentListQueryOptions(rule.originalType ?? "", "POSTED"),
+    enabled: rule.originalType !== null,
   });
 
-  const originalChoices = isPurchaseReturn
-    ? originalLineChoices(
-        inboundDocuments ?? [],
-        items ?? [],
-        "已入",
-        (document) => document.targetWarehouseId ?? "",
-      )
-    : originalLineChoices(
-        outboundDocuments ?? [],
-        items ?? [],
-        "已出",
-        (document) => document.sourceWarehouseId ?? "",
-      );
+  const originalChoices = originalLineChoices(
+    originalDocuments ?? [],
+    items ?? [],
+    rule.originalType === "PURCHASE_INBOUND" ? "已入" : "已出",
+    (document) =>
+      rule.originalWarehouseRole === "TARGET"
+        ? (document.targetWarehouseId ?? "")
+        : (document.sourceWarehouseId ?? ""),
+  );
 
   const originalLinePickerOptions = [
     {
       value: "",
-      label: isPurchaseReturn ? "请选择原采购入库单的行" : "请选择原销售出库单的行",
+      label: `请选择原${originalDocumentLabel}的行`,
     },
     ...originalChoices.map((choice) => ({ value: choice.value, label: choice.label })),
   ];
@@ -147,12 +137,11 @@ export function DocumentForm({
     }
   };
 
-  const needsSupplier = documentType === "PURCHASE_INBOUND";
-  const needsCustomer = documentType === "SALE_OUTBOUND";
-  const needsSourceWarehouse =
-    documentType === "SALE_OUTBOUND" || documentType === "TRANSFER" || isReturn;
-  const needsTargetWarehouse = documentType === "PURCHASE_INBOUND" || documentType === "TRANSFER";
-  const needsWarehouse = documentType === "STOCKTAKE";
+  const needsSupplier = rule.party === "SUPPLIER";
+  const needsCustomer = rule.party === "CUSTOMER";
+  const needsSourceWarehouse = rule.warehouses.includes("SOURCE");
+  const needsTargetWarehouse = rule.warehouses.includes("TARGET");
+  const needsWarehouse = rule.warehouses.includes("COUNT");
 
   return (
     <form
@@ -222,13 +211,11 @@ export function DocumentForm({
             htmlFor="document-source-warehouse"
             className="block text-sm"
           >
-            {isSaleReturn
-              ? "退货入库仓（取自原销售出库单）"
-              : isPurchaseReturn
-                ? "退货出库仓（取自原采购入库单）"
-                : documentType === "TRANSFER"
-                  ? "源仓"
-                  : "来源仓库"}
+            {requiresOriginalLine
+              ? `${rule.originalWarehouseRole === "TARGET" ? "退货出库仓" : "退货入库仓"}（取自原${originalDocumentLabel}）`
+              : rule.shortWarehouseLabels
+                ? "源仓"
+                : "来源仓库"}
           </Label>
           <Picker
             id="document-source-warehouse"
@@ -239,7 +226,7 @@ export function DocumentForm({
               { value: "", label: "请选择仓库" },
               ...warehouseOptionsWithCode(warehouses ?? []),
             ]}
-            disabled={isReturn}
+            disabled={requiresOriginalLine}
             data-testid="document-source-warehouse"
             aria-labelledby="document-source-warehouse-label"
           />
@@ -253,7 +240,7 @@ export function DocumentForm({
             htmlFor="document-target-warehouse"
             className="block text-sm"
           >
-            {documentType === "TRANSFER" ? "目标仓" : "目标仓库"}
+            {rule.shortWarehouseLabels ? "目标仓" : "目标仓库"}
           </Label>
           <Picker
             id="document-target-warehouse"
@@ -304,14 +291,14 @@ export function DocumentForm({
           const rate = conversionRateOf(item, line.unit);
           return (
             <div key={index} className="flex items-end gap-2" data-testid="document-line">
-              {isReturn ? (
+              {requiresOriginalLine ? (
                 <div>
                   <Label
                     id={`document-line-original-label-${index}`}
                     htmlFor={`document-line-original-${index}`}
                     className="block text-sm"
                   >
-                    {isPurchaseReturn ? "原采购入库行" : "原销售出库行"}
+                    {ORIGINAL_LINE_LABELS[rule.originalType ?? ""] ?? ""}
                   </Label>
                   <Picker
                     id={`document-line-original-${index}`}
@@ -338,7 +325,7 @@ export function DocumentForm({
                   value={line.itemId}
                   onValueChange={(value) => updateLine(index, { itemId: value, unit: "" })}
                   options={[{ value: "", label: "请选择商品" }, ...itemOptions(items ?? [])]}
-                  disabled={isReturn}
+                  disabled={requiresOriginalLine}
                   data-testid="document-line-item"
                   aria-labelledby={`document-line-item-label-${index}`}
                 />
@@ -358,14 +345,14 @@ export function DocumentForm({
                   onValueChange={(value) => updateLine(index, { unit: value })}
                   options={unitPickerOptions}
                   placeholder=""
-                  disabled={unitChoices.length === 0 || isReturn}
+                  disabled={unitChoices.length === 0 || requiresOriginalLine}
                   data-testid="document-line-unit"
                   aria-labelledby={`document-line-unit-label-${index}`}
                 />
               </div>
               <div>
                 <Label htmlFor={`document-line-quantity-${index}`} className="block text-sm">
-                  {priced ? "数量" : isReturn ? "退货数量" : "实盘数量"}
+                  {priced ? "数量" : requiresOriginalLine ? "退货数量" : "实盘数量"}
                 </Label>
                 <Input
                   id={`document-line-quantity-${index}`}
