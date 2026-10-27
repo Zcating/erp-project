@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Picker } from "@/components/ui/picker";
 import {
-  itemOptions,
   movementDocumentNoFilterAtom,
   movementFromFilterAtom,
   movementItemFilterAtom,
@@ -16,10 +15,9 @@ import {
   movementToFilterAtom,
   movementWarehouseFilterAtom,
   stockMovementQueryOptions,
-  warehouseOptions,
 } from "@/features/inventory";
-import { itemListQueryOptions } from "@/features/items";
-import { warehouseListQueryOptions } from "@/features/parties";
+import { itemListQueryOptions, itemOptions } from "@/features/items";
+import { warehouseListQueryOptions, warehouseOptionsWithoutCode } from "@/features/parties";
 
 export const Route = createFileRoute("/inventory/movements")({
   loader: async ({ context }) => {
@@ -92,7 +90,10 @@ function StockMovementPage() {
             className="mt-1 w-48"
             value={warehouseFilter}
             onValueChange={setWarehouseFilter}
-            options={warehouseOptions(warehouses ?? [])}
+            options={[
+              { value: "", label: "全部仓库" },
+              ...warehouseOptionsWithoutCode(warehouses ?? []),
+            ]}
             data-testid="movement-warehouse-filter"
             aria-labelledby="movement-warehouse-filter-label"
           />
@@ -111,7 +112,7 @@ function StockMovementPage() {
             className="mt-1 w-48"
             value={itemFilter}
             onValueChange={setItemFilter}
-            options={itemOptions(items ?? [])}
+            options={[{ value: "", label: "全部商品" }, ...itemOptions(items ?? [])]}
             data-testid="movement-item-filter"
             aria-labelledby="movement-item-filter-label"
           />

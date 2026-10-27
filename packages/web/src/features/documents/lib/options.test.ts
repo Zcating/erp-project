@@ -1,40 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { Customer, Supplier, Warehouse } from "../../parties/lib/api";
 import type { ItemMaster } from "../../items/lib/api";
 import type { Document } from "./api";
 import {
-  customerOptions,
   documentStatusFilterOptions,
   documentStatusOptions,
   documentTypeFilterOptions,
   documentTypeOptions,
-  itemOptions,
   originalLineChoices,
-  supplierOptions,
-  unitOptions,
-  warehouseOptions,
 } from "./options";
-
-const supplier: Supplier = {
-  id: "sup-1",
-  code: "SUP-1",
-  name: "可口可乐（中国）饮料有限公司",
-  contact: null,
-};
-
-const customer: Customer = {
-  id: "cus-1",
-  code: "CUS-1",
-  name: "杭州百货大楼",
-  contact: null,
-};
-
-const warehouse: Warehouse = {
-  id: "wh-1",
-  code: "WH-1",
-  name: "杭州总仓",
-  purpose: null,
-};
 
 const item: ItemMaster = {
   id: "item-1",
@@ -72,45 +45,6 @@ const inbound: Document = {
 };
 
 describe("单据域的候选集构造", () => {
-  it("供应商选项是「编码 名称」，取值是供应商标识，首项是空值项", () => {
-    expect(supplierOptions([supplier])).toEqual([
-      { value: "", label: "请选择供应商" },
-      { value: "sup-1", label: "SUP-1 可口可乐（中国）饮料有限公司" },
-    ]);
-  });
-
-  it("客户选项是「编码 名称」，取值是客户标识，首项是空值项", () => {
-    expect(customerOptions([customer])).toEqual([
-      { value: "", label: "请选择客户" },
-      { value: "cus-1", label: "CUS-1 杭州百货大楼" },
-    ]);
-  });
-
-  it("仓库选项是「编码 名称」，取值是仓库标识，首项是空值项", () => {
-    expect(warehouseOptions([warehouse])).toEqual([
-      { value: "", label: "请选择仓库" },
-      { value: "wh-1", label: "WH-1 杭州总仓" },
-    ]);
-  });
-
-  it("商品选项是「编码 名称」，取值是商品标识，首项是空值项", () => {
-    expect(itemOptions([item])).toEqual([
-      { value: "", label: "请选择商品" },
-      { value: "item-1", label: "SKU-1 可口可乐" },
-    ]);
-  });
-
-  it("单位选项的取值与文案都是单位本身", () => {
-    expect(unitOptions(item)).toEqual([
-      { value: "瓶", label: "瓶" },
-      { value: "箱", label: "箱" },
-    ]);
-  });
-
-  it("没有商品时单位选项是空值项加「—」", () => {
-    expect(unitOptions(undefined)).toEqual([{ value: "", label: "—" }]);
-  });
-
   it("原单据行选项是「单号 第 行号 行 商品（已出 数量）」，取值是行标识", () => {
     const choices = originalLineChoices(
       [inbound],

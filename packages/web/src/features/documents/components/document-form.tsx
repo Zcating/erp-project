@@ -5,26 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Picker } from "@/components/ui/picker";
-import { itemListQueryOptions } from "@/features/items";
+import { itemListQueryOptions, itemOptions, unitOptions } from "@/features/items";
 import type { ItemMaster } from "@/features/items";
 import {
   customerListQueryOptions,
+  customerOptions,
   supplierListQueryOptions,
+  supplierOptions,
   warehouseListQueryOptions,
+  warehouseOptionsWithCode,
 } from "@/features/parties";
 import type { Document, DocumentInput, DraftDocumentType, FormSubmitResult } from "../lib/api";
 import { DRAFT_DOCUMENT_TYPES } from "../lib/api";
 import { computeLineAmount } from "../lib/format";
-import {
-  customerOptions,
-  documentTypeOptions,
-  itemOptions,
-  originalLineChoices,
-  supplierOptions,
-  unitNames,
-  unitOptions,
-  warehouseOptions,
-} from "../lib/options";
+import { documentTypeOptions, originalLineChoices } from "../lib/options";
 import { buildDocumentInput } from "../lib/payload";
 import { documentListQueryOptions } from "../lib/queries";
 import { documentFormSchema, type DocumentLineDraft } from "../lib/schema";
@@ -197,7 +191,7 @@ export function DocumentForm({
             className="mt-1 w-full"
             value={values.supplierId}
             onValueChange={(value) => form.setFieldValue("supplierId", value)}
-            options={supplierOptions(suppliers ?? [])}
+            options={[{ value: "", label: "请选择供应商" }, ...supplierOptions(suppliers ?? [])]}
             data-testid="document-supplier"
             aria-labelledby="document-supplier-label"
           />
@@ -214,7 +208,7 @@ export function DocumentForm({
             className="mt-1 w-full"
             value={values.customerId}
             onValueChange={(value) => form.setFieldValue("customerId", value)}
-            options={customerOptions(customers ?? [])}
+            options={[{ value: "", label: "请选择客户" }, ...customerOptions(customers ?? [])]}
             data-testid="document-customer"
             aria-labelledby="document-customer-label"
           />
@@ -241,7 +235,10 @@ export function DocumentForm({
             className="mt-1 w-full"
             value={values.sourceWarehouseId}
             onValueChange={(value) => form.setFieldValue("sourceWarehouseId", value)}
-            options={warehouseOptions(warehouses ?? [])}
+            options={[
+              { value: "", label: "请选择仓库" },
+              ...warehouseOptionsWithCode(warehouses ?? []),
+            ]}
             disabled={isReturn}
             data-testid="document-source-warehouse"
             aria-labelledby="document-source-warehouse-label"
@@ -263,7 +260,10 @@ export function DocumentForm({
             className="mt-1 w-full"
             value={values.targetWarehouseId}
             onValueChange={(value) => form.setFieldValue("targetWarehouseId", value)}
-            options={warehouseOptions(warehouses ?? [])}
+            options={[
+              { value: "", label: "请选择仓库" },
+              ...warehouseOptionsWithCode(warehouses ?? []),
+            ]}
             data-testid="document-target-warehouse"
             aria-labelledby="document-target-warehouse-label"
           />
@@ -284,7 +284,10 @@ export function DocumentForm({
             className="mt-1 w-full"
             value={values.warehouseId}
             onValueChange={(value) => form.setFieldValue("warehouseId", value)}
-            options={warehouseOptions(warehouses ?? [])}
+            options={[
+              { value: "", label: "请选择仓库" },
+              ...warehouseOptionsWithCode(warehouses ?? []),
+            ]}
             data-testid="document-warehouse"
             aria-labelledby="document-warehouse-label"
           />
@@ -295,8 +298,9 @@ export function DocumentForm({
         <legend className="text-sm">单据行</legend>
         {values.lines.map((line, index) => {
           const item = (items ?? []).find((candidate) => candidate.id === line.itemId);
-          const units = unitNames(item);
           const unitChoices = unitOptions(item);
+          const unitPickerOptions =
+            unitChoices.length === 0 ? [{ value: "", label: "—" }] : unitChoices;
           const rate = conversionRateOf(item, line.unit);
           return (
             <div key={index} className="flex items-end gap-2" data-testid="document-line">
@@ -333,7 +337,7 @@ export function DocumentForm({
                   className="mt-1 w-56"
                   value={line.itemId}
                   onValueChange={(value) => updateLine(index, { itemId: value, unit: "" })}
-                  options={itemOptions(items ?? [])}
+                  options={[{ value: "", label: "请选择商品" }, ...itemOptions(items ?? [])]}
                   disabled={isReturn}
                   data-testid="document-line-item"
                   aria-labelledby={`document-line-item-label-${index}`}
@@ -352,9 +356,9 @@ export function DocumentForm({
                   className="mt-1 w-24"
                   value={line.unit}
                   onValueChange={(value) => updateLine(index, { unit: value })}
-                  options={unitChoices}
+                  options={unitPickerOptions}
                   placeholder=""
-                  disabled={units.length === 0 || isReturn}
+                  disabled={unitChoices.length === 0 || isReturn}
                   data-testid="document-line-unit"
                   aria-labelledby={`document-line-unit-label-${index}`}
                 />

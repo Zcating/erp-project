@@ -5,14 +5,12 @@ import { AdminShell } from "@/components/admin-shell";
 import { Label } from "@/components/ui/label";
 import { Picker } from "@/components/ui/picker";
 import {
-  itemOptions,
   stockBalanceQueryOptions,
   stockItemFilterAtom,
   stockWarehouseFilterAtom,
-  warehouseOptions,
 } from "@/features/inventory";
-import { itemListQueryOptions } from "@/features/items";
-import { warehouseListQueryOptions } from "@/features/parties";
+import { itemListQueryOptions, itemOptions } from "@/features/items";
+import { warehouseListQueryOptions, warehouseOptionsWithoutCode } from "@/features/parties";
 
 export const Route = createFileRoute("/inventory/")({
   loader: async ({ context }) => {
@@ -54,7 +52,10 @@ function StockQueryPage() {
             className="mt-1 w-48"
             value={warehouseFilter}
             onValueChange={setWarehouseFilter}
-            options={warehouseOptions(warehouses ?? [])}
+            options={[
+              { value: "", label: "全部仓库" },
+              ...warehouseOptionsWithoutCode(warehouses ?? []),
+            ]}
             data-testid="stock-warehouse-filter"
             aria-labelledby="stock-warehouse-filter-label"
           />
@@ -69,7 +70,7 @@ function StockQueryPage() {
             className="mt-1 w-48"
             value={itemFilter}
             onValueChange={setItemFilter}
-            options={itemOptions(items ?? [])}
+            options={[{ value: "", label: "全部商品" }, ...itemOptions(items ?? [])]}
             data-testid="stock-item-filter"
             aria-labelledby="stock-item-filter-label"
           />
