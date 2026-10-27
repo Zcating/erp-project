@@ -1,4 +1,15 @@
-import { index, integer, primaryKey, serial, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { STOCK_LEDGER_DIRECTIONS } from "@erp-inventory-sales/kernel";
+import { sql } from "drizzle-orm";
+import {
+  check,
+  index,
+  integer,
+  primaryKey,
+  serial,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { documents } from "./documents";
 import { erpSchema } from "./erp-schema";
 import { items } from "./item-master";
@@ -47,5 +58,12 @@ export const inventoryLedgerEntries = erpSchema.table(
   (table) => [
     index("inventory_ledger_entries_document_idx").on(table.documentId, table.lineNo),
     index("inventory_ledger_entries_document_no_idx").on(table.documentNo),
+    check(
+      "inventory_ledger_entries_direction_check",
+      sql`${table.direction} in (${sql.join(
+        STOCK_LEDGER_DIRECTIONS.map((direction) => sql`${direction}`),
+        sql`, `,
+      )})`.inlineParams(),
+    ),
   ],
 );

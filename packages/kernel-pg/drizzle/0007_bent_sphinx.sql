@@ -1,0 +1,3 @@
+ALTER TABLE "erp"."documents" ADD CONSTRAINT "documents_status_check" CHECK ("erp"."documents"."status" in ('DRAFT', 'POSTED', 'VOIDED'));--> statement-breakpoint
+ALTER TABLE "erp"."inventory_ledger_entries" ADD CONSTRAINT "inventory_ledger_entries_direction_check" CHECK ("erp"."inventory_ledger_entries"."direction" in ('POST', 'REVERSAL'));--> statement-breakpoint
+ALTER TABLE "erp"."transfer_in_transit" ADD CONSTRAINT "transfer_in_transit_status_check" CHECK ("erp"."transfer_in_transit"."status" in ('IN_TRANSIT', 'RECEIVED'));

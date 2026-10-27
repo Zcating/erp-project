@@ -1,4 +1,7 @@
+import { DOCUMENT_STATUSES } from "@erp-inventory-sales/kernel";
+import { sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   primaryKey,
@@ -29,6 +32,13 @@ export const documents = erpSchema.table(
   (table) => [
     uniqueIndex("documents_document_no_key").on(table.documentNo),
     index("documents_type_status_idx").on(table.type, table.status),
+    check(
+      "documents_status_check",
+      sql`${table.status} in (${sql.join(
+        DOCUMENT_STATUSES.map((status) => sql`${status}`),
+        sql`, `,
+      )})`.inlineParams(),
+    ),
   ],
 );
 

@@ -1,3 +1,8 @@
+import {
+  DOCUMENT_STATUSES,
+  STOCK_LEDGER_DIRECTIONS,
+  TRANSFER_IN_TRANSIT_STATUSES,
+} from "@erp-inventory-sales/kernel";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -21,6 +26,46 @@ describe("数据库迁移", () => {
 
     expect(result.output).not.toContain("error");
     expect(result.status).toBe(0);
+  });
+
+  it("三个状态列各带一条 CHECK 约束：约束名清楚，取值集合与内核声明一致", async () => {
+    const client = await connectToTestDatabase();
+    try {
+      const constraints = await client.query(
+        `select c.relname as table_name, con.conname as constraint_name, pg_get_constraintdef(con.oid) as definition
+         from pg_constraint con
+         join pg_class c on c.oid = con.conrelid
+         join pg_namespace n on n.oid = c.relnamespace
+         where n.nspname = 'erp' and con.contype = 'c'
+         order by c.relname, con.conname`,
+      );
+
+      expect(
+        constraints.rows.map((row) => ({
+          table_name: row.table_name,
+          constraint_name: row.constraint_name,
+          values: quotedLiteralsOf(row.definition as string).sort(),
+        })),
+      ).toEqual([
+        {
+          table_name: "documents",
+          constraint_name: "documents_status_check",
+          values: [...DOCUMENT_STATUSES].sort(),
+        },
+        {
+          table_name: "inventory_ledger_entries",
+          constraint_name: "inventory_ledger_entries_direction_check",
+          values: [...STOCK_LEDGER_DIRECTIONS].sort(),
+        },
+        {
+          table_name: "transfer_in_transit",
+          constraint_name: "transfer_in_transit_status_check",
+          values: [...TRANSFER_IN_TRANSIT_STATUSES].sort(),
+        },
+      ]);
+    } finally {
+      await client.end();
+    }
   });
 
   it("迁移产出的数量、单价、金额、换算率类型精度分别是 numeric(18,3)、numeric(18,6)、numeric(18,2)、numeric(18,6)", async () => {
@@ -240,7 +285,7 @@ describe("数据库迁移", () => {
     }
   });
 
-  it("重复执行迁移退出码仍为 0，且表清单、列清单与列类型完全一致", async () => {
+  it("重复执行迁移退出码仍为 0，且表清单、列清单、列类型与约束集合完全一致", async () => {
     const before = await listSchema();
 
     const result = runMigration();
@@ -501,6 +546,10 @@ async function queryDomains(): Promise<{ domain: string; baseType: string }[]> {
   }
 }
 
+function quotedLiteralsOf(definition: string): string[] {
+  return [...definition.matchAll(/'([^']*)'/g)].map((match) => match[1] ?? "");
+}
+
 async function listSchema(): Promise<unknown> {
   const client = await connectToTestDatabase();
   try {
@@ -521,7 +570,21 @@ async function listSchema(): Promise<unknown> {
        where t.typtype = 'd' and n.nspname not in ('pg_catalog', 'information_schema')
        order by domain`,
     );
-    return { tables: tables.rows, columns: columns.rows, domains: domains.rows };
+    const constraints = await client.query(
+      `select n.nspname as table_schema, c.relname as table_name, con.conname as constraint_name,
+              pg_get_constraintdef(con.oid) as definition
+       from pg_constraint con
+       join pg_class c on c.oid = con.conrelid
+       join pg_namespace n on n.oid = c.relnamespace
+       where n.nspname not in ('pg_catalog', 'information_schema')
+       order by n.nspname, c.relname, con.conname`,
+    );
+    return {
+      tables: tables.rows,
+      columns: columns.rows,
+      domains: domains.rows,
+      constraints: constraints.rows,
+    };
   } finally {
     await client.end();
   }

@@ -1,4 +1,6 @@
-import { index, integer, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { TRANSFER_IN_TRANSIT_STATUSES } from "@erp-inventory-sales/kernel";
+import { sql } from "drizzle-orm";
+import { check, index, integer, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { documents } from "./documents";
 import { erpSchema } from "./erp-schema";
 import { items } from "./item-master";
@@ -30,5 +32,12 @@ export const transferInTransit = erpSchema.table(
   (table) => [
     uniqueIndex("transfer_in_transit_document_line_key").on(table.documentId, table.lineNo),
     index("transfer_in_transit_source_item_idx").on(table.sourceWarehouseId, table.itemId),
+    check(
+      "transfer_in_transit_status_check",
+      sql`${table.status} in (${sql.join(
+        TRANSFER_IN_TRANSIT_STATUSES.map((status) => sql`${status}`),
+        sql`, `,
+      )})`.inlineParams(),
+    ),
   ],
 );
