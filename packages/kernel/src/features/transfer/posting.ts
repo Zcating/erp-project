@@ -25,6 +25,11 @@ import type {
   PostingPhase,
   PostingTypeHandler,
 } from "../posting";
+import {
+  assertPostingPrerequisites,
+  POSTING_PHASE_SEQUENCES,
+  POSTING_PREREQUISITES,
+} from "../posting";
 import { TRANSFER_POSTING_PHASES } from "./model";
 import type { TransferInTransitRecord } from "./model";
 import type { TransferInTransitRepository } from "./ports";
@@ -63,7 +68,7 @@ export function createTransferPostingHandler(
     const source = document.sourceWarehouseId;
     const target = document.targetWarehouseId;
     if (source === null || target === null) {
-      throw new ValidationError("调拨单缺少源仓或目标仓，不能过账");
+      throw new ValidationError(POSTING_PREREQUISITES.TRANSFER.missingWarehouseMessage);
     }
     if (source === target) {
       throw new ValidationError(`调拨单 ${document.documentNo} 的源仓与目标仓必须不同`);
@@ -73,14 +78,7 @@ export function createTransferPostingHandler(
 
   const validateOut = (document: Document): void => {
     warehousesOf(document);
-    if (document.lines.length === 0) {
-      throw new ValidationError("调拨单没有单据行，不能过账");
-    }
-    document.lines.forEach((line) => {
-      if (!quantity(line.quantity).greaterThan(0)) {
-        throw new ValidationError(`第 ${line.lineNo} 行数量必须大于 0：${line.quantity}`);
-      }
-    });
+    assertPostingPrerequisites(document);
   };
 
   const applyOut = async (
@@ -299,7 +297,7 @@ export function createTransferPostingHandler(
     buildLedger: async (document, movements, direction) =>
       buildLedger(document, movements, direction),
     phaseHandler: {
-      phases: [TRANSFER_POSTING_PHASES.OUT, TRANSFER_POSTING_PHASES.IN],
+      phases: POSTING_PHASE_SEQUENCES.TRANSFER,
       isPosted,
       validate: validatePhase,
       apply: async (document, phase, transaction) =>

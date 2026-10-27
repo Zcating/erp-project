@@ -7,7 +7,7 @@ import {
   toFixedString,
   unitPrice,
 } from "@erp-inventory-sales/shared";
-import { StockNegativeError, ValidationError } from "../../shared/errors";
+import { StockNegativeError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";
 import { weightedAverageUnitCost } from "../inventory";
@@ -19,6 +19,7 @@ import type {
 } from "../inventory";
 import { reverseDocumentPostings } from "../posting";
 import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting";
+import { assertPostingPrerequisites } from "../posting";
 
 const EMPTY_QUANTITY = "0.000";
 const EMPTY_UNIT_COST = "0.000000";
@@ -48,12 +49,7 @@ export function createStocktakePostingHandler(ledger: StockLedgerRepository): Po
   });
 
   const validate = async (document: Document): Promise<void> => {
-    if (document.warehouseId === null) {
-      throw new ValidationError("盘点单缺少仓库，不能过账");
-    }
-    if (document.lines.length === 0) {
-      throw new ValidationError("盘点单没有单据行，不能过账");
-    }
+    assertPostingPrerequisites(document);
   };
 
   const applyForward = async (

@@ -5,7 +5,12 @@ import type {
   DocumentService,
 } from "@erp-inventory-sales/kernel";
 import type { PostingService, TransferQueryService } from "@erp-inventory-sales/kernel";
-import { ValidationError, isDocumentStatus, isDocumentType } from "@erp-inventory-sales/kernel";
+import {
+  ValidationError,
+  isDocumentStatus,
+  isDocumentType,
+  isPostingPhase,
+} from "@erp-inventory-sales/kernel";
 import type { FastifyInstance } from "fastify";
 import { success } from "../../shared/envelope";
 import { documentBodySchema, postingBodySchema, type DocumentBody } from "./schema";
@@ -76,6 +81,9 @@ export function registerDocumentRoutes(app: FastifyInstance, deps: DocumentRoute
       throw new ValidationError("请求体必须是过账阶段对象");
     }
     const phase = body.data.phase ?? undefined;
+    if (phase !== undefined && !isPostingPhase(phase)) {
+      throw new ValidationError(`未知过账阶段：${phase}`);
+    }
     return success(await deps.postingService.post(params.id, undefined, phase));
   });
 

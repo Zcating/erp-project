@@ -303,7 +303,7 @@ describe("过账框架的过账阶段语义", () => {
   it("过账阶段不被类型处理器支持时请求被拒绝", async () => {
     const { postingService, document } = await createPhaseFixture();
 
-    await expect(postingService.post(document.id, undefined, "SIDEWAYS")).rejects.toThrow(
+    await expect(postingService.post(document.id, undefined, "DEFAULT")).rejects.toThrow(
       "不支持的过账阶段",
     );
   });

@@ -1,6 +1,8 @@
+import { POSTING_PHASES } from "../posting";
+
 export const TRANSFER_POSTING_PHASES = {
-  OUT: "OUT",
-  IN: "IN",
+  OUT: POSTING_PHASES.OUT,
+  IN: POSTING_PHASES.IN,
 } as const;
 
 export type TransferPostingPhase =

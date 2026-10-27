@@ -11,17 +11,24 @@ import type { Amount, Quantity } from "@erp-inventory-sales/shared";
 import { ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document, DocumentRepository } from "../documents";
+import { resolveOriginalLine } from "../documents";
 import type {
   StockBalance,
   StockBalanceKey,
   StockLedgerEntry,
   StockLedgerRepository,
 } from "../inventory";
-import { reverseDocumentPostings } from "../posting";
+import { reverseDocumentPostings, sumReturned } from "../posting";
 import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting";
+import { assertPostingPrerequisites } from "../posting";
 
 const EMPTY_QUANTITY = "0.000";
 const EMPTY_UNIT_COST = "0.000000";
+
+const ORIGINAL_LINE_WORDING = {
+  prefix: "引用的原单据行",
+  wrongType: "不是销售出库单的行",
+};
 
 type OriginalCostBasis = {
   documentNo: string;
@@ -62,20 +69,7 @@ export function createSaleReturnPostingHandler(
     direction: PostingDirection,
     context?: TransactionContext,
   ): Promise<void> => {
-    if (document.sourceWarehouseId === null) {
-      throw new ValidationError("销售退货单缺少仓库，不能过账");
-    }
-    if (document.lines.length === 0) {
-      throw new ValidationError("销售退货单没有单据行，不能过账");
-    }
-    document.lines.forEach((line) => {
-      if (line.originalLineId === null) {
-        throw new ValidationError(`第 ${line.lineNo} 行缺少原单据行引用，不能过账`);
-      }
-      if (!quantity(line.quantity).greaterThan(0)) {
-        throw new ValidationError(`第 ${line.lineNo} 行数量必须大于 0：${line.quantity}`);
-      }
-    });
+    assertPostingPrerequisites(document);
     if (direction !== "FORWARD") {
       return;
     }
@@ -89,16 +83,13 @@ export function createSaleReturnPostingHandler(
     context: TransactionContext | undefined,
   ): Promise<Document> => {
     const original = await documents.findByLineIdForUpdate(originalLineId, context);
-    if (original === null) {
-      throw new ValidationError(`引用的原单据行不存在：${originalLineId}`);
-    }
-    if (original.type !== "SALE_OUTBOUND") {
-      throw new ValidationError(`引用的原单据行不是销售出库单的行：${original.documentNo}`);
-    }
-    if (original.status !== "POSTED") {
-      throw new ValidationError(`引用的原单据行尚未过账：${original.documentNo}`);
-    }
-    return original;
+    const resolved = resolveOriginalLine(
+      original,
+      originalLineId,
+      "SALE_OUTBOUND",
+      ORIGINAL_LINE_WORDING,
+    );
+    return resolved.original;
   };
 
   const costBasisOf = async (
@@ -106,55 +97,28 @@ export function createSaleReturnPostingHandler(
     context: TransactionContext | undefined,
   ): Promise<OriginalCostBasis> => {
     const original = await documents.findByLineId(originalLineId, context);
-    if (original === null) {
-      throw new ValidationError(`引用的原单据行不存在：${originalLineId}`);
-    }
-    if (original.type !== "SALE_OUTBOUND") {
-      throw new ValidationError(`引用的原单据行不是销售出库单的行：${original.documentNo}`);
-    }
-    if (original.status !== "POSTED") {
-      throw new ValidationError(`引用的原单据行尚未过账：${original.documentNo}`);
-    }
-    const line = original.lines.find((candidate) => candidate.id === originalLineId);
-    if (line === undefined) {
-      throw new ValidationError(`引用的原单据行不存在：${originalLineId}`);
-    }
-    const entries = await ledger.listEntriesByDocument(original.id, context);
+    const resolved = resolveOriginalLine(
+      original,
+      originalLineId,
+      "SALE_OUTBOUND",
+      ORIGINAL_LINE_WORDING,
+    );
+    const line = resolved.line;
+    const entries = await ledger.listEntriesByDocument(resolved.original.id, context);
     const posted = entries.find(
       (entry) => entry.lineNo === line.lineNo && entry.direction === "POST",
     );
     if (posted === undefined) {
       throw new ValidationError(
-        `原单据行没有结转成本，无法回冲：${original.documentNo} 第 ${line.lineNo} 行`,
+        `原单据行没有结转成本，无法回冲：${resolved.original.documentNo} 第 ${line.lineNo} 行`,
       );
     }
     return {
-      documentNo: original.documentNo,
+      documentNo: resolved.original.documentNo,
       lineNo: line.lineNo,
       quantity: quantity(line.quantity),
       cost: amount(posted.amount),
     };
-  };
-
-  const netReturnedSummaryOf = async (
-    originalLineId: string,
-    context: TransactionContext | undefined,
-  ): Promise<{ quantity: Quantity; amount: Amount }> => {
-    const references = await documents.listReturnLineReferences(originalLineId, context);
-    let netQuantity = quantity("0.000");
-    let netAmount = amount("0");
-    for (const reference of references) {
-      const entries = await ledger.listEntriesByDocument(reference.documentId, context);
-      for (const entry of entries) {
-        if (entry.lineNo !== reference.lineNo) {
-          continue;
-        }
-        const delta = quantity(entry.quantityAfter).minus(quantity(entry.quantityBefore));
-        netQuantity = quantity(toFixedString(netQuantity.plus(delta), QUANTITY_SCALE));
-        netAmount = amount(toFixedString(netAmount.plus(amount(entry.amount)), AMOUNT_SCALE));
-      }
-    }
-    return { quantity: netQuantity, amount: netAmount };
   };
 
   const applyForward = async (
@@ -184,7 +148,7 @@ export function createSaleReturnPostingHandler(
       if (basis === undefined) {
         basis = await costBasisOf(originalLineId, transaction);
         bases.set(originalLineId, basis);
-        const prior = await netReturnedSummaryOf(originalLineId, transaction);
+        const prior = await sumReturned(documents, ledger, originalLineId, transaction);
         netQuantities.set(originalLineId, prior.quantity);
         netAllocated.set(originalLineId, prior.amount);
       }

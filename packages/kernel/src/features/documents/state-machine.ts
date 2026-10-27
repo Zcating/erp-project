@@ -7,6 +7,18 @@ export const DOCUMENT_STATUS_TRANSITIONS: Record<DocumentStatus, readonly Docume
   VOIDED: [],
 };
 
+const transitionTarget = (from: DocumentStatus): DocumentStatus => {
+  const [target] = DOCUMENT_STATUS_TRANSITIONS[from];
+  if (target === undefined) {
+    throw new Error(`单据状态 ${from} 没有可迁移的目标状态`);
+  }
+  return target;
+};
+
+export const POSTED_DOCUMENT_STATUS = transitionTarget("DRAFT");
+
+export const VOIDED_DOCUMENT_STATUS = transitionTarget("POSTED");
+
 export function canTransitionDocumentStatus(from: DocumentStatus, to: DocumentStatus): boolean {
   return DOCUMENT_STATUS_TRANSITIONS[from].includes(to);
 }

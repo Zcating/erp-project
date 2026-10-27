@@ -27,7 +27,14 @@ import type {
   DraftDocumentType,
 } from "./model";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
-import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES, WAREHOUSE_ROLE_LABELS } from "./rules";
+import { resolveOriginalLine } from "./returns";
+import type { OriginalLineWording, ResolvedOriginalLine } from "./returns";
+import {
+  DOCUMENT_TYPE_LABELS,
+  DOCUMENT_TYPE_RULES,
+  WAREHOUSE_ROLE_LABELS,
+  warehouseIdOfRole,
+} from "./rules";
 import type { DocumentPartyRole, DocumentTypeRule, DocumentWarehouseRole } from "./rules";
 import { createDocumentService } from "./service";
 import type { DocumentService, DocumentServiceOptions } from "./service";
@@ -36,6 +43,8 @@ import {
   assertDocumentStatusTransition,
   canTransitionDocumentStatus,
   DOCUMENT_STATUS_TRANSITIONS,
+  POSTED_DOCUMENT_STATUS,
+  VOIDED_DOCUMENT_STATUS,
 } from "./state-machine";
 import {
   assertDraftDocumentType,
@@ -55,6 +64,8 @@ export const documents = {
   DOCUMENT_TYPE_RULES,
   DOCUMENT_TYPES,
   DRAFT_DOCUMENT_TYPES,
+  POSTED_DOCUMENT_STATUS,
+  VOIDED_DOCUMENT_STATUS,
   WAREHOUSE_ROLE_LABELS,
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
@@ -70,8 +81,10 @@ export const documents = {
   isDocumentStatus,
   isDocumentType,
   isDraftDocumentType,
+  resolveOriginalLine,
   validateDocumentInput,
   validateDocumentLine,
+  warehouseIdOfRole,
 };
 
 export {
@@ -85,6 +98,8 @@ export {
   DOCUMENT_TYPE_RULES,
   DOCUMENT_TYPES,
   DRAFT_DOCUMENT_TYPES,
+  POSTED_DOCUMENT_STATUS,
+  VOIDED_DOCUMENT_STATUS,
   WAREHOUSE_ROLE_LABELS,
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
@@ -100,8 +115,10 @@ export {
   isDocumentStatus,
   isDocumentType,
   isDraftDocumentType,
+  resolveOriginalLine,
   validateDocumentInput,
   validateDocumentLine,
+  warehouseIdOfRole,
 };
 
 export type {
@@ -120,4 +137,6 @@ export type {
   DocumentTypeRule,
   DocumentWarehouseRole,
   DraftDocumentType,
+  OriginalLineWording,
+  ResolvedOriginalLine,
 };

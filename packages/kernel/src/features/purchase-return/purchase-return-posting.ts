@@ -11,17 +11,24 @@ import type { Quantity } from "@erp-inventory-sales/shared";
 import { StockNegativeError, ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document, DocumentRepository } from "../documents";
+import { resolveOriginalLine } from "../documents";
 import type {
   StockBalance,
   StockBalanceKey,
   StockLedgerEntry,
   StockLedgerRepository,
 } from "../inventory";
-import { reverseDocumentPostings } from "../posting";
+import { reverseDocumentPostings, sumReturned } from "../posting";
 import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting";
+import { assertPostingPrerequisites } from "../posting";
 
 const EMPTY_QUANTITY = "0.000";
 const EMPTY_UNIT_COST = "0.000000";
+
+const ORIGINAL_LINE_WORDING = {
+  prefix: "引用的原单据行",
+  wrongType: "不是采购入库单的行",
+};
 
 type OriginalLineBasis = {
   documentNo: string;
@@ -61,20 +68,7 @@ export function createPurchaseReturnPostingHandler(
     direction: PostingDirection,
     context?: TransactionContext,
   ): Promise<void> => {
-    if (document.sourceWarehouseId === null) {
-      throw new ValidationError("采购退货单缺少仓库，不能过账");
-    }
-    if (document.lines.length === 0) {
-      throw new ValidationError("采购退货单没有单据行，不能过账");
-    }
-    document.lines.forEach((line) => {
-      if (line.originalLineId === null) {
-        throw new ValidationError(`第 ${line.lineNo} 行缺少原单据行引用，不能过账`);
-      }
-      if (!quantity(line.quantity).greaterThan(0)) {
-        throw new ValidationError(`第 ${line.lineNo} 行数量必须大于 0：${line.quantity}`);
-      }
-    });
+    assertPostingPrerequisites(document);
     if (direction !== "FORWARD") {
       return;
     }
@@ -88,16 +82,13 @@ export function createPurchaseReturnPostingHandler(
     context: TransactionContext | undefined,
   ): Promise<Document> => {
     const original = await documents.findByLineIdForUpdate(originalLineId, context);
-    if (original === null) {
-      throw new ValidationError(`引用的原单据行不存在：${originalLineId}`);
-    }
-    if (original.type !== "PURCHASE_INBOUND") {
-      throw new ValidationError(`引用的原单据行不是采购入库单的行：${original.documentNo}`);
-    }
-    if (original.status !== "POSTED") {
-      throw new ValidationError(`引用的原单据行尚未过账：${original.documentNo}`);
-    }
-    return original;
+    const resolved = resolveOriginalLine(
+      original,
+      originalLineId,
+      "PURCHASE_INBOUND",
+      ORIGINAL_LINE_WORDING,
+    );
+    return resolved.original;
   };
 
   const originalLineBasisOf = async (
@@ -105,23 +96,16 @@ export function createPurchaseReturnPostingHandler(
     context: TransactionContext | undefined,
   ): Promise<OriginalLineBasis> => {
     const original = await documents.findByLineId(originalLineId, context);
-    if (original === null) {
-      throw new ValidationError(`引用的原单据行不存在：${originalLineId}`);
-    }
-    if (original.type !== "PURCHASE_INBOUND") {
-      throw new ValidationError(`引用的原单据行不是采购入库单的行：${original.documentNo}`);
-    }
-    if (original.status !== "POSTED") {
-      throw new ValidationError(`引用的原单据行尚未过账：${original.documentNo}`);
-    }
-    const line = original.lines.find((candidate) => candidate.id === originalLineId);
-    if (line === undefined) {
-      throw new ValidationError(`引用的原单据行不存在：${originalLineId}`);
-    }
+    const resolved = resolveOriginalLine(
+      original,
+      originalLineId,
+      "PURCHASE_INBOUND",
+      ORIGINAL_LINE_WORDING,
+    );
     return {
-      documentNo: original.documentNo,
-      lineNo: line.lineNo,
-      quantity: quantity(line.quantity),
+      documentNo: resolved.original.documentNo,
+      lineNo: resolved.line.lineNo,
+      quantity: quantity(resolved.line.quantity),
     };
   };
 
@@ -141,7 +125,7 @@ export function createPurchaseReturnPostingHandler(
     }
 
     const bases = new Map<string, OriginalLineBasis>();
-    const cumulatives = new Map<string, string>();
+    const cumulatives = new Map<string, Quantity>();
     const movements: InventoryMovement[] = [];
 
     for (const line of document.lines) {
@@ -150,13 +134,10 @@ export function createPurchaseReturnPostingHandler(
       if (basis === undefined) {
         basis = await originalLineBasisOf(originalLineId, transaction);
         bases.set(originalLineId, basis);
-        cumulatives.set(
-          originalLineId,
-          await documents.sumPostedReturnedQuantity(originalLineId, transaction),
-        );
+        const prior = await sumReturned(documents, ledger, originalLineId, transaction);
+        cumulatives.set(originalLineId, prior.quantity);
       }
-      const previousText = cumulatives.get(originalLineId) as string;
-      const previous = quantity(previousText);
+      const previous = cumulatives.get(originalLineId) as Quantity;
       const returned = quantity(line.quantity);
       const cumulative = previous.plus(returned);
       if (cumulative.greaterThan(basis.quantity)) {
@@ -166,7 +147,7 @@ export function createPurchaseReturnPostingHandler(
             `累计退货 ${toFixedString(cumulative, QUANTITY_SCALE)} 超过原单据 ${basis.documentNo} 第 ${basis.lineNo} 行已过账数量 ${toFixedString(basis.quantity, QUANTITY_SCALE)}`,
         );
       }
-      cumulatives.set(originalLineId, toFixedString(cumulative, QUANTITY_SCALE));
+      cumulatives.set(originalLineId, quantity(toFixedString(cumulative, QUANTITY_SCALE)));
 
       const key = { warehouseId, itemId: line.itemId };
       const before = balances.get(balanceKey(key)) as StockBalance;

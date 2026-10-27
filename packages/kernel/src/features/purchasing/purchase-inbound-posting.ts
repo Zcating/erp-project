@@ -7,7 +7,6 @@ import {
   toFixedString,
   unitPrice,
 } from "@erp-inventory-sales/shared";
-import { ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";
 import { weightedAverageUnitCost } from "../inventory";
@@ -19,6 +18,7 @@ import type {
 } from "../inventory";
 import { reverseDocumentPostings } from "../posting";
 import type { InventoryMovement, PostingTypeHandler } from "../posting";
+import { assertPostingPrerequisites } from "../posting";
 
 const EMPTY_QUANTITY = "0.000";
 const EMPTY_UNIT_COST = "0.000000";
@@ -43,20 +43,7 @@ export function createPurchaseInboundPostingHandler(
   };
 
   const validate = async (document: Document): Promise<void> => {
-    if (document.targetWarehouseId === null) {
-      throw new ValidationError("采购入库单缺少目标仓库，不能过账");
-    }
-    if (document.lines.length === 0) {
-      throw new ValidationError("采购入库单没有单据行，不能过账");
-    }
-    document.lines.forEach((line) => {
-      if (line.unitPrice === null) {
-        throw new ValidationError(`第 ${line.lineNo} 行缺少单价，不能过账`);
-      }
-      if (!quantity(line.quantity).greaterThan(0)) {
-        throw new ValidationError(`第 ${line.lineNo} 行数量必须大于 0：${line.quantity}`);
-      }
-    });
+    assertPostingPrerequisites(document);
   };
 
   const applyForward = async (

@@ -14,8 +14,13 @@ import type {
 } from "./model";
 import { DEFAULT_DOCUMENT_TIME_ZONE, formatDocumentDate, formatDocumentNumber } from "./numbering";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
-import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES, WAREHOUSE_ROLE_LABELS } from "./rules";
-import type { DocumentTypeRule } from "./rules";
+import { resolveOriginalLine } from "./returns";
+import {
+  DOCUMENT_TYPE_LABELS,
+  DOCUMENT_TYPE_RULES,
+  WAREHOUSE_ROLE_LABELS,
+  warehouseIdOfRole,
+} from "./rules";
 import { assertDocumentIsDraft } from "./state-machine";
 import { assertDraftDocumentType, assertQuantityText, validateDocumentInput } from "./validation";
 
@@ -80,22 +85,6 @@ export function createDocumentService(
     return converted;
   };
 
-  const warehouseOfRole = (
-    document: Document,
-    role: DocumentTypeRule["originalWarehouseRole"],
-  ): string | null => {
-    if (role === "SOURCE") {
-      return document.sourceWarehouseId;
-    }
-    if (role === "TARGET") {
-      return document.targetWarehouseId;
-    }
-    if (role === "COUNT") {
-      return document.warehouseId;
-    }
-    return null;
-  };
-
   const resolveOriginalLines = async (
     input: DocumentInput & { type: DraftDocumentType },
     context: TransactionContext | undefined,
@@ -114,25 +103,16 @@ export function createDocumentService(
       if (originalLineId === "") {
         throw new ValidationError(`第 ${index + 1} 行缺少原单据行引用`);
       }
-      const original = await repository.findByLineId(originalLineId, context);
-      if (original === null) {
-        throw new ValidationError(`第 ${index + 1} 行引用的原单据行不存在：${originalLineId}`);
-      }
-      if (original.type !== rule.originalType) {
-        throw new ValidationError(
-          `第 ${index + 1} 行引用的原单据行不属于${originalLabel}：${original.documentNo}`,
-        );
-      }
-      if (original.status !== "POSTED") {
-        throw new ValidationError(
-          `第 ${index + 1} 行引用的原单据行尚未过账：${original.documentNo}`,
-        );
-      }
-      const originalLine = original.lines.find((candidate) => candidate.id === originalLineId);
-      if (originalLine === undefined) {
-        throw new ValidationError(`第 ${index + 1} 行引用的原单据行不存在：${originalLineId}`);
-      }
-      const originalWarehouseId = warehouseOfRole(original, rule.originalWarehouseRole);
+      const { original, line: originalLine } = resolveOriginalLine(
+        await repository.findByLineId(originalLineId, context),
+        originalLineId,
+        rule.originalType,
+        {
+          prefix: `第 ${index + 1} 行引用的原单据行`,
+          wrongType: `不属于${originalLabel}`,
+        },
+      );
+      const originalWarehouseId = warehouseIdOfRole(original, rule.originalWarehouseRole);
       if (originalWarehouseId === null) {
         throw new ValidationError(
           `原单据 ${original.documentNo} 没有${warehouseLabel}，无法确定退货单仓库`,

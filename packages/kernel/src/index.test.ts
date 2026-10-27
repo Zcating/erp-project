@@ -80,8 +80,14 @@ describe("kernel package", () => {
     expect(Object.keys(posting).sort()).toEqual([
       "DEFAULT_POSTING_PHASE",
       "POSTING_DIRECTIONS",
+      "POSTING_PHASES",
+      "POSTING_PHASE_SEQUENCES",
+      "POSTING_PREREQUISITES",
+      "assertPostingPrerequisites",
       "createPostingService",
+      "isPostingPhase",
       "reverseDocumentPostings",
+      "sumReturned",
     ]);
   });
 

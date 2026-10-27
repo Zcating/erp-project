@@ -23,6 +23,7 @@ const EXCLUDED_LITERALS = ["POST", "REVERSAL"] as const;
 const DECLARATION_POINT_FILES = [
   "kernel/src/features/documents/model.ts",
   "kernel/src/features/documents/state-machine.ts",
+  "kernel/src/features/posting/model.ts",
   "kernel/src/features/transfer/model.ts",
   "kernel/src/features/inventory/model.ts",
 ];
@@ -35,6 +36,8 @@ type AllowedLiteral = {
 const ALLOWED_LITERALS_BY_FILE: Record<string, AllowedLiteral[]> = {
   "kernel/src/features/documents/service.ts": [
     { literal: "DRAFT", reason: "新建单据时写入的初始状态" },
+  ],
+  "kernel/src/features/documents/returns.ts": [
     { literal: "POSTED", reason: "退货引用校验要求原单据行已过账" },
   ],
   "kernel/src/features/documents/in-memory-repository.ts": [
@@ -43,14 +46,6 @@ const ALLOWED_LITERALS_BY_FILE: Record<string, AllowedLiteral[]> = {
   ],
   "kernel/src/features/posting/service.ts": [
     { literal: "DRAFT", reason: "过账时以草稿为前置状态做 CAS 写入" },
-    { literal: "POSTED", reason: "过账的目标状态与已过账幂等短路" },
-    { literal: "VOIDED", reason: "作废的目标状态与非法迁移拒绝" },
-  ],
-  "kernel/src/features/purchase-return/purchase-return-posting.ts": [
-    { literal: "POSTED", reason: "退货引用校验要求原采购入库单行已过账" },
-  ],
-  "kernel/src/features/sales-return/sale-return-posting.ts": [
-    { literal: "POSTED", reason: "退货成本回冲要求原销售出库单行已过账" },
   ],
   "kernel/src/features/transfer/posting.ts": [
     { literal: "IN_TRANSIT", reason: "调出过账写入在途记录、调入过账筛选在途记录" },
@@ -160,14 +155,14 @@ describe("状态字面量漂移守卫", () => {
     }
   });
 
-  it("调拨阶段字面量 OUT 与 IN 不会被 HTTP 动词误伤：它们只出现在调拨阶段的声明点", () => {
+  it("调拨阶段字面量 OUT 与 IN 不会被 HTTP 动词误伤：它们只出现在过账阶段的声明点", () => {
     const filesWithPhases = scannedFiles().filter((file) => {
       const content = readFileSync(file, "utf8");
       return occurrencesOf(content, "OUT") > 0 || occurrencesOf(content, "IN") > 0;
     });
 
     expect(filesWithPhases.map(relativeToPackages)).toEqual([
-      "kernel/src/features/transfer/model.ts",
+      "kernel/src/features/posting/model.ts",
     ]);
   });
 

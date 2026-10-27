@@ -6,9 +6,19 @@ export const POSTING_DIRECTIONS = ["FORWARD", "REVERSE"] as const;
 
 export type PostingDirection = (typeof POSTING_DIRECTIONS)[number];
 
-export const DEFAULT_POSTING_PHASE = "DEFAULT";
+export const POSTING_PHASES = {
+  DEFAULT: "DEFAULT",
+  OUT: "OUT",
+  IN: "IN",
+} as const;
 
-export type PostingPhase = string;
+export type PostingPhase = (typeof POSTING_PHASES)[keyof typeof POSTING_PHASES];
+
+export const DEFAULT_POSTING_PHASE = POSTING_PHASES.DEFAULT;
+
+export function isPostingPhase(value: string): value is PostingPhase {
+  return (Object.values(POSTING_PHASES) as string[]).includes(value);
+}
 
 export type InventoryMovement = {
   lineNo: number;

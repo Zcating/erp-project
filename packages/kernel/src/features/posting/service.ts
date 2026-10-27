@@ -6,7 +6,11 @@ import {
   ValidationError,
 } from "../../shared/errors";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
-import { assertDocumentStatusTransition } from "../documents";
+import {
+  assertDocumentStatusTransition,
+  POSTED_DOCUMENT_STATUS,
+  VOIDED_DOCUMENT_STATUS,
+} from "../documents";
 import type { Document, DocumentRepository } from "../documents";
 import type { StockLedgerEntry, StockLedgerRepository } from "../inventory";
 import type {
@@ -15,7 +19,8 @@ import type {
   PostingPhase,
   PostingTypeHandler,
 } from "./model";
-import { DEFAULT_POSTING_PHASE } from "./model";
+import { DEFAULT_POSTING_PHASE, isPostingPhase } from "./model";
+import { POSTING_PHASE_SEQUENCES } from "./phases";
 
 export type PostingService = {
   post(documentId: string, context?: TransactionContext, phase?: PostingPhase): Promise<Document>;
@@ -141,55 +146,67 @@ export function createPostingService(options: PostingServiceOptions): PostingSer
     async post(
       documentId: string,
       context?: TransactionContext,
-      phase: PostingPhase = DEFAULT_POSTING_PHASE,
+      requestedPhase?: PostingPhase,
     ): Promise<Document> {
       return inTransaction(context, async (transaction) => {
         const document = await load(documentId, transaction);
         const handler = handlerOf(document);
         const phaseHandler = handler.phaseHandler;
+        const phase: string = requestedPhase ?? DEFAULT_POSTING_PHASE;
+        const supportedPhases = phaseHandler?.phases ?? POSTING_PHASE_SEQUENCES[document.type];
+        if (!isPostingPhase(phase) || !supportedPhases.includes(phase)) {
+          throw new ValidationError(`单据 ${document.documentNo} 不支持的过账阶段：${phase}`);
+        }
 
         if (phaseHandler === undefined) {
-          if (document.status === "POSTED") {
+          if (document.status === POSTED_DOCUMENT_STATUS) {
             return document;
           }
-          assertDocumentStatusTransition(document.status, "POSTED");
+          assertDocumentStatusTransition(document.status, POSTED_DOCUMENT_STATUS);
           await handler.validate(document, "FORWARD", transaction);
           const movements = await handler.applyInventory(document, "FORWARD", transaction);
           await appendLedger(document, movements, "FORWARD", transaction);
-          const changed = await documents.updateStatus(documentId, "DRAFT", "POSTED", transaction);
+          const changed = await documents.updateStatus(
+            documentId,
+            "DRAFT",
+            POSTED_DOCUMENT_STATUS,
+            transaction,
+          );
           if (!changed) {
             throw new StateConflictError(`单据状态已变更，无法过账：${document.documentNo}`);
           }
-          return { ...document, status: "POSTED" };
+          return { ...document, status: POSTED_DOCUMENT_STATUS };
         }
 
-        if (!phaseHandler.phases.includes(phase)) {
-          throw new ValidationError(`单据 ${document.documentNo} 不支持的过账阶段：${phase}`);
-        }
         if (await phaseHandler.isPosted(document, phase, transaction)) {
           return document;
         }
-        if (document.status !== "POSTED") {
-          assertDocumentStatusTransition(document.status, "POSTED");
+        if (document.status !== POSTED_DOCUMENT_STATUS) {
+          assertDocumentStatusTransition(document.status, POSTED_DOCUMENT_STATUS);
         }
         await phaseHandler.validate(document, phase, transaction);
         const movements = await phaseHandler.apply(document, phase, transaction);
         await appendLedger(document, movements, "FORWARD", transaction);
-        if (document.status === "POSTED") {
+        if (document.status === POSTED_DOCUMENT_STATUS) {
           return document;
         }
-        const changed = await documents.updateStatus(documentId, "DRAFT", "POSTED", transaction);
+        const changed = await documents.updateStatus(
+          documentId,
+          "DRAFT",
+          POSTED_DOCUMENT_STATUS,
+          transaction,
+        );
         if (!changed) {
           throw new StateConflictError(`单据状态已变更，无法过账：${document.documentNo}`);
         }
-        return { ...document, status: "POSTED" };
+        return { ...document, status: POSTED_DOCUMENT_STATUS };
       });
     },
 
     async void(documentId: string, context?: TransactionContext): Promise<Document> {
       return inTransaction(context, async (transaction) => {
         const document = await load(documentId, transaction);
-        assertDocumentStatusTransition(document.status, "VOIDED");
+        assertDocumentStatusTransition(document.status, VOIDED_DOCUMENT_STATUS);
         await assertNotReferencedByPostedReturn(document, transaction);
         await assertVoidKeepsStockNonNegative(document, transaction);
         const handler = handlerOf(document);
@@ -202,11 +219,16 @@ export function createPostingService(options: PostingServiceOptions): PostingSer
           movements = await phaseHandler.reverse(document, transaction);
         }
         await appendLedger(document, movements, "REVERSE", transaction);
-        const changed = await documents.updateStatus(documentId, "POSTED", "VOIDED", transaction);
+        const changed = await documents.updateStatus(
+          documentId,
+          POSTED_DOCUMENT_STATUS,
+          VOIDED_DOCUMENT_STATUS,
+          transaction,
+        );
         if (!changed) {
           throw new StateConflictError(`单据状态已变更，无法作废：${document.documentNo}`);
         }
-        return { ...document, status: "VOIDED" };
+        return { ...document, status: VOIDED_DOCUMENT_STATUS };
       });
     },
   };
