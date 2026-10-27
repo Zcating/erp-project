@@ -2,39 +2,24 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { postDocument, voidDocument } from "../lib/api";
-import type { DocumentStatus } from "../lib/api";
-
-export type PostingActionOption = {
-  phase?: string;
-  label: string;
-  disabled: boolean;
-  testId: string;
-};
+import type { AvailableDocumentActions } from "../lib/api";
 
 export type PostingActionsProps = {
   documentId: string;
   documentNo: string;
-  status: DocumentStatus;
-  postActions?: PostingActionOption[] | undefined;
+  actions: AvailableDocumentActions;
 };
 
 type PendingAction = { kind: "POST"; phase: string | undefined; label: string } | { kind: "VOID" };
 
-const VOID_LABEL = "作废";
+export function postingActionTestId(phase: string | null): string {
+  return phase === null ? "document-post" : `document-post-${phase.toLowerCase()}`;
+}
 
-export function PostingActions({
-  documentId,
-  documentNo,
-  status,
-  postActions,
-}: PostingActionsProps) {
+export function PostingActions({ documentId, documentNo, actions }: PostingActionsProps) {
   const [confirming, setConfirming] = useState<PendingAction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
-
-  const options: PostingActionOption[] = postActions ?? [
-    { label: "过账", disabled: status !== "DRAFT", testId: "document-post" },
-  ];
 
   const mutation = useMutation({
     mutationFn: (action: PendingAction) =>
@@ -57,22 +42,24 @@ export function PostingActions({
   };
 
   const labelOf = (action: PendingAction): string =>
-    action.kind === "POST" ? action.label : VOID_LABEL;
+    action.kind === "POST" ? action.label : actions.void.label;
 
   return (
     <div className="flex flex-col gap-1" data-testid="posting-actions">
       <div className="flex gap-2">
-        {options.map((option) => (
+        {actions.post.map((action) => (
           <Button
-            key={option.testId}
+            key={postingActionTestId(action.phase)}
             type="button"
             variant="outline"
             size="sm"
-            data-testid={option.testId}
-            disabled={option.disabled || mutation.isPending}
-            onClick={() => ask({ kind: "POST", phase: option.phase, label: option.label })}
+            data-testid={postingActionTestId(action.phase)}
+            disabled={!action.enabled || mutation.isPending}
+            onClick={() =>
+              ask({ kind: "POST", phase: action.phase ?? undefined, label: action.label })
+            }
           >
-            {option.label}
+            {action.label}
           </Button>
         ))}
         <Button
@@ -80,10 +67,10 @@ export function PostingActions({
           variant="destructive"
           size="sm"
           data-testid="document-void"
-          disabled={status !== "POSTED" || mutation.isPending}
+          disabled={!actions.void.enabled || mutation.isPending}
           onClick={() => ask({ kind: "VOID" })}
         >
-          {VOID_LABEL}
+          {actions.void.label}
         </Button>
       </div>
       {confirming === null ? null : (

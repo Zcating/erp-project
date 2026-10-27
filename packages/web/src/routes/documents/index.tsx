@@ -16,9 +16,7 @@ import {
   documentTypeFilterOptions,
   DRAFT_DOCUMENT_TYPES,
   PostingActions,
-  TRANSFER_POSTING_PHASES,
 } from "@/features/documents";
-import type { Document } from "@/features/documents";
 
 export const Route = createFileRoute("/documents/")({
   loader: async ({ context }) => {
@@ -44,29 +42,6 @@ function DocumentListPage() {
       await queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
   });
-
-  const postActionsOf = (document: Document) => {
-    if (document.type !== "TRANSFER") {
-      return undefined;
-    }
-    const postedPhases = document.postedPhases ?? [];
-    const outDone = postedPhases.includes(TRANSFER_POSTING_PHASES.OUT);
-    const inDone = postedPhases.includes(TRANSFER_POSTING_PHASES.IN);
-    return [
-      {
-        phase: TRANSFER_POSTING_PHASES.OUT,
-        label: "调出过账",
-        disabled: document.status !== "DRAFT" || outDone,
-        testId: "document-post-out",
-      },
-      {
-        phase: TRANSFER_POSTING_PHASES.IN,
-        label: "调入过账",
-        disabled: document.status !== "POSTED" || !outDone || inDone,
-        testId: "document-post-in",
-      },
-    ];
-  };
 
   return (
     <AdminShell>
@@ -171,8 +146,7 @@ function DocumentListPage() {
                   <PostingActions
                     documentId={document.id}
                     documentNo={document.documentNo}
-                    status={document.status}
-                    postActions={postActionsOf(document)}
+                    actions={document.actions}
                   />
                 </div>
               </td>

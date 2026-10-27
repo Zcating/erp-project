@@ -1,7 +1,7 @@
 export { DocumentForm, type DocumentFormProps } from "./components/document-form";
 export {
+  postingActionTestId,
   PostingActions,
-  type PostingActionOption,
   type PostingActionsProps,
 } from "./components/posting-actions";
 export {
@@ -10,10 +10,13 @@ export {
   DRAFT_DOCUMENT_TYPES,
   getDocument,
   listDocuments,
+  listOriginalCandidates,
   postDocument,
   toFormSubmitResult,
   updateDocument,
   voidDocument,
+  type AvailableDocumentActions,
+  type AvailablePostingAction,
   type Document,
   type DocumentDeleteResult,
   type DocumentFailure,
@@ -22,6 +25,7 @@ export {
   type DocumentLineInput,
   type DocumentMutationResult,
   type DocumentStatus,
+  type DocumentWithActions,
   type DraftDocumentType,
   type FormSubmitResult,
 } from "./lib/api";
@@ -46,6 +50,8 @@ export {
   documentDetailQueryOptions,
   documentListQueryKey,
   documentListQueryOptions,
+  originalCandidateQueryKey,
+  originalCandidateQueryOptions,
 } from "./lib/queries";
 export {
   documentDetailOpenAtom,

@@ -19,7 +19,7 @@ import { DRAFT_DOCUMENT_TYPES } from "../lib/api";
 import { computeLineAmount, DOCUMENT_TYPE_LABELS } from "../lib/format";
 import { documentTypeOptions, originalLineChoices } from "../lib/options";
 import { buildDocumentInput } from "../lib/payload";
-import { documentListQueryOptions } from "../lib/queries";
+import { originalCandidateQueryOptions } from "../lib/queries";
 import { DOCUMENT_FORM_RULES } from "../lib/rules";
 import { documentFormSchema, type DocumentLineDraft } from "../lib/schema";
 
@@ -97,7 +97,7 @@ export function DocumentForm({
   const { data: customers } = useQuery(customerListQueryOptions());
   const { data: warehouses } = useQuery(warehouseListQueryOptions());
   const { data: originalDocuments } = useQuery({
-    ...documentListQueryOptions(rule.originalType ?? "", "POSTED"),
+    ...originalCandidateQueryOptions(rule.originalType ?? ""),
     enabled: rule.originalType !== null,
   });
 

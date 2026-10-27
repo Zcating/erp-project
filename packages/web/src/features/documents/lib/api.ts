@@ -15,6 +15,18 @@ export type DraftDocumentType = (typeof DRAFT_DOCUMENT_TYPES)[number];
 
 export type DocumentStatus = "DRAFT" | "POSTED" | "VOIDED";
 
+export type AvailablePostingAction = {
+  phase: string | null;
+  label: string;
+  enabled: boolean;
+  reason: string | null;
+};
+
+export type AvailableDocumentActions = {
+  post: AvailablePostingAction[];
+  void: { label: string; enabled: boolean; reason: string | null };
+};
+
 export type DocumentLine = {
   id: string;
   lineNo: number;
@@ -36,7 +48,10 @@ export type Document = {
   targetWarehouseId: string | null;
   warehouseId: string | null;
   lines: DocumentLine[];
-  postedPhases?: string[];
+};
+
+export type DocumentWithActions = Document & {
+  actions: AvailableDocumentActions;
 };
 
 export type DocumentLineInput = {
@@ -71,7 +86,7 @@ export const listDocuments = createServerFn({ method: "GET" })
     type: data.type,
     status: data.status,
   }))
-  .handler(async ({ data }): Promise<Document[]> => {
+  .handler(async ({ data }): Promise<DocumentWithActions[]> => {
     const { getRequestHeader } = await import("@tanstack/react-start/server");
     const query = new URLSearchParams();
     if (data.type !== "") {
@@ -91,13 +106,31 @@ export const listDocuments = createServerFn({ method: "GET" })
     if (!response.ok) {
       throw new Error(`Fastify API /api/documents 返回 ${response.status}`);
     }
-    const payload = (await response.json()) as { data: { documents: Document[] } };
+    const payload = (await response.json()) as { data: { documents: DocumentWithActions[] } };
+    return payload.data.documents;
+  });
+
+export const listOriginalCandidates = createServerFn({ method: "GET" })
+  .validator((data: { type: string }) => ({ type: data.type }))
+  .handler(async ({ data }): Promise<DocumentWithActions[]> => {
+    const { getRequestHeader } = await import("@tanstack/react-start/server");
+    const response = await fetchApi(
+      `/api/documents/original-candidates?type=${encodeURIComponent(data.type)}`,
+      getRequestHeader("cookie"),
+    );
+    if (response.status === 401) {
+      throw new UnauthenticatedError();
+    }
+    if (!response.ok) {
+      throw new Error(`Fastify API /api/documents/original-candidates 返回 ${response.status}`);
+    }
+    const payload = (await response.json()) as { data: { documents: DocumentWithActions[] } };
     return payload.data.documents;
   });
 
 export const getDocument = createServerFn({ method: "GET" })
   .validator((data: { id: string }) => ({ id: data.id }))
-  .handler(async ({ data }): Promise<Document> => {
+  .handler(async ({ data }): Promise<DocumentWithActions> => {
     const { getRequestHeader } = await import("@tanstack/react-start/server");
     const response = await fetchApi(`/api/documents/${data.id}`, getRequestHeader("cookie"));
     if (response.status === 401) {
@@ -106,7 +139,7 @@ export const getDocument = createServerFn({ method: "GET" })
     if (!response.ok) {
       throw new Error(`Fastify API /api/documents/${data.id} 返回 ${response.status}`);
     }
-    const payload = (await response.json()) as { data: Document };
+    const payload = (await response.json()) as { data: DocumentWithActions };
     return payload.data;
   });
 

@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getDocument, listDocuments } from "./api";
+import { getDocument, listDocuments, listOriginalCandidates } from "./api";
 
 export function documentListQueryKey(type: string, status: string) {
   return ["documents", "list", type, status] as const;
@@ -21,6 +21,18 @@ export function documentDetailQueryOptions(id: string) {
   return queryOptions({
     queryKey: documentDetailQueryKey(id),
     queryFn: () => getDocument({ data: { id } }),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
+
+export function originalCandidateQueryKey(type: string) {
+  return ["documents", "original-candidates", type] as const;
+}
+
+export function originalCandidateQueryOptions(type: string) {
+  return queryOptions({
+    queryKey: originalCandidateQueryKey(type),
+    queryFn: () => listOriginalCandidates({ data: { type } }),
     staleTime: Number.POSITIVE_INFINITY,
   });
 }
