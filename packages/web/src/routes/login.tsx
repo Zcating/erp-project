@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { loginAdmin } from "@/features/session/lib/api";
 
 export const Route = createFileRoute("/login")({
@@ -43,30 +45,34 @@ function LoginPage() {
       >
         <h1 className="mb-4 text-xl font-semibold">登录进销存管理后台</h1>
 
-        <label className="mb-3 block text-sm" htmlFor="login-username">
-          账号
-          <input
+        <div className="mb-3">
+          <Label htmlFor="login-username" className="block text-sm">
+            账号
+          </Label>
+          <Input
             id="login-username"
             data-testid="login-username"
-            className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-full"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
             autoComplete="username"
           />
-        </label>
+        </div>
 
-        <label className="mb-4 block text-sm" htmlFor="login-password">
-          密码
-          <input
+        <div className="mb-4">
+          <Label htmlFor="login-password" className="block text-sm">
+            密码
+          </Label>
+          <Input
             id="login-password"
             data-testid="login-password"
             type="password"
-            className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            className="mt-1 w-full"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"
           />
-        </label>
+        </div>
 
         {error === null ? null : (
           <p data-testid="login-error" className="mb-4 text-sm text-destructive">

@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -100,10 +100,10 @@ test("草稿态过账可用、作废禁用，已过账态过账禁用、作废�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-supplier").selectOption(master.supplierId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-supplier"), master.supplierId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
   await page.getByTestId("document-line-quantity").first().fill("12");
   await page.getByTestId("document-line-unit-price").first().fill("1.115");
   await page.getByTestId("document-submit").click();
@@ -138,10 +138,10 @@ test("点击过账弹出二次确认，取消后不发请求且库存不变", as
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-supplier").selectOption(master.supplierId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-supplier"), master.supplierId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
   await page.getByTestId("document-line-quantity").first().fill("12");
   await page.getByTestId("document-line-unit-price").first().fill("1.115");
   await page.getByTestId("document-submit").click();
@@ -170,10 +170,10 @@ test("确认过账后库存增加，作废后库存回到过账前", async ({ pa
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-supplier").selectOption(master.supplierId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-supplier"), master.supplierId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
   await page.getByTestId("document-line-quantity").first().fill("12");
   await page.getByTestId("document-line-unit-price").first().fill("1.115");
   await page.getByTestId("document-submit").click();
@@ -208,11 +208,11 @@ test("按辅助计量单位录入 1 箱并过账后账面库存增加 12 而不�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-supplier").selectOption(master.supplierId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
-  await page.getByTestId("document-line-unit").first().selectOption("箱");
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-supplier"), master.supplierId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
+  await pickOption(page.getByTestId("document-line-unit").first(), "箱");
   await page.getByTestId("document-line-quantity").first().fill("1");
   await page.getByTestId("document-line-unit-price").first().fill("1.115");
   await expect(page.getByTestId("document-line-amount").first()).toHaveText("13.38");

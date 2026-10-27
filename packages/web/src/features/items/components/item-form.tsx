@@ -1,8 +1,12 @@
+import { useForm, useSelector } from "@tanstack/react-form";
 import { useState } from "react";
-import type { FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import type { FormSubmitResult, ItemAuxiliaryUnit, ItemInput, ItemMaster } from "../lib/api";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { FormSubmitResult, ItemInput, ItemMaster } from "../lib/api";
 import { displayConversionRate } from "../lib/format";
+import { buildItemInput } from "../lib/payload";
+import { itemFormSchema } from "../lib/schema";
 
 export type ItemFormProps = {
   initialItem?: ItemMaster;
@@ -10,166 +14,185 @@ export type ItemFormProps = {
   onSubmit: (input: ItemInput) => Promise<FormSubmitResult>;
 };
 
-export function ItemForm({ initialItem, submitLabel, onSubmit }: ItemFormProps) {
-  const [code, setCode] = useState(initialItem?.code ?? "");
-  const [barcode, setBarcode] = useState(initialItem?.barcode ?? "");
-  const [name, setName] = useState(initialItem?.name ?? "");
-  const [specification, setSpecification] = useState(initialItem?.specification ?? "");
-  const [brand, setBrand] = useState(initialItem?.brand ?? "");
-  const [category, setCategory] = useState(initialItem?.category ?? "");
-  const [baseUnit, setBaseUnit] = useState(initialItem?.baseUnit ?? "");
-  const [auxiliaryUnits, setAuxiliaryUnits] = useState<ItemAuxiliaryUnit[]>(
-    initialItem?.auxiliaryUnits.map((auxiliaryUnit) => ({
-      unit: auxiliaryUnit.unit,
-      conversionRate: displayConversionRate(auxiliaryUnit.conversionRate),
-    })) ?? [],
-  );
+export function ItemForm({ initialItem, submitLabel, onSubmit: submitItem }: ItemFormProps) {
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
-
-  const updateAuxiliaryUnit = (index: number, patch: Partial<ItemAuxiliaryUnit>): void => {
-    setAuxiliaryUnits((current) =>
-      current.map((auxiliaryUnit, position) =>
-        position === index ? { ...auxiliaryUnit, ...patch } : auxiliaryUnit,
-      ),
-    );
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setPending(true);
-    setError(null);
-    const result = await onSubmit({
-      code,
-      barcode: barcode.trim() === "" ? null : barcode.trim(),
-      name,
-      specification: specification.trim() === "" ? null : specification.trim(),
-      brand: brand.trim() === "" ? null : brand.trim(),
-      category: category.trim() === "" ? null : category.trim(),
-      baseUnit,
-      auxiliaryUnits: auxiliaryUnits.map((auxiliaryUnit) => ({
-        unit: auxiliaryUnit.unit,
-        conversionRate: auxiliaryUnit.conversionRate,
-      })),
-    });
-    setPending(false);
-    if (!result.ok) {
-      setError(result.message);
-    }
-  };
+  const form = useForm({
+    defaultValues: {
+      code: initialItem?.code ?? "",
+      barcode: initialItem?.barcode ?? "",
+      name: initialItem?.name ?? "",
+      specification: initialItem?.specification ?? "",
+      brand: initialItem?.brand ?? "",
+      category: initialItem?.category ?? "",
+      baseUnit: initialItem?.baseUnit ?? "",
+      auxiliaryUnits:
+        initialItem?.auxiliaryUnits.map((auxiliaryUnit) => ({
+          unit: auxiliaryUnit.unit,
+          conversionRate: displayConversionRate(auxiliaryUnit.conversionRate),
+        })) ?? [],
+    },
+    onSubmit: async ({ value }) => {
+      const parsed = itemFormSchema.safeParse(value);
+      if (!parsed.success) {
+        setError(parsed.error.issues[0]?.message ?? "提交失败");
+        return;
+      }
+      setError(null);
+      const result = await submitItem(buildItemInput(parsed.data));
+      if (!result.ok) {
+        setError(result.message);
+      }
+    },
+  });
+  const values = useSelector(form.store, (state) => state.values);
+  const isSubmitting = useSelector(form.store, (state) => state.isSubmitting);
 
   return (
-    <form data-testid="item-form" className="max-w-2xl space-y-4" onSubmit={handleSubmit}>
-      <label className="block text-sm" htmlFor="item-code">
-        商品编码
-        <input
+    <form
+      data-testid="item-form"
+      className="max-w-2xl space-y-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void form.handleSubmit();
+      }}
+    >
+      <div>
+        <Label htmlFor="item-code" className="block text-sm">
+          商品编码
+        </Label>
+        <Input
           id="item-code"
           data-testid="item-code"
-          className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          value={code}
-          onChange={(event) => setCode(event.target.value)}
+          className="mt-1 w-full"
+          value={values.code}
+          onChange={(event) => form.setFieldValue("code", event.target.value)}
         />
-      </label>
+      </div>
 
-      <label className="block text-sm" htmlFor="item-barcode">
-        商品条码
-        <input
+      <div>
+        <Label htmlFor="item-barcode" className="block text-sm">
+          商品条码
+        </Label>
+        <Input
           id="item-barcode"
           data-testid="item-barcode"
-          className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          value={barcode}
-          onChange={(event) => setBarcode(event.target.value)}
+          className="mt-1 w-full"
+          value={values.barcode}
+          onChange={(event) => form.setFieldValue("barcode", event.target.value)}
         />
-      </label>
+      </div>
 
-      <label className="block text-sm" htmlFor="item-name">
-        名称
-        <input
+      <div>
+        <Label htmlFor="item-name" className="block text-sm">
+          名称
+        </Label>
+        <Input
           id="item-name"
           data-testid="item-name"
-          className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
+          className="mt-1 w-full"
+          value={values.name}
+          onChange={(event) => form.setFieldValue("name", event.target.value)}
         />
-      </label>
+      </div>
 
-      <label className="block text-sm" htmlFor="item-specification">
-        规格
-        <input
+      <div>
+        <Label htmlFor="item-specification" className="block text-sm">
+          规格
+        </Label>
+        <Input
           id="item-specification"
           data-testid="item-specification"
-          className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          value={specification}
-          onChange={(event) => setSpecification(event.target.value)}
+          className="mt-1 w-full"
+          value={values.specification}
+          onChange={(event) => form.setFieldValue("specification", event.target.value)}
         />
-      </label>
+      </div>
 
-      <label className="block text-sm" htmlFor="item-brand">
-        品牌
-        <input
+      <div>
+        <Label htmlFor="item-brand" className="block text-sm">
+          品牌
+        </Label>
+        <Input
           id="item-brand"
           data-testid="item-brand"
-          className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          value={brand}
-          onChange={(event) => setBrand(event.target.value)}
+          className="mt-1 w-full"
+          value={values.brand}
+          onChange={(event) => form.setFieldValue("brand", event.target.value)}
         />
-      </label>
+      </div>
 
-      <label className="block text-sm" htmlFor="item-category">
-        商品分类
-        <input
+      <div>
+        <Label htmlFor="item-category" className="block text-sm">
+          商品分类
+        </Label>
+        <Input
           id="item-category"
           data-testid="item-category"
-          className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          value={category}
-          onChange={(event) => setCategory(event.target.value)}
+          className="mt-1 w-full"
+          value={values.category}
+          onChange={(event) => form.setFieldValue("category", event.target.value)}
         />
-      </label>
+      </div>
 
-      <label className="block text-sm" htmlFor="item-base-unit">
-        基本计量单位
-        <input
+      <div>
+        <Label htmlFor="item-base-unit" className="block text-sm">
+          基本计量单位
+        </Label>
+        <Input
           id="item-base-unit"
           data-testid="item-base-unit"
-          className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-          value={baseUnit}
-          onChange={(event) => setBaseUnit(event.target.value)}
+          className="mt-1 w-full"
+          value={values.baseUnit}
+          onChange={(event) => form.setFieldValue("baseUnit", event.target.value)}
         />
-      </label>
+      </div>
 
       <fieldset className="space-y-2" data-testid="item-auxiliary-units">
         <legend className="text-sm">辅助计量单位与单位换算率</legend>
-        {auxiliaryUnits.map((auxiliaryUnit, index) => (
+        {values.auxiliaryUnits.map((auxiliaryUnit, index) => (
           <div key={index} className="flex items-end gap-2" data-testid="item-aux-row">
-            <label className="block text-sm" htmlFor={`item-aux-unit-${index}`}>
-              单位
-              <input
+            <div>
+              <Label htmlFor={`item-aux-unit-${index}`} className="block text-sm">
+                单位
+              </Label>
+              <Input
                 id={`item-aux-unit-${index}`}
                 data-testid="item-aux-unit"
-                className="mt-1 block w-32 rounded-md border border-border bg-background px-3 py-2 text-sm"
+                className="mt-1 w-32"
                 value={auxiliaryUnit.unit}
-                onChange={(event) => updateAuxiliaryUnit(index, { unit: event.target.value })}
-              />
-            </label>
-            <label className="block text-sm" htmlFor={`item-aux-rate-${index}`}>
-              单位换算率
-              <input
-                id={`item-aux-rate-${index}`}
-                data-testid="item-aux-rate"
-                className="mt-1 block w-32 rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={auxiliaryUnit.conversionRate}
                 onChange={(event) =>
-                  updateAuxiliaryUnit(index, { conversionRate: event.target.value })
+                  form.setFieldValue("auxiliaryUnits", (units) =>
+                    units.map((unit, position) =>
+                      position === index ? { ...unit, unit: event.target.value } : unit,
+                    ),
+                  )
                 }
               />
-            </label>
+            </div>
+            <div>
+              <Label htmlFor={`item-aux-rate-${index}`} className="block text-sm">
+                单位换算率
+              </Label>
+              <Input
+                id={`item-aux-rate-${index}`}
+                data-testid="item-aux-rate"
+                className="mt-1 w-32"
+                value={auxiliaryUnit.conversionRate}
+                onChange={(event) =>
+                  form.setFieldValue("auxiliaryUnits", (units) =>
+                    units.map((unit, position) =>
+                      position === index ? { ...unit, conversionRate: event.target.value } : unit,
+                    ),
+                  )
+                }
+              />
+            </div>
             <Button
               type="button"
               variant="outline"
               data-testid="item-aux-remove"
-              onClick={() =>
-                setAuxiliaryUnits((current) => current.filter((_, position) => position !== index))
-              }
+              onClick={() => void form.removeFieldValue("auxiliaryUnits", index)}
             >
               移除
             </Button>
@@ -179,9 +202,7 @@ export function ItemForm({ initialItem, submitLabel, onSubmit }: ItemFormProps) 
           type="button"
           variant="outline"
           data-testid="item-aux-add"
-          onClick={() =>
-            setAuxiliaryUnits((current) => [...current, { unit: "", conversionRate: "" }])
-          }
+          onClick={() => form.pushFieldValue("auxiliaryUnits", { unit: "", conversionRate: "" })}
         >
           添加辅助计量单位
         </Button>
@@ -193,7 +214,7 @@ export function ItemForm({ initialItem, submitLabel, onSubmit }: ItemFormProps) 
         </p>
       )}
 
-      <Button type="submit" data-testid="item-submit" disabled={pending}>
+      <Button type="submit" data-testid="item-submit" disabled={isSubmitting}>
         {submitLabel}
       </Button>
     </form>

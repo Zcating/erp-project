@@ -32,6 +32,15 @@ export {
   DOCUMENT_TYPE_LABELS,
   TRANSFER_POSTING_PHASES,
 } from "./lib/format";
+export { documentStatusFilterOptions, documentTypeFilterOptions } from "./lib/options";
+export { buildDocumentInput } from "./lib/payload";
+export {
+  documentFormSchema,
+  documentFormValuesSchema,
+  documentLineDraftSchema,
+  type DocumentFormValues,
+  type DocumentLineDraft,
+} from "./lib/schema";
 export {
   documentDetailQueryKey,
   documentDetailQueryOptions,

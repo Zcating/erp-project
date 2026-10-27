@@ -1,5 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -173,7 +173,7 @@ const rowOf = (page: Page, documentNo: string): Locator =>
 const openListOfType = async (page: Page, type: string): Promise<void> => {
   await page.goto("/documents");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type-filter").selectOption(type);
+  await pickOption(page.getByTestId("document-type-filter"), type);
 };
 
 const expectDraftButtons = async (row: Locator): Promise<void> => {

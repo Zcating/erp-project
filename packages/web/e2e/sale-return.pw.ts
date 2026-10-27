@@ -1,5 +1,12 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import {
+  countSubmitRequests,
+  expect,
+  loginAsAdmin,
+  pickOption,
+  test,
+  waitForDebugHandles,
+} from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -50,6 +57,7 @@ type MasterData = {
   supplierId: string;
   customerId: string;
   warehouseId: string;
+  warehouseCode: string;
   itemId: string;
 };
 
@@ -64,8 +72,9 @@ const createMasterData = async (): Promise<MasterData> => {
     name: "杭州百货大楼",
     contact: null,
   });
+  const warehouseCode = uniqueCode("PW-SRET-WH");
   const warehouse = await api("POST", "/api/warehouses", {
-    code: uniqueCode("PW-SRET-WH"),
+    code: warehouseCode,
     name: "杭州总仓",
     purpose: null,
   });
@@ -83,6 +92,7 @@ const createMasterData = async (): Promise<MasterData> => {
     supplierId: supplier.payload.data.id as string,
     customerId: customer.payload.data.id as string,
     warehouseId: warehouse.payload.data.id as string,
+    warehouseCode,
     itemId: item.payload.data.id as string,
   };
 };
@@ -145,10 +155,12 @@ test("销售退货单能在新建页选择原销售出库行，过账后库存�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("SALE_RETURN");
-  await page.getByTestId("document-line-original").first().selectOption(outbound.lineId);
+  await pickOption(page.getByTestId("document-type"), "SALE_RETURN");
+  await pickOption(page.getByTestId("document-line-original").first(), outbound.lineId);
   await page.getByTestId("document-line-quantity").first().fill("2");
-  await expect(page.getByTestId("document-source-warehouse")).toHaveValue(master.warehouseId);
+  await expect(page.getByTestId("document-source-warehouse")).toHaveText(
+    `${master.warehouseCode} 杭州总仓`,
+  );
   await page.getByTestId("document-submit").click();
   await expect(page).toHaveURL(/\/documents$/);
 
@@ -180,18 +192,20 @@ test("销售退货单能在新建页选择原销售出库行，过账后库存�
   expect(afterVoid.payload.data.movements[1].amount).toBe("-4.00");
 });
 
-test("销售退货单不选原销售出库行时保存失败，界面显示后端给出的错误", async ({ page }) => {
+test("销售退货单不选原销售出库行时提交前被拦下，界面显示客户端给出的错误", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
   await seedStock(master);
   await createPostedOutbound(master);
+  const submitCount = countSubmitRequests(page);
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("SALE_RETURN");
+  await pickOption(page.getByTestId("document-type"), "SALE_RETURN");
   await page.getByTestId("document-line-quantity").first().fill("2");
   await page.getByTestId("document-submit").click();
 
   await expect(page.getByTestId("document-form-error")).toBeVisible();
   await expect(page.getByTestId("document-form-error")).toContainText("缺少原单据行引用");
+  expect(submitCount()).toBe(0);
 });

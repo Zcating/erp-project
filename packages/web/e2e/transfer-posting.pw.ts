@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import { expect, loginAsAdmin, pickOption, test, waitForDebugHandles } from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -115,10 +115,10 @@ test("调拨单在列表页能发起调出与调入两个阶段的过账，按�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("TRANSFER");
-  await page.getByTestId("document-source-warehouse").selectOption(master.sourceWarehouseId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.targetWarehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
+  await pickOption(page.getByTestId("document-type"), "TRANSFER");
+  await pickOption(page.getByTestId("document-source-warehouse"), master.sourceWarehouseId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.targetWarehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
   await page.getByTestId("document-line-quantity").first().fill("4");
   await page.getByTestId("document-line-unit-price").first().fill("2.5");
   await page.getByTestId("document-submit").click();
@@ -151,10 +151,10 @@ test("调入过账后这批数量不再计入在途，两个过账按钮都不�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("TRANSFER");
-  await page.getByTestId("document-source-warehouse").selectOption(master.sourceWarehouseId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.targetWarehouseId);
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
+  await pickOption(page.getByTestId("document-type"), "TRANSFER");
+  await pickOption(page.getByTestId("document-source-warehouse"), master.sourceWarehouseId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.targetWarehouseId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
   await page.getByTestId("document-line-quantity").first().fill("4");
   await page.getByTestId("document-line-unit-price").first().fill("2.5");
   await page.getByTestId("document-submit").click();
@@ -176,7 +176,7 @@ test("调入过账后这批数量不再计入在途，两个过账按钮都不�
 
   await page.goto("/inventory");
   await waitForDebugHandles(page);
-  await page.getByTestId("stock-warehouse-filter").selectOption(master.sourceWarehouseId);
+  await pickOption(page.getByTestId("stock-warehouse-filter"), master.sourceWarehouseId);
   const stockRow = page.getByTestId("stock-row").filter({ hasText: master.itemCode });
   await expect(stockRow).toHaveCount(1);
   await expect(stockRow.getByTestId("stock-on-hand")).toHaveText("6.000");

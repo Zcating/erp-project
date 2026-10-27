@@ -1,5 +1,13 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import {
+  expect,
+  countSubmitRequests,
+  loginAsAdmin,
+  pickOption,
+  pickOptionLabels,
+  test,
+  waitForDebugHandles,
+} from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -102,7 +110,7 @@ async function fillLine(
   master: MasterData,
   values: { quantity: string; unitPrice?: string },
 ): Promise<void> {
-  await page.getByTestId("document-line-item").first().selectOption(master.itemId);
+  await pickOption(page.getByTestId("document-line-item").first(), master.itemId);
   await page.getByTestId("document-line-quantity").first().fill(values.quantity);
   if (values.unitPrice !== undefined) {
     await page.getByTestId("document-line-unit-price").first().fill(values.unitPrice);
@@ -126,7 +134,7 @@ test("单据新建入口提供采购入库单、销售出库单、销售退货�
   await waitForDebugHandles(page);
   await expect(page.getByTestId("document-type")).toBeVisible();
 
-  const options = await page.getByTestId("document-type").locator("option").allTextContents();
+  const options = await pickOptionLabels(page.getByTestId("document-type"));
   expect(options).toEqual([
     "采购入库单",
     "销售出库单",
@@ -143,9 +151,9 @@ test("新建采购入库单草稿后列表页出现单号与草稿状态", async
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-supplier").selectOption(master.supplierId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-supplier"), master.supplierId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
   await fillLine(page, master, { quantity: "3", unitPrice: "1.115" });
   await page.getByTestId("document-submit").click();
 
@@ -162,11 +170,11 @@ test("新建销售出库单草稿时能选到客户与来源仓库", async ({ pa
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("SALE_OUTBOUND");
+  await pickOption(page.getByTestId("document-type"), "SALE_OUTBOUND");
   await expect(page.getByTestId("document-customer")).toBeVisible();
   await expect(page.getByTestId("document-source-warehouse")).toBeVisible();
-  await page.getByTestId("document-customer").selectOption(master.customerId);
-  await page.getByTestId("document-source-warehouse").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("document-customer"), master.customerId);
+  await pickOption(page.getByTestId("document-source-warehouse"), master.warehouseId);
   await fillLine(page, master, { quantity: "1", unitPrice: "2" });
   await page.getByTestId("document-submit").click();
 
@@ -182,10 +190,10 @@ test("新建盘点单草稿时能选到仓库并只录商品与实盘数量", as
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("STOCKTAKE");
+  await pickOption(page.getByTestId("document-type"), "STOCKTAKE");
   await expect(page.getByTestId("document-warehouse")).toBeVisible();
   await expect(page.getByTestId("document-line-unit-price")).toHaveCount(0);
-  await page.getByTestId("document-warehouse").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("document-warehouse"), master.warehouseId);
   await fillLine(page, master, { quantity: "0" });
   await page.getByTestId("document-submit").click();
 
@@ -201,9 +209,9 @@ test("新建调拨单草稿时能选到源仓与目标仓", async ({ page }) => 
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("TRANSFER");
-  await page.getByTestId("document-source-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.otherWarehouseId);
+  await pickOption(page.getByTestId("document-type"), "TRANSFER");
+  await pickOption(page.getByTestId("document-source-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.otherWarehouseId);
   await fillLine(page, master, { quantity: "2", unitPrice: "1.5" });
   await page.getByTestId("document-submit").click();
 
@@ -221,9 +229,9 @@ test("单据行金额按金额精度回显：单价 1.115、数量 3 得 3.35，
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-supplier").selectOption(master.supplierId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-supplier"), master.supplierId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
   await fillLine(page, master, { quantity: "3", unitPrice: "1.115" });
   await expect(page.getByTestId("document-line-amount").first()).toHaveText("3.35");
   await page.getByTestId("document-submit").click();
@@ -246,33 +254,37 @@ test("单据行金额按金额精度回显：单价 1.115、数量 3 得 3.35，
   );
 });
 
-test("缺少供应商时表单显示后端给出的错误消息", async ({ page }) => {
+test("缺少供应商时表单显示客户端给出的错误消息且不发出提交请求", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
+  const submitCount = countSubmitRequests(page);
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
   await fillLine(page, master, { quantity: "1", unitPrice: "1" });
   await page.getByTestId("document-submit").click();
 
   await expect(page.getByTestId("document-form-error")).toHaveText("缺少供应商");
+  expect(submitCount()).toBe(0);
 });
 
-test("源仓与目标仓相同的调拨单保存失败并给出明确提示", async ({ page }) => {
+test("源仓与目标仓相同的调拨单提交前被拦下并给出明确提示", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
+  const submitCount = countSubmitRequests(page);
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("TRANSFER");
-  await page.getByTestId("document-source-warehouse").selectOption(master.warehouseId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("document-type"), "TRANSFER");
+  await pickOption(page.getByTestId("document-source-warehouse"), master.warehouseId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
   await fillLine(page, master, { quantity: "1", unitPrice: "1" });
   await page.getByTestId("document-submit").click();
 
   await expect(page.getByTestId("document-form-error")).toHaveText("源仓与目标仓必须不同");
+  expect(submitCount()).toBe(0);
 });
 
 test("删除草稿后单据列表里不再显示该条草稿", async ({ page }) => {
@@ -281,9 +293,9 @@ test("删除草稿后单据列表里不再显示该条草稿", async ({ page }) 
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-supplier").selectOption(master.supplierId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-supplier"), master.supplierId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
   await fillLine(page, master, { quantity: "1", unitPrice: "1" });
   await page.getByTestId("document-submit").click();
 
@@ -304,19 +316,20 @@ test("按单据类型筛选时列表里只剩该类型的单据", async ({ page 
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("STOCKTAKE");
-  await page.getByTestId("document-warehouse").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("document-type"), "STOCKTAKE");
+  await pickOption(page.getByTestId("document-warehouse"), master.warehouseId);
   await fillLine(page, master, { quantity: "1" });
   await page.getByTestId("document-submit").click();
   await expect(page).toHaveURL(/\/documents$/);
 
   await page.goto("/documents");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type-filter").selectOption("STOCKTAKE");
+  await pickOption(page.getByTestId("document-type-filter"), "STOCKTAKE");
 
   const rows = page.getByTestId("document-row");
   await expect(rows.first()).toBeVisible();
-  expect(await rows.count()).toBeGreaterThan(0);
+  await expect(rows).not.toHaveCount(0);
+  await expect(rows.first()).toContainText("盘点单");
   for (const text of await rows.allTextContents()) {
     expect(text).toContain("盘点单");
   }
@@ -328,9 +341,9 @@ test("单据列表只由查询缓存持有，界面状态里没有服务端数�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_INBOUND");
-  await page.getByTestId("document-supplier").selectOption(master.supplierId);
-  await page.getByTestId("document-target-warehouse").selectOption(master.warehouseId);
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_INBOUND");
+  await pickOption(page.getByTestId("document-supplier"), master.supplierId);
+  await pickOption(page.getByTestId("document-target-warehouse"), master.warehouseId);
   await fillLine(page, master, { quantity: "1", unitPrice: "1" });
   await page.getByTestId("document-submit").click();
   await expect(page).toHaveURL(/\/documents$/);

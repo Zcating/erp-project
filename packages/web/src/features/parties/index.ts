@@ -7,6 +7,12 @@ export {
   type Warehouse,
 } from "./lib/api";
 export {
+  customerOptions,
+  supplierOptions,
+  warehouseOptionsWithCode,
+  warehouseOptionsWithoutCode,
+} from "./lib/options";
+export {
   customerListQueryKey,
   customerListQueryOptions,
   supplierListQueryKey,

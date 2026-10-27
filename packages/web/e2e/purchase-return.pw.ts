@@ -1,5 +1,14 @@
 import type { Page } from "@playwright/test";
-import { expect, loginAsAdmin, test, waitForDebugHandles } from "./fixtures";
+import {
+  countSubmitRequests,
+  expect,
+  loginAsAdmin,
+  pickOption,
+  pickOptionByLabel,
+  pickOptionLabels,
+  test,
+  waitForDebugHandles,
+} from "./fixtures";
 
 const apiBaseUrl = process.env.E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "admin";
@@ -50,7 +59,9 @@ type MasterData = {
   supplierId: string;
   customerId: string;
   warehouseId: string;
+  warehouseCode: string;
   itemId: string;
+  itemCode: string;
 };
 
 const createMasterData = async (): Promise<MasterData> => {
@@ -64,13 +75,15 @@ const createMasterData = async (): Promise<MasterData> => {
     name: "杭州百货大楼",
     contact: null,
   });
+  const warehouseCode = uniqueCode("PW-PRET-WH");
   const warehouse = await api("POST", "/api/warehouses", {
-    code: uniqueCode("PW-PRET-WH"),
+    code: warehouseCode,
     name: "杭州总仓",
     purpose: null,
   });
+  const itemCode = uniqueCode("PW-PRET-SKU");
   const item = await api("POST", "/api/items", {
-    code: uniqueCode("PW-PRET-SKU"),
+    code: itemCode,
     barcode: null,
     name: "可口可乐",
     specification: null,
@@ -83,7 +96,9 @@ const createMasterData = async (): Promise<MasterData> => {
     supplierId: supplier.payload.data.id as string,
     customerId: customer.payload.data.id as string,
     warehouseId: warehouse.payload.data.id as string,
+    warehouseCode,
     itemId: item.payload.data.id as string,
+    itemCode,
   };
 };
 
@@ -128,14 +143,23 @@ test("采购退货单能在新建页选择原采购入库行，过账后库存�
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_RETURN");
-  const option = page.getByTestId("document-line-original").first().locator("option");
-  await expect(option.filter({ hasText: `${inbound.documentNo} 第 1 行` })).toHaveCount(1);
-  await page.getByTestId("document-line-original").first().selectOption(inbound.lineId);
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_RETURN");
+  const originalLabels = await pickOptionLabels(page.getByTestId("document-line-original").first());
+  expect(
+    originalLabels.filter((label) => label.includes(`${inbound.documentNo} 第 1 行`)),
+  ).toHaveLength(1);
+  await pickOptionByLabel(
+    page.getByTestId("document-line-original").first(),
+    `${inbound.documentNo} 第 1 行`,
+  );
   await page.getByTestId("document-line-quantity").first().fill("4");
-  await expect(page.getByTestId("document-source-warehouse")).toHaveValue(master.warehouseId);
+  await expect(page.getByTestId("document-source-warehouse")).toHaveText(
+    `${master.warehouseCode} 杭州总仓`,
+  );
   await expect(page.getByTestId("document-source-warehouse")).toBeDisabled();
-  await expect(page.getByTestId("document-line-item").first()).toHaveValue(master.itemId);
+  await expect(page.getByTestId("document-line-item").first()).toHaveText(
+    `${master.itemCode} 可口可乐`,
+  );
   await page.getByTestId("document-submit").click();
   await expect(page).toHaveURL(/\/documents$/);
 
@@ -167,17 +191,19 @@ test("采购退货单能在新建页选择原采购入库行，过账后库存�
   expect(afterVoid.payload.data.movements[1].amount).toBe("-8.00");
 });
 
-test("采购退货单不选原采购入库行时保存失败，界面显示后端给出的错误", async ({ page }) => {
+test("采购退货单不选原采购入库行时提交前被拦下，界面显示客户端给出的错误", async ({ page }) => {
   await loginAsAdmin(page);
   const master = await createMasterData();
   await createPostedInbound(master);
+  const submitCount = countSubmitRequests(page);
 
   await page.goto("/documents/new");
   await waitForDebugHandles(page);
-  await page.getByTestId("document-type").selectOption("PURCHASE_RETURN");
+  await pickOption(page.getByTestId("document-type"), "PURCHASE_RETURN");
   await page.getByTestId("document-line-quantity").first().fill("4");
   await page.getByTestId("document-submit").click();
 
   await expect(page.getByTestId("document-form-error")).toBeVisible();
   await expect(page.getByTestId("document-form-error")).toContainText("缺少原单据行引用");
+  expect(submitCount()).toBe(0);
 });
