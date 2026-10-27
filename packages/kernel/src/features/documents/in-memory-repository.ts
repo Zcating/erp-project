@@ -141,7 +141,11 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
     },
 
     async update(document: Document): Promise<void> {
-      stored.set(document.id, copy(document));
+      const existing = stored.get(document.id);
+      if (existing === undefined) {
+        return;
+      }
+      stored.set(document.id, { ...copy(document), status: existing.status });
     },
 
     async updateStatus(id: string, from: DocumentStatus, to: DocumentStatus): Promise<boolean> {

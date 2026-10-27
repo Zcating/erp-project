@@ -265,10 +265,7 @@ export function createDocumentService(
         const resolved = await resolveOriginalLines(converted, ctx);
         const validated = validateDocumentInput(resolved);
         await assertUniqueItems(validated, ctx);
-        const updated: Document = {
-          ...normalize(validated, existing.id, existing.documentNo),
-          status: existing.status,
-        };
+        const updated: Document = normalize(validated, existing.id, existing.documentNo);
         await repository.update(updated, ctx);
         return updated;
       });

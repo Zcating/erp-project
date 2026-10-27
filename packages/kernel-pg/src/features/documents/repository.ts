@@ -168,7 +168,6 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
       .update(documents)
       .set({
         type: document.type,
-        status: document.status,
         supplierId: document.supplierId,
         customerId: document.customerId,
         sourceWarehouseId: document.sourceWarehouseId,
