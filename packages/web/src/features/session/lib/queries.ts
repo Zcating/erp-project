@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { readSession } from "./api";
+import { readSession } from "@/server";
 
 export function sessionQueryKey() {
   return ["session", "current"] as const;

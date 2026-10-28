@@ -2,13 +2,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AdminShell } from "@/components/admin-shell";
-import {
-  createDocument,
-  DocumentForm,
-  toFormSubmitResult,
-  type DocumentInput,
-  type DraftDocumentType,
-} from "@/features/documents";
+import { DocumentForm } from "@/features/documents";
+import { createDocument, type DocumentInput, type DraftDocumentType } from "@/server";
+import { toFormSubmitResult } from "@/shared/form";
 
 export const Route = createFileRoute("/documents/new")({
   component: NewDocumentPage,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ItemMaster } from "../../items/lib/api";
-import type { Document } from "./api";
+import type { Document } from "../../../server/documents";
+import type { ItemMaster } from "../../../server/items";
 import {
   documentStatusFilterOptions,
   documentStatusOptions,

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { fetchApi } from "@/lib/api-client";
+import { fetchApi } from "./client";
 
 export type SessionState = { authenticated: true; adminId: string } | { authenticated: false };
 

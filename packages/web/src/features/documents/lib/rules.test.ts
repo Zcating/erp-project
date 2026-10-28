@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DraftDocumentType } from "./api";
+import type { DraftDocumentType } from "../../../server/documents";
 import {
   DOCUMENT_FORM_RULES,
   missingPartyMessage,

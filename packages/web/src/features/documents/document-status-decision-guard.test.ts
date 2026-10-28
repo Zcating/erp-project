@@ -21,7 +21,7 @@ const ALLOWED_LITERALS_BY_FILE: Record<string, AllowedLiteral[]> = {
     { literal: "OUT", reason: "展示层的调拨过账阶段常量" },
     { literal: "IN", reason: "展示层的调拨过账阶段常量" },
   ],
-  "features/documents/lib/api.ts": [
+  "server/documents.ts": [
     { literal: "DRAFT", reason: "HTTP 契约里的单据状态联合类型" },
     { literal: "POSTED", reason: "HTTP 契约里的单据状态联合类型" },
     { literal: "VOIDED", reason: "HTTP 契约里的单据状态联合类型" },

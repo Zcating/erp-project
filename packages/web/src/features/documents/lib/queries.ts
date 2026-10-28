@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getDocument, listDocuments, listOriginalCandidates } from "./api";
+import { getDocument, listDocuments, listOriginalCandidates } from "@/server";
 
 export function documentListQueryKey(type: string, status: string) {
   return ["documents", "list", type, status] as const;

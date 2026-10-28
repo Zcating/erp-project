@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ItemMaster } from "./api";
+import type { ItemMaster } from "../../../server/items";
 import { itemOptions, unitNames, unitOptions } from "./options";
 
 const item: ItemMaster = {

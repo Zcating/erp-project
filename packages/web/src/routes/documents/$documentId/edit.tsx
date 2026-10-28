@@ -1,13 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AdminShell } from "@/components/admin-shell";
-import {
-  documentDetailQueryOptions,
-  DocumentForm,
-  toFormSubmitResult,
-  updateDocument,
-  type DocumentInput,
-} from "@/features/documents";
+import { documentDetailQueryOptions, DocumentForm } from "@/features/documents";
+import { updateDocument, type DocumentInput } from "@/server";
+import { toFormSubmitResult } from "@/shared/form";
 
 export const Route = createFileRoute("/documents/$documentId/edit")({
   loader: async ({ context, params }) => {
