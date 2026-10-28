@@ -1,12 +1,4 @@
 export {
-  listCustomers,
-  listSuppliers,
-  listWarehouses,
-  type Customer,
-  type Supplier,
-  type Warehouse,
-} from "./lib/api";
-export {
   customerOptions,
   supplierOptions,
   warehouseOptionsWithCode,

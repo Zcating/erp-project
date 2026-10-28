@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { UnauthenticatedError } from "@/features/session/lib/errors";
-import { fetchApi } from "@/lib/api-client";
+import { fetchApi } from "./client";
+import { UnauthenticatedError } from "./errors";
+import { readErrorBody } from "./http";
 
 export type ItemAuxiliaryUnit = {
   unit: string;
@@ -37,8 +38,6 @@ export type ItemMutationResult = { ok: true; item: ItemMaster } | ItemFailure;
 export type ItemLookupResult = { ok: true; item: ItemMaster } | ItemFailure;
 
 export type ItemDeleteResult = { ok: true } | ItemFailure;
-
-export type FormSubmitResult = { ok: true } | { ok: false; message: string };
 
 export const listItems = createServerFn({ method: "GET" }).handler(
   async (): Promise<ItemMaster[]> => {
@@ -133,17 +132,6 @@ export const deleteItem = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export async function toFormSubmitResult(
-  run: () => Promise<ItemMutationResult | ItemDeleteResult>,
-): Promise<FormSubmitResult> {
-  try {
-    const result = await run();
-    return result.ok ? { ok: true } : { ok: false, message: result.message };
-  } catch (error) {
-    return { ok: false, message: error instanceof Error ? error.message : "提交失败" };
-  }
-}
-
 async function readMutationResult(response: Response): Promise<ItemMutationResult> {
   if (response.status === 401) {
     throw new UnauthenticatedError();
@@ -154,16 +142,4 @@ async function readMutationResult(response: Response): Promise<ItemMutationResul
   }
   const payload = (await response.json()) as { data: ItemMaster };
   return { ok: true, item: payload.data };
-}
-
-async function readErrorBody(response: Response): Promise<{ code: string; message: string }> {
-  try {
-    const payload = (await response.json()) as { error?: { code?: string; message?: string } };
-    return {
-      code: payload.error?.code ?? "INTERNAL",
-      message: payload.error?.message ?? `请求失败（${response.status}）`,
-    };
-  } catch {
-    return { code: "INTERNAL", message: `请求失败（${response.status}）` };
-  }
 }

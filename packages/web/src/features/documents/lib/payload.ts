@@ -1,4 +1,4 @@
-import type { DocumentInput, DraftDocumentType } from "./api";
+import type { DocumentInput, DraftDocumentType } from "@/server";
 import { DOCUMENT_FORM_RULES } from "./rules";
 import type { DocumentFormValues } from "./schema";
 

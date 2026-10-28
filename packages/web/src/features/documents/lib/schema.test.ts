@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DraftDocumentType } from "./api";
+import type { DraftDocumentType } from "../../../server/documents";
 import { documentFormSchema, type DocumentFormValues, type DocumentLineDraft } from "./schema";
 
 const baseLine: DocumentLineDraft = {

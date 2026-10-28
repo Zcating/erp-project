@@ -1,20 +1,3 @@
-export {
-  createItem,
-  deleteItem,
-  findItemByBarcode,
-  getItem,
-  listItems,
-  toFormSubmitResult,
-  updateItem,
-  type FormSubmitResult,
-  type ItemAuxiliaryUnit,
-  type ItemDeleteResult,
-  type ItemFailure,
-  type ItemInput,
-  type ItemLookupResult,
-  type ItemMaster,
-  type ItemMutationResult,
-} from "./lib/api";
 export { conversionRateOf } from "./lib/conversion";
 export { displayConversionRate } from "./lib/format";
 export { itemOptions, unitOptions } from "./lib/options";

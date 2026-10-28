@@ -1,7 +1,8 @@
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
-import { isUnauthenticatedError, LOGIN_PATH } from "@/features/session";
+import { LOGIN_PATH } from "@/features/session";
+import { isUnauthenticatedError } from "@/server";
 import { routeTree } from "./routeTree.gen";
 
 export function createRouter() {

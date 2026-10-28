@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { listSystemRoutes } from "./api";
+import { listSystemRoutes } from "@/server";
 
 export function systemRoutesQueryKey(filter: string) {
   return ["system", "routes", filter] as const;

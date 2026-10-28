@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Customer, Supplier, Warehouse } from "./api";
+import type { Customer, Supplier, Warehouse } from "../../../server/parties";
 import {
   customerOptions,
   supplierOptions,

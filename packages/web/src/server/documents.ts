@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { UnauthenticatedError } from "@/features/session/lib/errors";
-import { fetchApi } from "@/lib/api-client";
+import { fetchApi } from "./client";
+import { UnauthenticatedError } from "./errors";
+import { readErrorBody } from "./http";
 
 export const DRAFT_DOCUMENT_TYPES = [
   "PURCHASE_INBOUND",
@@ -78,8 +79,6 @@ export type DocumentFailure = { ok: false; code: string; message: string };
 export type DocumentMutationResult = { ok: true; document: Document } | DocumentFailure;
 
 export type DocumentDeleteResult = { ok: true } | DocumentFailure;
-
-export type FormSubmitResult = { ok: true } | { ok: false; message: string };
 
 export const listDocuments = createServerFn({ method: "GET" })
   .validator((data: { type: string; status: string }) => ({
@@ -209,17 +208,6 @@ export const voidDocument = createServerFn({ method: "POST" })
     return readMutationResult(response);
   });
 
-export async function toFormSubmitResult(
-  run: () => Promise<DocumentMutationResult | DocumentDeleteResult>,
-): Promise<FormSubmitResult> {
-  try {
-    const result = await run();
-    return result.ok ? { ok: true } : { ok: false, message: result.message };
-  } catch (error) {
-    return { ok: false, message: error instanceof Error ? error.message : "提交失败" };
-  }
-}
-
 async function readMutationResult(response: Response): Promise<DocumentMutationResult> {
   if (response.status === 401) {
     throw new UnauthenticatedError();
@@ -230,16 +218,4 @@ async function readMutationResult(response: Response): Promise<DocumentMutationR
   }
   const payload = (await response.json()) as { data: Document };
   return { ok: true, document: payload.data };
-}
-
-async function readErrorBody(response: Response): Promise<{ code: string; message: string }> {
-  try {
-    const payload = (await response.json()) as { error?: { code?: string; message?: string } };
-    return {
-      code: payload.error?.code ?? "INTERNAL",
-      message: payload.error?.message ?? `请求失败（${response.status}）`,
-    };
-  } catch {
-    return { code: "INTERNAL", message: `请求失败（${response.status}）` };
-  }
 }

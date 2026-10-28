@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { UnauthenticatedError } from "@/features/session/lib/errors";
-import { fetchApi } from "@/lib/api-client";
+import { fetchApi } from "./client";
+import { UnauthenticatedError } from "./errors";
 
 export type StockBalanceSummary = {
   warehouseId: string;

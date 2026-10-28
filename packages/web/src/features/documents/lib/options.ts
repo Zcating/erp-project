@@ -1,6 +1,5 @@
 import type { PickerOption } from "@/components/ui/picker";
-import type { ItemMaster } from "@/features/items";
-import type { Document, DocumentLine, DraftDocumentType } from "./api";
+import type { Document, DocumentLine, DraftDocumentType, ItemMaster } from "@/server";
 import { DOCUMENT_STATUS_LABELS, DOCUMENT_STATUS_OPTIONS, DOCUMENT_TYPE_LABELS } from "./format";
 
 export type OriginalLineChoice = PickerOption & {

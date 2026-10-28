@@ -1,4 +1,4 @@
-import type { DraftDocumentType } from "./api";
+import type { DraftDocumentType } from "@/server";
 
 export type DocumentPartyRole = "SUPPLIER" | "CUSTOMER";
 

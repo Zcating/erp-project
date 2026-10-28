@@ -14,8 +14,9 @@ import {
   warehouseListQueryOptions,
   warehouseOptionsWithCode,
 } from "@/features/parties";
-import type { Document, DocumentInput, DraftDocumentType, FormSubmitResult } from "../lib/api";
-import { DRAFT_DOCUMENT_TYPES } from "../lib/api";
+import type { Document, DocumentInput, DraftDocumentType } from "@/server";
+import { DRAFT_DOCUMENT_TYPES } from "@/server";
+import type { FormSubmitResult } from "@/shared/form";
 import { computeLineAmount, DOCUMENT_TYPE_LABELS } from "../lib/format";
 import { documentTypeOptions, originalLineChoices } from "../lib/options";
 import { buildDocumentInput } from "../lib/payload";

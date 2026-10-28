@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { listCustomers, listSuppliers, listWarehouses } from "./api";
+import { listCustomers, listSuppliers, listWarehouses } from "@/server";
 
 export function supplierListQueryKey() {
   return ["suppliers", "list"] as const;

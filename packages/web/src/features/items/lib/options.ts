@@ -1,5 +1,5 @@
 import type { PickerOption } from "@/components/ui/picker";
-import type { ItemMaster } from "./api";
+import type { ItemMaster } from "@/server";
 
 export function itemOptions(items: readonly ItemMaster[]): PickerOption[] {
   return items.map((item) => ({ value: item.id, label: `${item.code} ${item.name}` }));

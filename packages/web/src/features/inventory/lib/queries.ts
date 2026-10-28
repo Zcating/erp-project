@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
-import { listStockBalances, listStockMovements } from "./api";
-import type { StockMovementQuery } from "./api";
+import { listStockBalances, listStockMovements } from "@/server";
+import type { StockMovementQuery } from "@/server";
 
 export function stockBalanceQueryKey(warehouseId: string, itemId: string) {
   return ["inventory", "balances", warehouseId, itemId] as const;

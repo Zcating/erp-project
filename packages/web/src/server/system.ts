@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { fetchApi } from "@/lib/api-client";
-import { UnauthenticatedError } from "@/features/session/lib/errors";
+import { fetchApi } from "./client";
+import { UnauthenticatedError } from "./errors";
 
 export type SystemRouteEntry = {
   method: string;

@@ -1,4 +1,4 @@
-import type { ItemInput } from "./api";
+import type { ItemInput } from "@/server";
 import type { ItemFormValues } from "./schema";
 
 export function buildItemInput(values: ItemFormValues): ItemInput {

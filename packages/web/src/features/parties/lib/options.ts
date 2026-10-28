@@ -1,5 +1,5 @@
 import type { PickerOption } from "@/components/ui/picker";
-import type { Customer, Supplier, Warehouse } from "./api";
+import type { Customer, Supplier, Warehouse } from "@/server";
 
 export function warehouseOptionsWithCode(warehouses: readonly Warehouse[]): PickerOption[] {
   return warehouses.map((warehouse) => ({

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { DraftDocumentType } from "./api";
+import type { DraftDocumentType } from "@/server";
 import {
   DOCUMENT_FORM_RULES,
   missingPartyMessage,

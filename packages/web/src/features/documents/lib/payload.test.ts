@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DraftDocumentType } from "./api";
+import type { DraftDocumentType } from "../../../server/documents";
 import { buildDocumentInput } from "./payload";
 import type { DocumentFormValues } from "./schema";
 

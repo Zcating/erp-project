@@ -6,7 +6,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Picker } from "@/components/ui/picker";
 import {
-  deleteDocument,
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_TYPE_LABELS,
   documentListQueryOptions,
@@ -14,9 +13,9 @@ import {
   documentStatusFilterOptions,
   documentTypeFilterAtom,
   documentTypeFilterOptions,
-  DRAFT_DOCUMENT_TYPES,
   PostingActions,
 } from "@/features/documents";
+import { deleteDocument, DRAFT_DOCUMENT_TYPES } from "@/server";
 
 export const Route = createFileRoute("/documents/")({
   loader: async ({ context }) => {

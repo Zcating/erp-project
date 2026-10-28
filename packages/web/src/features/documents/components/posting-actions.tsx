@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { postDocument, voidDocument } from "../lib/api";
-import type { AvailableDocumentActions } from "../lib/api";
+import { postDocument, voidDocument } from "@/server";
+import type { AvailableDocumentActions } from "@/server";
 
 export type PostingActionsProps = {
   documentId: string;
