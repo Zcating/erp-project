@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { Fragment } from "react";
 import type { BreadcrumbChain } from "@/lib/route-breadcrumbs";
 import {
   Breadcrumb,
@@ -14,12 +15,14 @@ export function RouteBreadcrumb({ chain }: { chain: BreadcrumbChain }) {
     <Breadcrumb className="mb-2">
       <BreadcrumbList>
         {chain.ancestors.map((ancestor) => (
-          <BreadcrumbItem key={ancestor.to}>
-            <BreadcrumbLink asChild>
-              <Link to={ancestor.to}>{ancestor.label}</Link>
-            </BreadcrumbLink>
+          <Fragment key={ancestor.to}>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to={ancestor.to}>{ancestor.label}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
             <BreadcrumbSeparator />
-          </BreadcrumbItem>
+          </Fragment>
         ))}
         <BreadcrumbItem>
           <BreadcrumbPage>{chain.current.label}</BreadcrumbPage>
