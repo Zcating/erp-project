@@ -2,7 +2,7 @@
 
 请先阅读 `docs/AGENTS.md` 获取编码指南。
 
-改动 `packages/web` 前请先阅读 `packages/web/AGENTS.md` 获取前端组件与表单约束。
+改动 `packages/web` 前请先阅读 `packages/web/AGENTS.md` 获取前端写法约束。
 
 ## Agent skills
 
