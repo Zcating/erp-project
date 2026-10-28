@@ -4,13 +4,13 @@
 
 ## 技术栈
 
-| 用途        | 用什么                                                   |
-| ----------- | -------------------------------------------------------- |
-| 控件        | 先考虑本地（`src/components/`）再考虑 shadcn/ui|
-| 表单        | `@tanstack/react-form` + zod                             |
-| 数据获取    | TanStack Query + server functions（代理 Fastify）        |
-| 客户端状态  | jotai（只放 UI 状态）                                    |
-| 路由 / 样式 | TanStack Router 文件路由 / Tailwind CSS                  |
+| 用途        | 用什么                                            |
+| ----------- | ------------------------------------------------- |
+| 控件        | 先考虑本地（`src/components/`）再考虑 shadcn/ui   |
+| 表单        | `@tanstack/react-form` + zod                      |
+| 数据获取    | TanStack Query + server functions（代理 Fastify） |
+| 客户端状态  | jotai（只放 UI 状态）                             |
+| 路由 / 样式 | TanStack Router 文件路由 / Tailwind CSS           |
 
 前端栈与数据边界的决策见 `docs/adr/0014-frontend-stack.md`。
 
