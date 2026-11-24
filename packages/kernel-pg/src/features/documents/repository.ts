@@ -304,6 +304,21 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
       return toDomain(row, grouped.get(row.id) ?? []);
     },
 
+    async findDocumentIdsByLineIds(
+      lineIds: readonly string[],
+      context?: TransactionContext,
+    ): Promise<Array<{ lineId: string; documentId: string }>> {
+      if (lineIds.length === 0) {
+        return [];
+      }
+      const executor = executorOf(context);
+      const rows = await executor
+        .select({ lineId: documentLines.id, documentId: documentLines.documentId })
+        .from(documentLines)
+        .where(inArray(documentLines.id, [...lineIds]));
+      return rows.map((row) => ({ lineId: row.lineId, documentId: row.documentId }));
+    },
+
     async sumPostedReturnedQuantity(
       originalLineId: string,
       context?: TransactionContext,

@@ -11,6 +11,10 @@ export type DocumentRepository = MasterDataReferenceChecker &
     findByDocumentNo(documentNo: string, context?: TransactionContext): Promise<Document | null>;
     findByLineId(lineId: string, context?: TransactionContext): Promise<Document | null>;
     findByLineIdForUpdate(lineId: string, context?: TransactionContext): Promise<Document | null>;
+    findDocumentIdsByLineIds(
+      lineIds: readonly string[],
+      context?: TransactionContext,
+    ): Promise<Array<{ lineId: string; documentId: string }>>;
     sumPostedReturnedQuantity(
       originalLineId: string,
       context?: TransactionContext,

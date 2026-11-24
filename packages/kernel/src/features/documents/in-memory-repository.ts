@@ -79,6 +79,21 @@ export function createInMemoryDocumentRepository(): DocumentRepository {
       return null;
     },
 
+    async findDocumentIdsByLineIds(
+      lineIds: readonly string[],
+    ): Promise<Array<{ lineId: string; documentId: string }>> {
+      const wanted = new Set(lineIds);
+      const mappings: Array<{ lineId: string; documentId: string }> = [];
+      for (const document of stored.values()) {
+        for (const line of document.lines) {
+          if (wanted.has(line.id)) {
+            mappings.push({ lineId: line.id, documentId: document.id });
+          }
+        }
+      }
+      return mappings;
+    },
+
     async sumPostedReturnedQuantity(originalLineId: string): Promise<string> {
       let total = "0.000";
       for (const document of stored.values()) {

@@ -11,7 +11,7 @@ import type { Quantity } from "@erp-project/shared";
 import { StockNegativeError, ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document, DocumentRepository } from "../documents";
-import { resolveOriginalLine } from "../documents";
+import { lockOriginalDocuments, resolveOriginalLine } from "../documents";
 import type {
   StockBalance,
   StockBalanceKey,
@@ -72,23 +72,19 @@ export function createPurchaseReturnPostingHandler(
     if (direction !== "FORWARD") {
       return;
     }
-    for (const line of document.lines) {
-      await lockOriginalDocument(line.originalLineId as string, context);
-    }
-  };
-
-  const lockOriginalDocument = async (
-    originalLineId: string,
-    context: TransactionContext | undefined,
-  ): Promise<Document> => {
-    const original = await documents.findByLineIdForUpdate(originalLineId, context);
-    const resolved = resolveOriginalLine(
-      original,
-      originalLineId,
-      "PURCHASE_INBOUND",
-      ORIGINAL_LINE_WORDING,
+    const locked = await lockOriginalDocuments(
+      documents,
+      document.lines.map((line) => line.originalLineId as string),
+      context,
     );
-    return resolved.original;
+    for (const line of document.lines) {
+      resolveOriginalLine(
+        locked.get(line.originalLineId as string) ?? null,
+        line.originalLineId as string,
+        "PURCHASE_INBOUND",
+        ORIGINAL_LINE_WORDING,
+      );
+    }
   };
 
   const originalLineBasisOf = async (
