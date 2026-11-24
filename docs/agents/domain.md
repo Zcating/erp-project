@@ -10,10 +10,18 @@ This repo is **single-context**: one `GLOSSARY.md` at the repo root, and ADRs in
 /
 ├── GLOSSARY.md
 ├── docs/adr/
-│   ├── 0001-event-sourced-orders.md
-│   └── 0002-postgres-for-write-model.md
-└── src/
+│   ├── 0001-typescript-only-stack.md
+│   ├── 0005-monorepo-feature-slices.md
+│   └── ...
+└── packages/
+    ├── kernel/        纯领域逻辑与端口定义
+    ├── kernel-pg/     Postgres/Drizzle 适配器
+    ├── app/           Fastify 参考 API
+    ├── web/           TanStack Start 管理后台
+    └── shared/        跨包通用能力
 ```
+
+The `packages/` split is a **technical layering of one domain**, not multiple business contexts: dependency direction is `app → kernel-pg → kernel`, with `web` depending on `app` over HTTP only and `shared` depending on nothing above it. One root `GLOSSARY.md` and one `docs/adr/` therefore cover every package — do not create a `GLOSSARY-MAP.md` or per-package glossaries unless a genuinely separate business vocabulary appears.
 
 ## Before exploring, read these
 

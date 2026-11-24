@@ -8,7 +8,7 @@
 
 ### Issue tracker
 
-Issues and specs live as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+Issues and specs live in GitHub Issues (`Zcating/erp-project`), one feature parent issue per spec with its tickets as sub-issues. See `docs/agents/issue-tracker.md`.
 
 ### Domain docs
 
