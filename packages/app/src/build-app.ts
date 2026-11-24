@@ -7,7 +7,7 @@ import type {
   TransactionRunner,
   TransferInTransitRepository,
   WarehouseRepository,
-} from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
 import {
   createCustomerService,
   createDocumentService,
@@ -28,7 +28,7 @@ import {
   createTransferPostingHandler,
   createTransferQueryService,
   createWarehouseService,
-} from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
 import {
   createCustomerRepository,
   createDatabase,
@@ -40,8 +40,8 @@ import {
   createTransferInTransitRepository,
   createWarehouseRepository,
   databaseUrl,
-} from "@erp-inventory-sales/kernel-pg";
-import type { DatabaseConnection, KernelDatabase } from "@erp-inventory-sales/kernel-pg";
+} from "@erp-project/kernel-pg";
+import type { DatabaseConnection, KernelDatabase } from "@erp-project/kernel-pg";
 import Fastify, { type FastifyInstance } from "fastify";
 import { registerDecimalRoutes } from "./features/decimals";
 import { registerDocumentRoutes, resolveDocumentTimeZone } from "./features/documents";

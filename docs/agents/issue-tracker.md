@@ -18,13 +18,13 @@ Infer the repo from `git remote -v`; `gh` does this automatically when run insid
 
 Every spec is a **parent issue**; every ticket of that spec is a **sub-issue** of it.
 
-| Parent issue | Sub-issues |
-| --- | --- |
-| `[inventory-sales-kernel]` | 18 tickets |
-| `[shadcn-picker-form]` | 13 tickets |
-| `[state-machine-verification]` | 6 tickets |
-| `[page-breadcrumb]` | none (spec only) |
-| `[web-server-boundary]` | none (spec only) |
+| Parent issue                   | Sub-issues       |
+| ------------------------------ | ---------------- |
+| `[inventory-sales-kernel]`     | 18 tickets       |
+| `[shadcn-picker-form]`         | 13 tickets       |
+| `[state-machine-verification]` | 6 tickets        |
+| `[page-breadcrumb]`            | none (spec only) |
+| `[web-server-boundary]`        | none (spec only) |
 
 Ticket titles carry the feature name in brackets, e.g. `[shadcn-picker-form] 02: 端到端选值动作统一走选值助手`, so a flat `gh issue list` stays readable.
 

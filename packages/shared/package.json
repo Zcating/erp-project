@@ -1,5 +1,5 @@
 {
-  "name": "@erp-inventory-sales/shared",
+  "name": "@erp-project/shared",
   "private": true,
   "type": "module",
   "exports": {

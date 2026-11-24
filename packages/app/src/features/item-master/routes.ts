@@ -1,9 +1,5 @@
-import type {
-  ItemImportService,
-  ItemMasterInput,
-  ItemMasterService,
-} from "@erp-inventory-sales/kernel";
-import { ValidationError } from "@erp-inventory-sales/kernel";
+import type { ItemImportService, ItemMasterInput, ItemMasterService } from "@erp-project/kernel";
+import { ValidationError } from "@erp-project/kernel";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { success } from "../../shared/envelope";
 import { itemMasterBodySchema, type ItemMasterBody } from "./schema";

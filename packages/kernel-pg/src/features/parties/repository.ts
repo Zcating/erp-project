@@ -5,8 +5,8 @@ import type {
   SupplierRepository,
   Warehouse,
   WarehouseRepository,
-} from "@erp-inventory-sales/kernel";
-import { DuplicateError } from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
+import { DuplicateError } from "@erp-project/kernel";
 import type { InferSelectModel } from "drizzle-orm";
 import { asc, eq } from "drizzle-orm";
 import type { KernelDatabase } from "../../db/client";

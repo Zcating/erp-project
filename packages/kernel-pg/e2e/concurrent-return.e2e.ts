@@ -5,12 +5,8 @@ import {
   createSaleOutboundPostingHandler,
   createSaleReturnPostingHandler,
   ValidationError,
-} from "@erp-inventory-sales/kernel";
-import type {
-  DocumentInput,
-  TransactionContext,
-  TransactionRunner,
-} from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
+import type { DocumentInput, TransactionContext, TransactionRunner } from "@erp-project/kernel";
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { createDatabase } from "../src/db/client.js";

@@ -1,4 +1,4 @@
-import { UNIT_PRICE_SCALE, quantity, toFixedString, unitPrice } from "@erp-inventory-sales/shared";
+import { UNIT_PRICE_SCALE, quantity, toFixedString, unitPrice } from "@erp-project/shared";
 
 export function weightedAverageUnitCost(
   quantityBefore: string,

@@ -3,7 +3,7 @@ import {
   createItemImportService,
   createItemMasterService,
   ItemBatchError,
-} from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
 import { createDatabase } from "../src/db/client.js";
 import { e2eDatabaseUrl } from "../src/db/config.js";
 import { createTransactionRunner } from "../src/db/transactions.js";

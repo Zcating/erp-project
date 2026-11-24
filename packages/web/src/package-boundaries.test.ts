@@ -15,7 +15,7 @@ const FORBIDDEN_DEPENDENCY_PATTERNS = [
   /^postgres/,
   /^postgresql/,
   /^drizzle-/,
-  /^@erp-inventory-sales\/kernel/,
+  /^@erp-project\/kernel/,
   /^mysql2?$/,
   /^sqlite3?$/,
   /^mongodb$/,

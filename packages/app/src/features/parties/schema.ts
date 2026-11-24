@@ -1,4 +1,4 @@
-import { z } from "@erp-inventory-sales/shared";
+import { z } from "@erp-project/shared";
 
 export const supplierBodySchema = z.object({
   code: z.string().optional(),

@@ -1,4 +1,4 @@
-import { quantity } from "@erp-inventory-sales/shared";
+import { quantity } from "@erp-project/shared";
 import { ValidationError } from "../../shared/errors";
 import { DOCUMENT_TYPE_LABELS, warehouseIdOfRole } from "../documents";
 import type { Document, DocumentWarehouseRole, DraftDocumentType } from "../documents";

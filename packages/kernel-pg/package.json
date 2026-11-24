@@ -1,5 +1,5 @@
 {
-  "name": "@erp-inventory-sales/kernel-pg",
+  "name": "@erp-project/kernel-pg",
   "private": true,
   "type": "module",
   "exports": {
@@ -14,7 +14,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@erp-inventory-sales/kernel": "workspace:*",
+    "@erp-project/kernel": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "pg": "^8.23.1"
   },

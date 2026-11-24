@@ -1,4 +1,4 @@
-import { createInMemoryItemMasterRepository } from "@erp-inventory-sales/kernel";
+import { createInMemoryItemMasterRepository } from "@erp-project/kernel";
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../../build-app";

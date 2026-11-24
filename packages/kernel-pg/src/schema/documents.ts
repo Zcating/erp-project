@@ -1,4 +1,4 @@
-import { DOCUMENT_STATUSES } from "@erp-inventory-sales/kernel";
+import { DOCUMENT_STATUSES } from "@erp-project/kernel";
 import { sql } from "drizzle-orm";
 import {
   check,

@@ -1,5 +1,5 @@
-import { ValidationError } from "@erp-inventory-sales/kernel";
-import { AMOUNT_SCALE, toFixedString } from "@erp-inventory-sales/shared";
+import { ValidationError } from "@erp-project/kernel";
+import { AMOUNT_SCALE, toFixedString } from "@erp-project/shared";
 import type { FastifyInstance } from "fastify";
 import { success } from "../../shared/envelope";
 import { parseAmount } from "../../shared/parse-decimal";

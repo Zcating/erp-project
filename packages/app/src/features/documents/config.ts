@@ -1,4 +1,4 @@
-import { DEFAULT_DOCUMENT_TIME_ZONE } from "@erp-inventory-sales/kernel";
+import { DEFAULT_DOCUMENT_TIME_ZONE } from "@erp-project/kernel";
 
 export const DOCUMENT_TIME_ZONE_ENV = "DOCUMENT_TIME_ZONE";
 

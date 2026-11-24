@@ -6,7 +6,7 @@ import {
   quantity,
   toFixedString,
   unitPrice,
-} from "@erp-inventory-sales/shared";
+} from "@erp-project/shared";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";
 import { weightedAverageUnitCost } from "../inventory";

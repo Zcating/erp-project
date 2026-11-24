@@ -1,5 +1,5 @@
-import { ValidationError } from "@erp-inventory-sales/kernel";
-import { AMOUNT_SCALE, amount, type Amount } from "@erp-inventory-sales/shared";
+import { ValidationError } from "@erp-project/kernel";
+import { AMOUNT_SCALE, amount, type Amount } from "@erp-project/shared";
 
 const DECIMAL_PATTERN = /^-?\d+(?:\.\d+)?$/;
 

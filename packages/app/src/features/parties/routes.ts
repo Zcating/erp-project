@@ -8,10 +8,10 @@ import type {
   Warehouse,
   WarehouseInput,
   WarehouseService,
-} from "@erp-inventory-sales/kernel";
-import { ValidationError } from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
+import { ValidationError } from "@erp-project/kernel";
 import type { FastifyInstance } from "fastify";
-import { z } from "@erp-inventory-sales/shared";
+import { z } from "@erp-project/shared";
 import { success } from "../../shared/envelope";
 import {
   customerBodySchema,

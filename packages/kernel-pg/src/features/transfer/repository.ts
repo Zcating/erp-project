@@ -3,7 +3,7 @@ import type {
   TransferInTransitRecord,
   TransferInTransitRepository,
   TransactionContext,
-} from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import type { KernelDatabase } from "../../db/client";
 import type { PgTransaction } from "../../db/transactions";

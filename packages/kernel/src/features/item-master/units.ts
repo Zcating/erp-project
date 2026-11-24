@@ -1,4 +1,4 @@
-import { QUANTITY_SCALE, quantity, roundToScale, toFixedString } from "@erp-inventory-sales/shared";
+import { QUANTITY_SCALE, quantity, roundToScale, toFixedString } from "@erp-project/shared";
 import { ValidationError } from "../../shared/errors";
 import { CONVERSION_RATE_SCALE, type ItemMaster } from "./model";
 

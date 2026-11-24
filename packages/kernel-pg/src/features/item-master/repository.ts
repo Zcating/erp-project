@@ -1,9 +1,5 @@
-import type {
-  ItemMaster,
-  ItemMasterRepository,
-  TransactionContext,
-} from "@erp-inventory-sales/kernel";
-import { ConflictError, DuplicateError } from "@erp-inventory-sales/kernel";
+import type { ItemMaster, ItemMasterRepository, TransactionContext } from "@erp-project/kernel";
+import { ConflictError, DuplicateError } from "@erp-project/kernel";
 import { randomUUID } from "node:crypto";
 import type { InferSelectModel } from "drizzle-orm";
 import { asc, eq, inArray } from "drizzle-orm";
