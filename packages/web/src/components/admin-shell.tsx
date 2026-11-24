@@ -1,7 +1,13 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useMatches } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { RouteBreadcrumb } from "@/components/route-breadcrumb";
+import { breadcrumbForRoute, routeLabel } from "@/lib/route-breadcrumbs";
 
 export function AdminShell({ children }: { children: ReactNode }) {
+  const matches = useMatches();
+  const currentRouteId = matches[matches.length - 1]?.routeId;
+  const chain = currentRouteId === undefined ? undefined : breadcrumbForRoute(currentRouteId);
+
   return (
     <div className="flex min-h-screen">
       <nav data-testid="admin-nav" className="w-64 shrink-0 border-r border-border bg-muted/40 p-4">
@@ -14,7 +20,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               activeProps={{ className: "bg-muted font-medium" }}
               activeOptions={{ exact: true }}
             >
-              总览
+              {routeLabel("/")}
             </Link>
           </li>
           <li>
@@ -23,7 +29,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               className="block rounded-md px-2 py-1 hover:bg-muted"
               activeProps={{ className: "bg-muted font-medium" }}
             >
-              商品档案
+              {routeLabel("/items/")}
             </Link>
           </li>
           <li>
@@ -32,7 +38,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               className="block rounded-md px-2 py-1 hover:bg-muted"
               activeProps={{ className: "bg-muted font-medium" }}
             >
-              单据
+              {routeLabel("/documents/")}
             </Link>
           </li>
           <li>
@@ -41,7 +47,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               className="block rounded-md px-2 py-1 hover:bg-muted"
               activeProps={{ className: "bg-muted font-medium" }}
             >
-              库存查询
+              {routeLabel("/inventory/")}
             </Link>
           </li>
           <li>
@@ -50,7 +56,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
               className="block rounded-md px-2 py-1 hover:bg-muted"
               activeProps={{ className: "bg-muted font-medium" }}
             >
-              库存流水
+              {routeLabel("/inventory/movements")}
             </Link>
           </li>
           <li>
@@ -59,12 +65,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
               className="block rounded-md px-2 py-1 hover:bg-muted"
               activeProps={{ className: "bg-muted font-medium" }}
             >
-              系统路由
+              {routeLabel("/system/routes")}
             </Link>
           </li>
         </ul>
       </nav>
       <main data-testid="admin-main" className="flex-1 p-6">
+        {chain === undefined ? null : <RouteBreadcrumb chain={chain} />}
         {children}
       </main>
     </div>
