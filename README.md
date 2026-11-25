@@ -58,8 +58,8 @@ pnpm db:migrate
 
 迁移产物在 `packages/kernel-pg/drizzle/`，由 drizzle-kit 管理：
 
-- `pnpm --filter @erp-inventory-sales/kernel-pg db:generate` 生成新迁移
-- `pnpm --filter @erp-inventory-sales/kernel-pg db:migrate` 执行迁移
+- `pnpm --filter @erp-project/kernel-pg db:generate` 生成新迁移
+- `pnpm --filter @erp-project/kernel-pg db:migrate` 执行迁移
 
 迁移可以在同一个库上重复执行：已执行的迁移由 `drizzle.__drizzle_migrations` 记账，不会重复建列、不会改变已有表与列。
 
@@ -112,8 +112,8 @@ packages/web dev:   Local:   http://localhost:5173/
 也可以只起其中一个：
 
 ```bash
-pnpm --filter @erp-inventory-sales/app start   # API，默认 http://localhost:3000，端口用 PORT 覆盖
-pnpm --filter @erp-inventory-sales/web dev      # 管理后台，默认 http://localhost:5173
+pnpm --filter @erp-project/app start   # API，默认 http://localhost:3000，端口用 PORT 覆盖
+pnpm --filter @erp-project/web dev      # 管理后台，默认 http://localhost:5173
 ```
 
 启动命令会自动加载仓库根目录的 `.env`（文件不存在时忽略，不影响 CI 与生产环境）：
@@ -201,7 +201,7 @@ Fastify 的地址只在服务端可见。
 
 ```bash
 # 先起参考应用（第 5 节），再起前端
-pnpm --filter @erp-inventory-sales/app start
+pnpm --filter @erp-project/app start
 vp dev packages/web --port 5173
 ```
 
@@ -305,7 +305,7 @@ pnpm test:e2e
 CI 上要预装 Playwright 浏览器（二进制约百兆级，本地首次运行也需要）：
 
 ```bash
-pnpm --filter @erp-inventory-sales/web exec playwright install --with-deps chromium
+pnpm --filter @erp-project/web exec playwright install --with-deps chromium
 ```
 
 只跑 Playwright 的旧命令仍然可用。配置里的 `webServer` 会拉起 Fastify 与前端开发服务器，
@@ -313,7 +313,7 @@ Fastify 由 `scripts/e2e/start-api.ts` 启动，连接的同样是端到端数�
 也不是 `vp test` 用的 `erp_test`）；该库不存在时会被创建并迁移：
 
 ```bash
-pnpm --filter @erp-inventory-sales/web test:e2e
+pnpm --filter @erp-project/web test:e2e
 ```
 
 ## 单一 vite 副本
@@ -325,5 +325,5 @@ Vite 实现（`npm:@voidzero-dev/vite-plus-core@1.0.0`），根 `package.json` �
 自检：
 
 ```bash
-pnpm --filter @erp-inventory-sales/web exec vitest run src/single-vite.test.ts
+pnpm --filter @erp-project/web exec vitest run src/single-vite.test.ts
 ```

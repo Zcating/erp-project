@@ -2,7 +2,7 @@ import {
   DOCUMENT_STATUSES,
   STOCK_LEDGER_DIRECTIONS,
   TRANSFER_IN_TRANSIT_STATUSES,
-} from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import path from "node:path";

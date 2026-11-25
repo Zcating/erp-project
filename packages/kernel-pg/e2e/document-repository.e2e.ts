@@ -1,5 +1,5 @@
-import { createDocumentService } from "@erp-inventory-sales/kernel";
-import type { DocumentInput } from "@erp-inventory-sales/kernel";
+import { createDocumentService } from "@erp-project/kernel";
+import type { DocumentInput } from "@erp-project/kernel";
 import { describe, expect, it } from "vitest";
 import { createDatabase } from "../src/db/client.js";
 import { e2eDatabaseUrl } from "../src/db/config.js";

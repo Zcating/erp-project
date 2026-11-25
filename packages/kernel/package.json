@@ -1,5 +1,5 @@
 {
-  "name": "@erp-inventory-sales/kernel",
+  "name": "@erp-project/kernel",
   "private": true,
   "type": "module",
   "exports": {
@@ -12,7 +12,7 @@
     "build": "vp pack"
   },
   "dependencies": {
-    "@erp-inventory-sales/shared": "workspace:*"
+    "@erp-project/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.5"

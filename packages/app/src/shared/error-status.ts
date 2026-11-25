@@ -1,4 +1,4 @@
-import type { KernelErrorCode } from "@erp-inventory-sales/kernel";
+import type { KernelErrorCode } from "@erp-project/kernel";
 
 export const UNAUTHENTICATED_ERROR_CODE = "UNAUTHENTICATED";
 export const INTERNAL_ERROR_CODE = "INTERNAL";

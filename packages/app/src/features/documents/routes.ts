@@ -4,8 +4,8 @@ import type {
   DocumentFilter,
   DocumentInput,
   DocumentService,
-} from "@erp-inventory-sales/kernel";
-import type { PostingService, TransferQueryService } from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
+import type { PostingService, TransferQueryService } from "@erp-project/kernel";
 import {
   ValidationError,
   availableDocumentActions,
@@ -13,7 +13,7 @@ import {
   isDocumentType,
   isPostingPhase,
   POSTED_DOCUMENT_STATUS,
-} from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
 import type { FastifyInstance } from "fastify";
 import { success } from "../../shared/envelope";
 import { documentBodySchema, postingBodySchema, type DocumentBody } from "./schema";

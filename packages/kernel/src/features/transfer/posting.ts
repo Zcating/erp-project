@@ -7,7 +7,7 @@ import {
   quantity,
   toFixedString,
   unitPrice,
-} from "@erp-inventory-sales/shared";
+} from "@erp-project/shared";
 import { StockNegativeError, ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";

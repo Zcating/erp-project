@@ -1,5 +1,5 @@
-import { AMOUNT_SCALE, amount, quantity, toFixedString } from "@erp-inventory-sales/shared";
-import type { Amount, Quantity } from "@erp-inventory-sales/shared";
+import { AMOUNT_SCALE, amount, quantity, toFixedString } from "@erp-project/shared";
+import type { Amount, Quantity } from "@erp-project/shared";
 import type { TransactionContext } from "../../shared/transactions";
 import type { DocumentRepository } from "../documents";
 import type { StockLedgerRepository } from "../inventory";

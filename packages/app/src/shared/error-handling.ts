@@ -1,4 +1,4 @@
-import { ItemBatchError } from "@erp-inventory-sales/kernel";
+import { ItemBatchError } from "@erp-project/kernel";
 import type { FastifyInstance } from "fastify";
 import { failure } from "./envelope";
 import type { ErrorDetail } from "./envelope";

@@ -1,4 +1,4 @@
-import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-inventory-sales/shared";
+import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-project/shared";
 import { describe, expect, it } from "vitest";
 import { StateConflictError } from "../../shared/errors";
 import { createInMemoryDocumentRepository } from "../documents/in-memory-repository";

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
-import { ports } from "@erp-inventory-sales/kernel";
-import { kernelPg } from "@erp-inventory-sales/kernel-pg";
-import { shared } from "@erp-inventory-sales/shared";
+import { ports } from "@erp-project/kernel";
+import { kernelPg } from "@erp-project/kernel-pg";
+import { shared } from "@erp-project/shared";
 
 export type { FastifyInstance };
 

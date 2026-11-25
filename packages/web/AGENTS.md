@@ -18,7 +18,7 @@
 
 ### 控件
 
-- 控件优先用仓库自有的 shadcn/ui；缺组件走 shadcn CLI：`pnpm --filter @erp-inventory-sales/web exec shadcn add <组件名> --yes`
+- 控件优先用仓库自有的 shadcn/ui；缺组件走 shadcn CLI：`pnpm --filter @erp-project/web exec shadcn add <组件名> --yes`
 
 ### 表单
 

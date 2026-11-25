@@ -7,13 +7,13 @@ import type {
   DraftDocumentType,
   MasterDataReference,
   TransactionContext,
-} from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
 import {
   DRAFT_DOCUMENT_TYPES,
   DOCUMENT_TYPE_RULES,
   DuplicateError,
   ValidationError,
-} from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { KernelDatabase } from "../../db/client";
 import type { PgTransaction } from "../../db/transactions";

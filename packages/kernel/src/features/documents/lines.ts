@@ -6,7 +6,7 @@ import {
   quantity,
   toFixedString,
   unitPrice,
-} from "@erp-inventory-sales/shared";
+} from "@erp-project/shared";
 import {
   isDraftDocumentType,
   type DocumentLine,

@@ -187,13 +187,13 @@ importers:
 
   packages/app:
     dependencies:
-      '@erp-inventory-sales/kernel':
+      '@erp-project/kernel':
         specifier: workspace:*
         version: link:../kernel
-      '@erp-inventory-sales/kernel-pg':
+      '@erp-project/kernel-pg':
         specifier: workspace:*
         version: link:../kernel-pg
-      '@erp-inventory-sales/shared':
+      '@erp-project/shared':
         specifier: workspace:*
         version: link:../shared
       fastify:
@@ -206,7 +206,7 @@ importers:
 
   packages/kernel:
     dependencies:
-      '@erp-inventory-sales/shared':
+      '@erp-project/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:
@@ -216,7 +216,7 @@ importers:
 
   packages/kernel-pg:
     dependencies:
-      '@erp-inventory-sales/kernel':
+      '@erp-project/kernel':
         specifier: workspace:*
         version: link:../kernel
       drizzle-orm:

@@ -3,8 +3,8 @@ import type {
   StockBalanceFilter,
   StockMovementFilter,
   StockMovementOrder,
-} from "@erp-inventory-sales/kernel";
-import { ValidationError } from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
+import { ValidationError } from "@erp-project/kernel";
 import type { FastifyInstance } from "fastify";
 import { success } from "../../shared/envelope";
 

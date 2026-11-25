@@ -1,4 +1,4 @@
-import { STOCK_LEDGER_DIRECTIONS } from "@erp-inventory-sales/kernel";
+import { STOCK_LEDGER_DIRECTIONS } from "@erp-project/kernel";
 import { sql } from "drizzle-orm";
 import {
   check,

@@ -1,10 +1,4 @@
-import {
-  AMOUNT_SCALE,
-  amountOf,
-  quantity,
-  toFixedString,
-  unitPrice,
-} from "@erp-inventory-sales/shared";
+import { AMOUNT_SCALE, amountOf, quantity, toFixedString, unitPrice } from "@erp-project/shared";
 import { describe, expect, it } from "vitest";
 import { ValidationError } from "../../shared/errors";
 import { createInMemoryDocumentRepository } from "../documents/in-memory-repository";

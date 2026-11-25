@@ -6,8 +6,8 @@ import {
   quantity,
   toFixedString,
   unitPrice,
-} from "@erp-inventory-sales/shared";
-import type { Amount, Quantity } from "@erp-inventory-sales/shared";
+} from "@erp-project/shared";
+import type { Amount, Quantity } from "@erp-project/shared";
 import { ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document, DocumentRepository } from "../documents";

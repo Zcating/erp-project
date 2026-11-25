@@ -1,4 +1,4 @@
-import type { TransactionContext, TransactionRunner } from "@erp-inventory-sales/kernel";
+import type { TransactionContext, TransactionRunner } from "@erp-project/kernel";
 import { randomUUID } from "node:crypto";
 import type { KernelDatabase } from "./client";
 

@@ -3,8 +3,8 @@ import {
   createPostingService,
   createPurchaseInboundPostingHandler,
   createSaleOutboundPostingHandler,
-} from "@erp-inventory-sales/kernel";
-import type { DocumentInput, StockLedgerRepository } from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
+import type { DocumentInput, StockLedgerRepository } from "@erp-project/kernel";
 import { describe, expect, it } from "vitest";
 import { createDatabase } from "../src/db/client.js";
 import { e2eDatabaseUrl } from "../src/db/config.js";

@@ -1,4 +1,4 @@
-import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-inventory-sales/shared";
+import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-project/shared";
 import { DuplicateError } from "../../shared/errors";
 import type { MasterDataReference } from "../../shared/ports";
 import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model";

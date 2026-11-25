@@ -1,5 +1,5 @@
 {
-  "name": "@erp-inventory-sales/app",
+  "name": "@erp-project/app",
   "private": true,
   "type": "module",
   "exports": {
@@ -14,9 +14,9 @@
     "dev": "node --env-file-if-exists=../../.env --import tsx src/server.ts"
   },
   "dependencies": {
-    "@erp-inventory-sales/kernel": "workspace:*",
-    "@erp-inventory-sales/kernel-pg": "workspace:*",
-    "@erp-inventory-sales/shared": "workspace:*",
+    "@erp-project/kernel": "workspace:*",
+    "@erp-project/kernel-pg": "workspace:*",
+    "@erp-project/shared": "workspace:*",
     "fastify": "^5.12.7"
   },
   "devDependencies": {

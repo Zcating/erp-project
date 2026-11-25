@@ -56,11 +56,9 @@ export async function prepareE2eDatabase(options: { recreate: boolean }): Promis
     await client.end();
   }
 
-  const migration = runCommand(
-    "pnpm",
-    ["--filter", "@erp-inventory-sales/kernel-pg", "db:migrate"],
-    { env: { ...process.env, DATABASE_URL: url } },
-  );
+  const migration = runCommand("pnpm", ["--filter", "@erp-project/kernel-pg", "db:migrate"], {
+    env: { ...process.env, DATABASE_URL: url },
+  });
   if (migration.code !== 0) {
     throw new Error(`迁移端到端数据库失败：${migration.stderr.trim() || migration.stdout.trim()}`);
   }
@@ -80,7 +78,7 @@ export function spawnApi(
   };
   env.ADMIN_USERNAME = DEFAULT_ADMIN_USERNAME;
   env.ADMIN_PASSWORD = DEFAULT_ADMIN_PASSWORD;
-  return startProcess("pnpm", ["--filter", "@erp-inventory-sales/app", "start"], {
+  return startProcess("pnpm", ["--filter", "@erp-project/app", "start"], {
     cwd: repoRoot,
     env: { ...env, ...extraEnv },
   });

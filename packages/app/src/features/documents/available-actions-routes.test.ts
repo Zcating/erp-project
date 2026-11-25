@@ -5,8 +5,8 @@ import {
   createInMemoryItemMasterRepository,
   createInMemorySupplierRepository,
   createInMemoryWarehouseRepository,
-} from "@erp-inventory-sales/kernel";
-import type { Document } from "@erp-inventory-sales/kernel";
+} from "@erp-project/kernel";
+import type { Document } from "@erp-project/kernel";
 import type { FastifyInstance } from "fastify";
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../../build-app";

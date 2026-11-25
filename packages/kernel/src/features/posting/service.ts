@@ -1,4 +1,4 @@
-import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-inventory-sales/shared";
+import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-project/shared";
 import {
   NotFoundError,
   StateConflictError,

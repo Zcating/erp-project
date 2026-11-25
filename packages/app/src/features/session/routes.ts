@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { z } from "@erp-inventory-sales/shared";
+import { z } from "@erp-project/shared";
 import type { FastifyInstance } from "fastify";
 import { success } from "../../shared/envelope";
 import { UnauthenticatedError } from "../../shared/errors";

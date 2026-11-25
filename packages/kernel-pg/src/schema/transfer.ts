@@ -1,4 +1,4 @@
-import { TRANSFER_IN_TRANSIT_STATUSES } from "@erp-inventory-sales/kernel";
+import { TRANSFER_IN_TRANSIT_STATUSES } from "@erp-project/kernel";
 import { sql } from "drizzle-orm";
 import { check, index, integer, text, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { documents } from "./documents";
