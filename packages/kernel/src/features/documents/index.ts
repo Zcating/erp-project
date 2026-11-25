@@ -26,6 +26,7 @@ import type {
   DocumentType,
   DraftDocumentType,
 } from "./model";
+import { lockOriginalDocuments } from "./lock-order";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
 import { resolveOriginalLine } from "./returns";
 import type { OriginalLineWording, ResolvedOriginalLine } from "./returns";
@@ -81,6 +82,7 @@ export const documents = {
   isDocumentStatus,
   isDocumentType,
   isDraftDocumentType,
+  lockOriginalDocuments,
   resolveOriginalLine,
   validateDocumentInput,
   validateDocumentLine,
@@ -115,6 +117,7 @@ export {
   isDocumentStatus,
   isDocumentType,
   isDraftDocumentType,
+  lockOriginalDocuments,
   resolveOriginalLine,
   validateDocumentInput,
   validateDocumentLine,
