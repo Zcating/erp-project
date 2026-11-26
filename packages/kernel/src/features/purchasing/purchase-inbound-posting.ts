@@ -10,38 +10,20 @@ import {
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";
 import { weightedAverageUnitCost } from "../inventory";
-import type {
-  StockBalance,
-  StockBalanceKey,
-  StockLedgerEntry,
-  StockLedgerRepository,
-} from "../inventory";
-import { reverseDocumentPostings } from "../posting";
+import type { StockBalance, StockLedgerRepository } from "../inventory";
+import {
+  assertPostingPrerequisites,
+  balanceKey,
+  buildLedgerEntries,
+  emptyBalance,
+  reverseMovements,
+  uniqueKeys,
+} from "../posting";
 import type { InventoryMovement, PostingTypeHandler } from "../posting";
-import { assertPostingPrerequisites } from "../posting";
-
-const EMPTY_QUANTITY = "0.000";
-const EMPTY_UNIT_COST = "0.000000";
 
 export function createPurchaseInboundPostingHandler(
   ledger: StockLedgerRepository,
 ): PostingTypeHandler {
-  const balanceKey = (key: StockBalanceKey): string => `${key.warehouseId}::${key.itemId}`;
-
-  const uniqueKeys = (keys: StockBalanceKey[]): StockBalanceKey[] => {
-    const seen = new Set<string>();
-    const result: StockBalanceKey[] = [];
-    for (const key of keys) {
-      const identifier = balanceKey(key);
-      if (seen.has(identifier)) {
-        continue;
-      }
-      seen.add(identifier);
-      result.push(key);
-    }
-    return result;
-  };
-
   const validate = async (document: Document): Promise<void> => {
     assertPostingPrerequisites(document);
   };
@@ -59,15 +41,7 @@ export function createPurchaseInboundPostingHandler(
       const found = locked.find(
         (balance) => balance.warehouseId === key.warehouseId && balance.itemId === key.itemId,
       );
-      balances.set(
-        balanceKey(key),
-        found ?? {
-          warehouseId: key.warehouseId,
-          itemId: key.itemId,
-          quantity: EMPTY_QUANTITY,
-          unitCost: EMPTY_UNIT_COST,
-        },
-      );
+      balances.set(balanceKey(key), found ?? emptyBalance(key));
     }
 
     const movements: InventoryMovement[] = [];
@@ -117,30 +91,7 @@ export function createPurchaseInboundPostingHandler(
   const applyReverse = async (
     document: Document,
     transaction?: TransactionContext,
-  ): Promise<InventoryMovement[]> => {
-    const movements = await reverseDocumentPostings(document.id, ledger, transaction);
-    return movements.sort((left, right) => left.lineNo - right.lineNo);
-  };
-
-  const buildLedger = async (
-    document: Document,
-    movements: InventoryMovement[],
-    direction: "FORWARD" | "REVERSE",
-  ): Promise<StockLedgerEntry[]> =>
-    movements.map((movement) => ({
-      documentId: document.id,
-      documentNo: document.documentNo,
-      lineNo: movement.lineNo,
-      warehouseId: movement.warehouseId,
-      itemId: movement.itemId,
-      direction: direction === "FORWARD" ? "POST" : "REVERSAL",
-      quantityBefore: movement.quantityBefore,
-      quantityAfter: movement.quantityAfter,
-      costBefore: movement.costBefore,
-      costAfter: movement.costAfter,
-      unitPrice: movement.unitPrice,
-      amount: movement.amount,
-    }));
+  ): Promise<InventoryMovement[]> => reverseMovements(document, ledger, transaction);
 
   return {
     type: "PURCHASE_INBOUND",
@@ -150,6 +101,6 @@ export function createPurchaseInboundPostingHandler(
         ? applyForward(document, transaction)
         : applyReverse(document, transaction),
     buildLedger: async (document, movements, direction) =>
-      buildLedger(document, movements, direction),
+      buildLedgerEntries(document, movements, direction),
   };
 }

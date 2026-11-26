@@ -13,54 +13,27 @@ import { StockNegativeError, ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";
 import { weightedAverageUnitCost } from "../inventory";
-import type {
-  StockBalance,
-  StockBalanceKey,
-  StockLedgerEntry,
-  StockLedgerRepository,
-} from "../inventory";
-import { reverseDocumentPostings } from "../posting";
-import type {
-  InventoryMovement,
-  PostingDirection,
-  PostingPhase,
-  PostingTypeHandler,
+import type { StockBalance, StockLedgerRepository } from "../inventory";
+import {
+  assertPostingPrerequisites,
+  balanceKey,
+  buildLedgerEntries,
+  emptyBalance,
+  POSTING_PHASE_SEQUENCES,
+  reverseMovements,
+  uniqueKeys,
 } from "../posting";
-import { assertPostingPrerequisites, POSTING_PHASE_SEQUENCES } from "../posting";
+import type { InventoryMovement, PostingPhase, PostingTypeHandler } from "../posting";
 import { TRANSFER_POSTING_PHASES } from "./model";
 import type { TransferInTransitRecord } from "./model";
 import type { TransferInTransitRepository } from "./ports";
 
 const EMPTY_QUANTITY = "0.000";
-const EMPTY_UNIT_COST = "0.000000";
 
 export function createTransferPostingHandler(
   ledger: StockLedgerRepository,
   inTransit: TransferInTransitRepository,
 ): PostingTypeHandler {
-  const balanceKey = (key: StockBalanceKey): string => `${key.warehouseId}::${key.itemId}`;
-
-  const uniqueKeys = (keys: StockBalanceKey[]): StockBalanceKey[] => {
-    const seen = new Set<string>();
-    const result: StockBalanceKey[] = [];
-    for (const key of keys) {
-      const identifier = balanceKey(key);
-      if (seen.has(identifier)) {
-        continue;
-      }
-      seen.add(identifier);
-      result.push(key);
-    }
-    return result;
-  };
-
-  const emptyBalance = (key: StockBalanceKey): StockBalance => ({
-    warehouseId: key.warehouseId,
-    itemId: key.itemId,
-    quantity: EMPTY_QUANTITY,
-    unitCost: EMPTY_UNIT_COST,
-  });
-
   const warehousesOf = (document: Document): { source: string; target: string } => {
     const source = document.sourceWarehouseId;
     const target = document.targetWarehouseId;
@@ -221,7 +194,7 @@ export function createTransferPostingHandler(
     document: Document,
     transaction?: TransactionContext,
   ): Promise<InventoryMovement[]> => {
-    const movements = await reverseDocumentPostings(document.id, ledger, transaction);
+    const movements = await reverseMovements(document, ledger, transaction);
     await inTransit.removeByDocument(document.id, transaction);
     const legOf = (movement: InventoryMovement): number =>
       movement.warehouseId === document.sourceWarehouseId ? 0 : 1;
@@ -267,26 +240,6 @@ export function createTransferPostingHandler(
     throw new ValidationError(`${DOCUMENT_TYPE_CATALOG.TRANSFER.label}不支持的过账阶段：${phase}`);
   };
 
-  const buildLedger = async (
-    document: Document,
-    movements: InventoryMovement[],
-    direction: PostingDirection,
-  ): Promise<StockLedgerEntry[]> =>
-    movements.map((movement) => ({
-      documentId: document.id,
-      documentNo: document.documentNo,
-      lineNo: movement.lineNo,
-      warehouseId: movement.warehouseId,
-      itemId: movement.itemId,
-      direction: direction === "FORWARD" ? "POST" : "REVERSAL",
-      quantityBefore: movement.quantityBefore,
-      quantityAfter: movement.quantityAfter,
-      costBefore: movement.costBefore,
-      costAfter: movement.costAfter,
-      unitPrice: movement.unitPrice,
-      amount: movement.amount,
-    }));
-
   return {
     type: "TRANSFER",
     validate: async () => {
@@ -296,7 +249,7 @@ export function createTransferPostingHandler(
       throw new ValidationError(`${DOCUMENT_TYPE_CATALOG.TRANSFER.label}必须指定调出或调入阶段`);
     },
     buildLedger: async (document, movements, direction) =>
-      buildLedger(document, movements, direction),
+      buildLedgerEntries(document, movements, direction),
     phaseHandler: {
       phases: POSTING_PHASE_SEQUENCES.TRANSFER,
       isPosted,
