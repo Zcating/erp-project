@@ -1,13 +1,7 @@
-export const DOCUMENT_TYPES = [
-  "PURCHASE_INBOUND",
-  "SALE_OUTBOUND",
-  "SALE_RETURN",
-  "PURCHASE_RETURN",
-  "STOCKTAKE",
-  "TRANSFER",
-] as const;
+import type { DocumentType } from "../../shared/document-types";
 
-export type DocumentType = (typeof DOCUMENT_TYPES)[number];
+export { DOCUMENT_TYPES, isDocumentType } from "../../shared/document-types";
+export type { DocumentType } from "../../shared/document-types";
 
 export const DRAFT_DOCUMENT_TYPES = [
   "PURCHASE_INBOUND",
@@ -85,10 +79,6 @@ export type DocumentFilter = {
   type: DocumentType | null;
   status: DocumentStatus | null;
 };
-
-export function isDocumentType(value: string): value is DocumentType {
-  return (DOCUMENT_TYPES as readonly string[]).includes(value);
-}
 
 export function isDraftDocumentType(value: string): value is DraftDocumentType {
   return (DRAFT_DOCUMENT_TYPES as readonly string[]).includes(value);

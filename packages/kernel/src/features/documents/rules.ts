@@ -1,8 +1,12 @@
+import {
+  WAREHOUSE_ROLE_LABELS,
+  type DocumentPartyRole,
+  type DocumentWarehouseRole,
+} from "../../shared/document-types";
 import type { Document, DocumentType, DraftDocumentType } from "./model";
 
-export type DocumentPartyRole = "SUPPLIER" | "CUSTOMER";
-
-export type DocumentWarehouseRole = "SOURCE" | "TARGET" | "COUNT";
+export { WAREHOUSE_ROLE_LABELS };
+export type { DocumentPartyRole, DocumentWarehouseRole };
 
 export type DocumentTypeRule = {
   party: DocumentPartyRole | null;
@@ -69,12 +73,6 @@ export const DOCUMENT_TYPE_RULES: Record<DraftDocumentType, DocumentTypeRule> = 
     originalType: null,
     originalWarehouseRole: null,
   },
-};
-
-export const WAREHOUSE_ROLE_LABELS: Record<DocumentWarehouseRole, string> = {
-  SOURCE: "来源仓",
-  TARGET: "目标仓",
-  COUNT: "仓库",
 };
 
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
