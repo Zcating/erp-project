@@ -8,6 +8,7 @@ import {
   toFixedString,
   unitPrice,
 } from "@erp-project/shared";
+import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
 import { StockNegativeError, ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";
@@ -25,11 +26,7 @@ import type {
   PostingPhase,
   PostingTypeHandler,
 } from "../posting";
-import {
-  assertPostingPrerequisites,
-  POSTING_PHASE_SEQUENCES,
-  POSTING_PREREQUISITES,
-} from "../posting";
+import { assertPostingPrerequisites, POSTING_PHASE_SEQUENCES } from "../posting";
 import { TRANSFER_POSTING_PHASES } from "./model";
 import type { TransferInTransitRecord } from "./model";
 import type { TransferInTransitRepository } from "./ports";
@@ -68,7 +65,7 @@ export function createTransferPostingHandler(
     const source = document.sourceWarehouseId;
     const target = document.targetWarehouseId;
     if (source === null || target === null) {
-      throw new ValidationError(POSTING_PREREQUISITES.TRANSFER.missingWarehouseMessage);
+      throw new ValidationError(DOCUMENT_TYPE_CATALOG.TRANSFER.missingWarehouseMessage);
     }
     if (source === target) {
       throw new ValidationError(`调拨单 ${document.documentNo} 的源仓与目标仓必须不同`);

@@ -9,8 +9,7 @@ import type {
   PostingTypeHandler,
 } from "./model";
 import { POSTING_PHASE_SEQUENCES } from "./phases";
-import { assertPostingPrerequisites, POSTING_PREREQUISITES } from "./prerequisites";
-import type { PostingPrerequisite } from "./prerequisites";
+import { assertPostingPrerequisites } from "./prerequisites";
 import { reverseDocumentPostings } from "./reversal";
 import { sumReturned } from "./returns";
 import type { ReturnedSummary } from "./returns";
@@ -22,7 +21,6 @@ export const posting = {
   POSTING_DIRECTIONS,
   POSTING_PHASES,
   POSTING_PHASE_SEQUENCES,
-  POSTING_PREREQUISITES,
   assertPostingPrerequisites,
   availableDocumentActions,
   createPostingService,
@@ -36,7 +34,6 @@ export {
   POSTING_DIRECTIONS,
   POSTING_PHASES,
   POSTING_PHASE_SEQUENCES,
-  POSTING_PREREQUISITES,
   assertPostingPrerequisites,
   availableDocumentActions,
   createPostingService,
@@ -52,7 +49,6 @@ export type {
   PostingDirection,
   PostingPhase,
   PostingPhaseHandler,
-  PostingPrerequisite,
   PostingTypeHandler,
 };
 export type { PostingService, PostingServiceOptions };

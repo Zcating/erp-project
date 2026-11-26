@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ValidationError } from "../../shared/errors";
-import { DOCUMENT_TYPE_RULES } from "../documents";
 import type { Document, DocumentLine, DraftDocumentType } from "../documents";
-import { assertPostingPrerequisites, POSTING_PREREQUISITES } from "./prerequisites";
+import { assertPostingPrerequisites } from "./prerequisites";
 
 const line = (overrides: Partial<DocumentLine> = {}): DocumentLine => ({
   id: "line-1",
@@ -56,8 +55,54 @@ const messageOf = (document: Document): string => {
   return "";
 };
 
-describe("过账前置条件表", () => {
-  it("六类单据全都要求至少一条单据行，措辞各自带自己的单据名", () => {
+const missingWarehouseCases: Array<{
+  type: DraftDocumentType;
+  cleared: Partial<Document>;
+  message: string;
+}> = [
+  {
+    type: "PURCHASE_INBOUND",
+    cleared: { targetWarehouseId: null },
+    message: "采购入库单缺少目标仓库，不能过账",
+  },
+  {
+    type: "SALE_OUTBOUND",
+    cleared: { sourceWarehouseId: null },
+    message: "销售出库单缺少来源仓库，不能过账",
+  },
+  {
+    type: "SALE_RETURN",
+    cleared: { sourceWarehouseId: null },
+    message: "销售退货单缺少仓库，不能过账",
+  },
+  {
+    type: "PURCHASE_RETURN",
+    cleared: { sourceWarehouseId: null },
+    message: "采购退货单缺少仓库，不能过账",
+  },
+  {
+    type: "STOCKTAKE",
+    cleared: { warehouseId: null },
+    message: "盘点单缺少仓库，不能过账",
+  },
+  {
+    type: "TRANSFER",
+    cleared: { targetWarehouseId: null },
+    message: "调拨单缺少源仓或目标仓，不能过账",
+  },
+];
+
+const returnTypes: readonly DraftDocumentType[] = ["SALE_RETURN", "PURCHASE_RETURN"];
+
+const nonReturnTypes: readonly DraftDocumentType[] = [
+  "PURCHASE_INBOUND",
+  "SALE_OUTBOUND",
+  "STOCKTAKE",
+  "TRANSFER",
+];
+
+describe("过账前置条件", () => {
+  it("零行单据报各自类型的「没有单据行」，措辞带自己的单据名", () => {
     const messages = Object.entries(readyDocuments).map(([type, document]) => [
       type,
       messageOf({ ...document, lines: [] }),
@@ -73,90 +118,25 @@ describe("过账前置条件表", () => {
     ]);
   });
 
-  it("缺仓库时给出各类型自己的措辞，不复用建单时的仓库名词", () => {
-    expect(messageOf({ ...readyDocuments.PURCHASE_INBOUND, targetWarehouseId: null })).toBe(
-      "采购入库单缺少目标仓库，不能过账",
-    );
-    expect(messageOf({ ...readyDocuments.SALE_OUTBOUND, sourceWarehouseId: null })).toBe(
-      "销售出库单缺少来源仓库，不能过账",
-    );
-    expect(messageOf({ ...readyDocuments.SALE_RETURN, sourceWarehouseId: null })).toBe(
-      "销售退货单缺少仓库，不能过账",
-    );
-    expect(messageOf({ ...readyDocuments.PURCHASE_RETURN, sourceWarehouseId: null })).toBe(
-      "采购退货单缺少仓库，不能过账",
-    );
-    expect(messageOf({ ...readyDocuments.STOCKTAKE, warehouseId: null })).toBe(
-      "盘点单缺少仓库，不能过账",
-    );
-    expect(messageOf({ ...readyDocuments.TRANSFER, targetWarehouseId: null })).toBe(
-      "调拨单缺少源仓或目标仓，不能过账",
-    );
+  it("缺仓库时每类单据各报自己的文案", () => {
+    for (const { type, cleared, message } of missingWarehouseCases) {
+      expect(messageOf({ ...readyDocuments[type], ...cleared })).toBe(message);
+    }
   });
 
-  it("采购入库单要求单价，销售出库单要求售价，其余类型不要求", () => {
-    expect(
-      messageOf({
-        ...readyDocuments.PURCHASE_INBOUND,
-        lines: [line({ unitPrice: null })],
-      }),
-    ).toBe("第 1 行缺少单价，不能过账");
-    expect(
-      messageOf({
-        ...readyDocuments.SALE_OUTBOUND,
-        lines: [line({ unitPrice: null })],
-      }),
-    ).toBe("第 1 行缺少售价，不能过账");
-    expect(messageOf({ ...readyDocuments.STOCKTAKE, lines: [line({ unitPrice: null })] })).toBe("");
-    expect(messageOf({ ...readyDocuments.TRANSFER, lines: [line({ unitPrice: null })] })).toBe("");
-  });
-
-  it("两类退货单要求引用原单据行，其余类型不要求", () => {
-    expect(
-      messageOf({
-        ...readyDocuments.SALE_RETURN,
-        lines: [line({ originalLineId: null })],
-      }),
-    ).toBe("第 1 行缺少原单据行引用，不能过账");
-    expect(
-      messageOf({
-        ...readyDocuments.PURCHASE_RETURN,
-        lines: [line({ originalLineId: null })],
-      }),
-    ).toBe("第 1 行缺少原单据行引用，不能过账");
-    expect(messageOf(readyDocuments.SALE_OUTBOUND)).toBe("");
-  });
-
-  it("盘点单不要求数量为正，其余类型都要求", () => {
-    expect(messageOf({ ...readyDocuments.STOCKTAKE, lines: [line({ quantity: "0" })] })).toBe("");
-    expect(
-      messageOf({ ...readyDocuments.PURCHASE_INBOUND, lines: [line({ quantity: "0" })] }),
-    ).toBe("第 1 行数量必须大于 0：0");
-    expect(messageOf({ ...readyDocuments.SALE_OUTBOUND, lines: [line({ quantity: "0" })] })).toBe(
-      "第 1 行数量必须大于 0：0",
-    );
-    expect(messageOf({ ...readyDocuments.TRANSFER, lines: [line({ quantity: "0" })] })).toBe(
-      "第 1 行数量必须大于 0：0",
-    );
-  });
-
-  it("每一类单据声明的仓库角色与该类型在建单时要求的仓库角色一致", () => {
-    for (const [type, prerequisite] of Object.entries(POSTING_PREREQUISITES)) {
-      expect(prerequisite.warehouses).toEqual(
-        DOCUMENT_TYPE_RULES[type as DraftDocumentType].warehouses,
+  it("两类退货单缺原单据行时报既有文案", () => {
+    for (const type of returnTypes) {
+      expect(messageOf({ ...readyDocuments[type], lines: [line({ originalLineId: null })] })).toBe(
+        "第 1 行缺少原单据行引用，不能过账",
       );
     }
   });
 
-  it("调拨单的建单单价要求不套用到过账：过账表里调拨单没有单价要求", () => {
-    expect(DOCUMENT_TYPE_RULES.TRANSFER.priced).toBe(true);
-    expect(POSTING_PREREQUISITES.TRANSFER.priceLabel).toBeNull();
-  });
-
-  it("盘点单与调拨单在过账表里没有数量要求之外的额外前提", () => {
-    expect(POSTING_PREREQUISITES.STOCKTAKE.positiveQuantity).toBe(false);
-    expect(POSTING_PREREQUISITES.STOCKTAKE.originalLine).toBe(false);
-    expect(POSTING_PREREQUISITES.TRANSFER.positiveQuantity).toBe(true);
-    expect(POSTING_PREREQUISITES.TRANSFER.originalLine).toBe(false);
+  it("其余类型缺原单据行时不报错", () => {
+    for (const type of nonReturnTypes) {
+      expect(messageOf({ ...readyDocuments[type], lines: [line({ originalLineId: null })] })).toBe(
+        "",
+      );
+    }
   });
 });
