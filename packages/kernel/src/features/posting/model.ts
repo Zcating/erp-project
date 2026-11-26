@@ -1,7 +1,7 @@
 import type { TransactionContext } from "../../shared/transactions";
 import type { DocumentType } from "../../shared/document-types";
-import type { Document } from "../documents";
-import type { StockLedgerEntry } from "../inventory";
+import type { Document, DocumentRepository } from "../documents";
+import type { StockBalance, StockBalanceKey, StockLedgerRepository } from "../inventory";
 
 export const POSTING_DIRECTIONS = ["FORWARD", "REVERSE"] as const;
 
@@ -34,34 +34,50 @@ export type InventoryMovement = {
   amount: string;
 };
 
+export type PostingSaveMode = "per-line" | "after-loop";
+
+export type PostingHandlerPolicy = {
+  saveMode: PostingSaveMode;
+  ensureZeroBalances: boolean;
+};
+
+export type PostingContext = {
+  readonly ledger: StockLedgerRepository;
+  readonly documents: DocumentRepository;
+  readonly transaction: TransactionContext | undefined;
+};
+
+export type PostingApplyContext = PostingContext & {
+  lockBalances(keys: readonly StockBalanceKey[]): Promise<void>;
+  balanceOf(key: StockBalanceKey): StockBalance;
+  saveBalance(balance: StockBalance): Promise<void>;
+};
+
 export type PostingPhaseHandler = {
   phases: readonly PostingPhase[];
+  policy: PostingHandlerPolicy;
   isPosted(document: Document, phase: PostingPhase, context?: TransactionContext): Promise<boolean>;
   validate(document: Document, phase: PostingPhase, context?: TransactionContext): Promise<void>;
   apply(
     document: Document,
     phase: PostingPhase,
-    context?: TransactionContext,
+    context: PostingApplyContext,
   ): Promise<InventoryMovement[]>;
-  reverse(document: Document, context?: TransactionContext): Promise<InventoryMovement[]>;
+  reverse(document: Document, context: PostingContext): Promise<InventoryMovement[]>;
 };
 
-export type PostingTypeHandler = {
+export type PostingApplyHandler = {
   type: DocumentType;
-  validate(
-    document: Document,
-    direction: PostingDirection,
-    transaction?: TransactionContext,
-  ): Promise<void>;
-  applyInventory(
-    document: Document,
-    direction: PostingDirection,
-    transaction?: TransactionContext,
-  ): Promise<InventoryMovement[]>;
-  buildLedger(
-    document: Document,
-    movements: InventoryMovement[],
-    direction: PostingDirection,
-  ): Promise<StockLedgerEntry[]>;
-  phaseHandler?: PostingPhaseHandler;
+  policy: PostingHandlerPolicy;
+  apply(document: Document, context: PostingApplyContext): Promise<InventoryMovement[]>;
+  phaseHandler?: never;
 };
+
+export type PostingPhaseTypeHandler = {
+  type: DocumentType;
+  phaseHandler: PostingPhaseHandler;
+  apply?: never;
+  policy?: never;
+};
+
+export type PostingTypeHandler = PostingApplyHandler | PostingPhaseTypeHandler;

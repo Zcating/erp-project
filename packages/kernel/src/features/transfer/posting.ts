@@ -13,17 +13,15 @@ import { StockNegativeError, ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";
 import { weightedAverageUnitCost } from "../inventory";
-import type { StockBalance, StockLedgerRepository } from "../inventory";
-import {
-  assertPostingPrerequisites,
-  balanceKey,
-  buildLedgerEntries,
-  emptyBalance,
-  POSTING_PHASE_SEQUENCES,
-  reverseMovements,
-  uniqueKeys,
+import type { StockLedgerRepository } from "../inventory";
+import { assertPostingPrerequisites, POSTING_PHASE_SEQUENCES, reverseMovements } from "../posting";
+import type {
+  InventoryMovement,
+  PostingApplyContext,
+  PostingContext,
+  PostingPhase,
+  PostingPhaseTypeHandler,
 } from "../posting";
-import type { InventoryMovement, PostingPhase, PostingTypeHandler } from "../posting";
 import { TRANSFER_POSTING_PHASES } from "./model";
 import type { TransferInTransitRecord } from "./model";
 import type { TransferInTransitRepository } from "./ports";
@@ -31,9 +29,9 @@ import type { TransferInTransitRepository } from "./ports";
 const EMPTY_QUANTITY = "0.000";
 
 export function createTransferPostingHandler(
-  ledger: StockLedgerRepository,
+  _ledger: StockLedgerRepository,
   inTransit: TransferInTransitRepository,
-): PostingTypeHandler {
+): PostingPhaseTypeHandler {
   const warehousesOf = (document: Document): { source: string; target: string } => {
     const source = document.sourceWarehouseId;
     const target = document.targetWarehouseId;
@@ -55,27 +53,18 @@ export function createTransferPostingHandler(
 
   const applyOut = async (
     document: Document,
-    transaction?: TransactionContext,
+    context: PostingApplyContext,
   ): Promise<InventoryMovement[]> => {
     const { source, target } = warehousesOf(document);
-    const keys = uniqueKeys(
+    await context.lockBalances(
       document.lines.map((line) => ({ warehouseId: source, itemId: line.itemId })),
     );
-    await ledger.ensureBalances(keys, transaction);
-    const locked = await ledger.findBalancesForUpdate(keys, transaction);
-    const balances = new Map<string, StockBalance>();
-    for (const key of keys) {
-      const found = locked.find(
-        (balance) => balance.warehouseId === key.warehouseId && balance.itemId === key.itemId,
-      );
-      balances.set(balanceKey(key), found ?? emptyBalance(key));
-    }
 
     const movements: InventoryMovement[] = [];
     const records: TransferInTransitRecord[] = [];
     for (const line of document.lines) {
       const key = { warehouseId: source, itemId: line.itemId };
-      const before = balances.get(balanceKey(key)) as StockBalance;
+      const before = context.balanceOf(key);
       const outbound = quantity(line.quantity);
       const afterQuantity = quantity(before.quantity).minus(outbound);
       if (afterQuantity.isNegative()) {
@@ -97,7 +86,7 @@ export function createTransferPostingHandler(
         unitPrice: toFixedString(cost, UNIT_PRICE_SCALE),
         amount: toFixedString(amountOf(outbound, cost), AMOUNT_SCALE),
       });
-      balances.set(balanceKey(key), {
+      await context.saveBalance({
         warehouseId: source,
         itemId: line.itemId,
         quantity: afterQuantityText,
@@ -117,40 +106,28 @@ export function createTransferPostingHandler(
       });
     }
 
-    for (const balance of balances.values()) {
-      await ledger.saveBalance(balance, transaction);
-    }
     for (const record of records) {
-      await inTransit.create(record, transaction);
+      await inTransit.create(record, context.transaction);
     }
     return movements;
   };
 
   const applyIn = async (
     document: Document,
-    transaction?: TransactionContext,
+    context: PostingApplyContext,
   ): Promise<InventoryMovement[]> => {
     const { target } = warehousesOf(document);
-    const records = await inTransit.listByDocument(document.id, transaction);
+    const records = await inTransit.listByDocument(document.id, context.transaction);
     const pending = records.filter((record) => record.status === "IN_TRANSIT");
-    const keys = uniqueKeys(
+    await context.lockBalances(
       pending.map((record) => ({ warehouseId: target, itemId: record.itemId })),
     );
-    await ledger.ensureBalances(keys, transaction);
-    const locked = await ledger.findBalancesForUpdate(keys, transaction);
-    const balances = new Map<string, StockBalance>();
-    for (const key of keys) {
-      const found = locked.find(
-        (balance) => balance.warehouseId === key.warehouseId && balance.itemId === key.itemId,
-      );
-      balances.set(balanceKey(key), found ?? emptyBalance(key));
-    }
 
     const movements: InventoryMovement[] = [];
     const received: TransferInTransitRecord[] = [];
     for (const record of pending) {
       const key = { warehouseId: target, itemId: record.itemId };
-      const before = balances.get(balanceKey(key)) as StockBalance;
+      const before = context.balanceOf(key);
       const incoming = quantity(record.quantity);
       const afterQuantity = quantity(before.quantity).plus(incoming);
       const afterCost = weightedAverageUnitCost(
@@ -172,7 +149,7 @@ export function createTransferPostingHandler(
         unitPrice: record.unitCost,
         amount: toFixedString(amountOf(incoming, unitPrice(record.unitCost)), AMOUNT_SCALE),
       });
-      balances.set(balanceKey(key), {
+      await context.saveBalance({
         warehouseId: target,
         itemId: record.itemId,
         quantity: afterQuantityText,
@@ -181,21 +158,18 @@ export function createTransferPostingHandler(
       received.push({ ...record, quantity: EMPTY_QUANTITY, status: "RECEIVED" });
     }
 
-    for (const balance of balances.values()) {
-      await ledger.saveBalance(balance, transaction);
-    }
     for (const record of received) {
-      await inTransit.update(record, transaction);
+      await inTransit.update(record, context.transaction);
     }
     return movements;
   };
 
   const reverse = async (
     document: Document,
-    transaction?: TransactionContext,
+    context: PostingContext,
   ): Promise<InventoryMovement[]> => {
-    const movements = await reverseMovements(document, ledger, transaction);
-    await inTransit.removeByDocument(document.id, transaction);
+    const movements = await reverseMovements(document, context.ledger, context.transaction);
+    await inTransit.removeByDocument(document.id, context.transaction);
     const legOf = (movement: InventoryMovement): number =>
       movement.warehouseId === document.sourceWarehouseId ? 0 : 1;
     return movements.sort(
@@ -242,22 +216,15 @@ export function createTransferPostingHandler(
 
   return {
     type: "TRANSFER",
-    validate: async () => {
-      throw new ValidationError(`${DOCUMENT_TYPE_CATALOG.TRANSFER.label}必须指定调出或调入阶段`);
-    },
-    applyInventory: async () => {
-      throw new ValidationError(`${DOCUMENT_TYPE_CATALOG.TRANSFER.label}必须指定调出或调入阶段`);
-    },
-    buildLedger: async (document, movements, direction) =>
-      buildLedgerEntries(document, movements, direction),
     phaseHandler: {
       phases: POSTING_PHASE_SEQUENCES.TRANSFER,
+      policy: { saveMode: "after-loop", ensureZeroBalances: true },
       isPosted,
       validate: validatePhase,
-      apply: async (document, phase, transaction) =>
+      apply: async (document, phase, context) =>
         phase === TRANSFER_POSTING_PHASES.OUT
-          ? applyOut(document, transaction)
-          : applyIn(document, transaction),
+          ? applyOut(document, context)
+          : applyIn(document, context),
       reverse,
     },
   };

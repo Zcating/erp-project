@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository";
+import { createPostingApplyContext } from "../posting/orchestration";
 import { createSaleReturnPostingHandler } from "../sales-return/sale-return-posting";
 import { createInMemoryDocumentRepository } from "./in-memory-repository";
 import type { Document, DocumentLine } from "./model";
@@ -114,17 +115,54 @@ const saleReturn = (id: string, lines: DocumentLine[]): Document => ({
 describe("销售退货过账走有序取锁", () => {
   it("退货单的行顺序相反时，两次过账校验的取锁顺序一致且按原单据 id 升序", async () => {
     const documents = createInMemoryDocumentRepository();
-    await documents.insert(document("doc-a", [line("line-a", "item-1")]));
-    await documents.insert(document("doc-b", [line("line-b", "item-1")]));
+    await documents.insert(document("doc-a", [line("line-a", "item-1", null, "5.000")]));
+    await documents.insert(document("doc-b", [line("line-b", "item-1", null, "5.000")]));
     const ledger = createInMemoryStockLedgerRepository();
+    await ledger.appendEntries([
+      {
+        documentId: "doc-a",
+        documentNo: "DOC-A",
+        lineNo: 1,
+        warehouseId: "warehouse-1",
+        itemId: "item-1",
+        direction: "POST",
+        quantityBefore: "0.000",
+        quantityAfter: "5.000",
+        costBefore: "2.000000",
+        costAfter: "2.000000",
+        unitPrice: "2.000000",
+        amount: "10.00",
+      },
+      {
+        documentId: "doc-b",
+        documentNo: "DOC-B",
+        lineNo: 1,
+        warehouseId: "warehouse-1",
+        itemId: "item-1",
+        direction: "POST",
+        quantityBefore: "0.000",
+        quantityAfter: "5.000",
+        costBefore: "2.000000",
+        costAfter: "2.000000",
+        unitPrice: "2.000000",
+        amount: "10.00",
+      },
+    ]);
     const recorder = recording(documents);
     const handler = createSaleReturnPostingHandler(ledger, recorder.repository);
+    const applyContext = () =>
+      createPostingApplyContext({
+        policy: handler.policy,
+        ledger,
+        documents: recorder.repository,
+        transaction: undefined,
+      }).context;
 
     const forward = saleReturn("return-forward", [
       line("return-forward-1", "item-1", "line-a", "2.000"),
       line("return-forward-2", "item-1", "line-b", "2.000"),
     ]);
-    await handler.validate(forward, "FORWARD", undefined);
+    await handler.apply(forward, applyContext());
     const forwardOrder = [...recorder.lockOrder];
 
     recorder.lockOrder.length = 0;
@@ -132,7 +170,7 @@ describe("销售退货过账走有序取锁", () => {
       line("return-backward-1", "item-1", "line-b", "2.000"),
       line("return-backward-2", "item-1", "line-a", "2.000"),
     ]);
-    await handler.validate(backward, "FORWARD", undefined);
+    await handler.apply(backward, applyContext());
 
     expect(forwardOrder).toEqual(["line-a", "line-b"]);
     expect(recorder.lockOrder).toEqual(forwardOrder);

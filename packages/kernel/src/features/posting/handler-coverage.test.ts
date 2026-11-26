@@ -7,9 +7,8 @@ import type { PostingTypeHandler } from "./model";
 
 const handlerOfType = (type: string): PostingTypeHandler => ({
   type: type as DocumentType,
-  validate: async () => {},
-  applyInventory: async () => [],
-  buildLedger: async () => [],
+  policy: { saveMode: "after-loop", ensureZeroBalances: false },
+  apply: async () => [],
 });
 
 const fullHandlers = (): PostingTypeHandler[] => DOCUMENT_TYPES.map(handlerOfType);

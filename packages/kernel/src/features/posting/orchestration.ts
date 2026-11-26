@@ -22,7 +22,10 @@ import type {
 } from "../inventory";
 import type {
   InventoryMovement,
+  PostingApplyContext,
+  PostingContext,
   PostingDirection,
+  PostingHandlerPolicy,
   PostingPhase,
   PostingTypeHandler,
 } from "./model";
@@ -91,6 +94,64 @@ export async function reverseMovements(
   return movements.sort((left, right) => left.lineNo - right.lineNo);
 }
 
+export type PostingApplyContextController = {
+  context: PostingApplyContext;
+  flush(): Promise<void>;
+};
+
+export function createPostingApplyContext(input: {
+  policy: PostingHandlerPolicy;
+  ledger: StockLedgerRepository;
+  documents: DocumentRepository;
+  transaction: TransactionContext | undefined;
+}): PostingApplyContextController {
+  const { policy, ledger, documents, transaction } = input;
+  const balances = new Map<string, StockBalance>();
+  const dirty = new Map<string, StockBalance>();
+
+  const context: PostingApplyContext = {
+    ledger,
+    documents,
+    transaction,
+    async lockBalances(keys) {
+      const unique = uniqueKeys([...keys]);
+      if (policy.ensureZeroBalances) {
+        await ledger.ensureBalances(unique, transaction);
+      }
+      const locked = await ledger.findBalancesForUpdate(unique, transaction);
+      for (const key of unique) {
+        const found = locked.find(
+          (balance) => balance.warehouseId === key.warehouseId && balance.itemId === key.itemId,
+        );
+        balances.set(balanceKey(key), found ?? emptyBalance(key));
+      }
+    },
+    balanceOf(key) {
+      return balances.get(balanceKey(key)) ?? emptyBalance(key);
+    },
+    async saveBalance(balance) {
+      const key = balanceKey(balance);
+      balances.set(key, balance);
+      if (policy.saveMode === "per-line") {
+        await ledger.saveBalance(balance, transaction);
+        return;
+      }
+      dirty.set(key, balance);
+    },
+  };
+
+  const flush = async (): Promise<void> => {
+    if (policy.saveMode === "per-line") {
+      return;
+    }
+    for (const balance of dirty.values()) {
+      await ledger.saveBalance(balance, transaction);
+    }
+  };
+
+  return { context, flush };
+}
+
 export type PostingOrchestrationOptions = {
   documents: DocumentRepository;
   ledger: StockLedgerRepository;
@@ -115,6 +176,12 @@ export function createPostingOrchestration(
     return handler;
   };
 
+  const postingContext = (context: TransactionContext | undefined): PostingContext => ({
+    ledger,
+    documents,
+    transaction: context,
+  });
+
   const load = async (
     documentId: string,
     context: TransactionContext | undefined,
@@ -132,7 +199,7 @@ export function createPostingOrchestration(
     direction: PostingDirection,
     context: TransactionContext | undefined,
   ): Promise<void> => {
-    const entries = await handlerOf(document).buildLedger(document, movements, direction);
+    const entries = buildLedgerEntries(document, movements, direction);
     if (entries.length > 0) {
       await ledger.appendEntries(entries, context);
     }
@@ -208,21 +275,26 @@ export function createPostingOrchestration(
   ): Promise<Document> => {
     const document = await load(documentId, context);
     const handler = handlerOf(document);
-    const phaseHandler = handler.phaseHandler;
     const phase: string = requestedPhase ?? DEFAULT_POSTING_PHASE;
-    const supportedPhases = phaseHandler?.phases ?? POSTING_PHASE_SEQUENCES[document.type];
+    const supportedPhases = handler.phaseHandler?.phases ?? POSTING_PHASE_SEQUENCES[document.type];
     if (!isPostingPhase(phase) || !supportedPhases.includes(phase)) {
       throw new ValidationError(`单据 ${document.documentNo} 不支持的过账阶段：${phase}`);
     }
 
-    if (phaseHandler === undefined) {
+    if (handler.phaseHandler === undefined) {
       if (document.status === POSTED_DOCUMENT_STATUS) {
         return document;
       }
       assertDocumentStatusTransition(document.status, POSTED_DOCUMENT_STATUS);
       assertPostingPrerequisites(document);
-      await handler.validate(document, "FORWARD", context);
-      const movements = await handler.applyInventory(document, "FORWARD", context);
+      const applyController = createPostingApplyContext({
+        policy: handler.policy,
+        ledger,
+        documents,
+        transaction: context,
+      });
+      const movements = await handler.apply(document, applyController.context);
+      await applyController.flush();
       await appendLedger(document, movements, "FORWARD", context);
       const changed = await documents.updateStatus(
         documentId,
@@ -236,6 +308,7 @@ export function createPostingOrchestration(
       return { ...document, status: POSTED_DOCUMENT_STATUS };
     }
 
+    const phaseHandler = handler.phaseHandler;
     if (await phaseHandler.isPosted(document, phase, context)) {
       return document;
     }
@@ -243,7 +316,14 @@ export function createPostingOrchestration(
       assertDocumentStatusTransition(document.status, POSTED_DOCUMENT_STATUS);
     }
     await phaseHandler.validate(document, phase, context);
-    const movements = await phaseHandler.apply(document, phase, context);
+    const applyController = createPostingApplyContext({
+      policy: phaseHandler.policy,
+      ledger,
+      documents,
+      transaction: context,
+    });
+    const movements = await phaseHandler.apply(document, phase, applyController.context);
+    await applyController.flush();
     await appendLedger(document, movements, "FORWARD", context);
     if (document.status === POSTED_DOCUMENT_STATUS) {
       return document;
@@ -269,14 +349,12 @@ export function createPostingOrchestration(
     await assertNotReferencedByPostedReturn(document, context);
     await assertVoidKeepsStockNonNegative(document, context);
     const handler = handlerOf(document);
-    const phaseHandler = handler.phaseHandler;
     let movements: InventoryMovement[];
-    if (phaseHandler === undefined) {
+    if (handler.phaseHandler === undefined) {
       assertPostingPrerequisites(document);
-      await handler.validate(document, "REVERSE", context);
-      movements = await handler.applyInventory(document, "REVERSE", context);
+      movements = await reverseMovements(document, ledger, context);
     } else {
-      movements = await phaseHandler.reverse(document, context);
+      movements = await handler.phaseHandler.reverse(document, postingContext(context));
     }
     await appendLedger(document, movements, "REVERSE", context);
     const changed = await documents.updateStatus(

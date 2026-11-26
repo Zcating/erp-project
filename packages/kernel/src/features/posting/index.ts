@@ -4,9 +4,15 @@ import { assertPostingHandlerCoverage } from "./handler-coverage";
 import { DEFAULT_POSTING_PHASE, isPostingPhase, POSTING_DIRECTIONS, POSTING_PHASES } from "./model";
 import type {
   InventoryMovement,
+  PostingApplyContext,
+  PostingApplyHandler,
+  PostingContext,
   PostingDirection,
+  PostingHandlerPolicy,
   PostingPhase,
   PostingPhaseHandler,
+  PostingPhaseTypeHandler,
+  PostingSaveMode,
   PostingTypeHandler,
 } from "./model";
 import {
@@ -91,9 +97,15 @@ export type {
   InventoryMovement,
   OriginalCostBasis,
   OriginalLineBasis,
+  PostingApplyContext,
+  PostingApplyHandler,
+  PostingContext,
   PostingDirection,
+  PostingHandlerPolicy,
   PostingPhase,
   PostingPhaseHandler,
+  PostingPhaseTypeHandler,
+  PostingSaveMode,
   PostingTypeHandler,
   ReturnQuantityRounding,
   ReturnedCostAllocation,
