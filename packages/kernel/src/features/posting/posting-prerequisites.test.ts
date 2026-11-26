@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ValidationError } from "../../shared/errors";
-import type { Document, DocumentLine, DraftDocumentType } from "../documents";
+import type { Document, DocumentLine, DocumentType } from "../documents";
 import { assertPostingPrerequisites } from "./prerequisites";
 
 const line = (overrides: Partial<DocumentLine> = {}): DocumentLine => ({
@@ -14,7 +14,7 @@ const line = (overrides: Partial<DocumentLine> = {}): DocumentLine => ({
   ...overrides,
 });
 
-const documentOf = (type: DraftDocumentType, overrides: Partial<Document> = {}): Document => ({
+const documentOf = (type: DocumentType, overrides: Partial<Document> = {}): Document => ({
   id: "doc-1",
   documentNo: "DOC-1",
   type,
@@ -28,7 +28,7 @@ const documentOf = (type: DraftDocumentType, overrides: Partial<Document> = {}):
   ...overrides,
 });
 
-const readyDocuments: Record<DraftDocumentType, Document> = {
+const readyDocuments: Record<DocumentType, Document> = {
   PURCHASE_INBOUND: documentOf("PURCHASE_INBOUND", { targetWarehouseId: "warehouse-1" }),
   SALE_OUTBOUND: documentOf("SALE_OUTBOUND", { sourceWarehouseId: "warehouse-1" }),
   SALE_RETURN: documentOf("SALE_RETURN", {
@@ -56,7 +56,7 @@ const messageOf = (document: Document): string => {
 };
 
 const missingWarehouseCases: Array<{
-  type: DraftDocumentType;
+  type: DocumentType;
   cleared: Partial<Document>;
   message: string;
 }> = [
@@ -92,9 +92,9 @@ const missingWarehouseCases: Array<{
   },
 ];
 
-const returnTypes: readonly DraftDocumentType[] = ["SALE_RETURN", "PURCHASE_RETURN"];
+const returnTypes: readonly DocumentType[] = ["SALE_RETURN", "PURCHASE_RETURN"];
 
-const nonReturnTypes: readonly DraftDocumentType[] = [
+const nonReturnTypes: readonly DocumentType[] = [
   "PURCHASE_INBOUND",
   "SALE_OUTBOUND",
   "STOCKTAKE",

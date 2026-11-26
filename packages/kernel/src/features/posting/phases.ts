@@ -1,8 +1,8 @@
-import type { DraftDocumentType } from "../documents";
+import type { DocumentType } from "../documents";
 import { POSTING_PHASES } from "./model";
 import type { PostingPhase } from "./model";
 
-export const POSTING_PHASE_SEQUENCES: Record<DraftDocumentType, readonly PostingPhase[]> = {
+export const POSTING_PHASE_SEQUENCES: Record<DocumentType, readonly PostingPhase[]> = {
   PURCHASE_INBOUND: [POSTING_PHASES.DEFAULT],
   SALE_OUTBOUND: [POSTING_PHASES.DEFAULT],
   SALE_RETURN: [POSTING_PHASES.DEFAULT],

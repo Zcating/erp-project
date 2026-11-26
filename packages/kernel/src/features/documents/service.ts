@@ -5,20 +5,14 @@ import type { PostedItemReferenceChecker } from "../../shared/ports";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
 import { baseQuantityOf } from "../item-master";
 import { buildDocumentLines } from "./lines";
-import type {
-  Document,
-  DocumentFilter,
-  DocumentInput,
-  DocumentLineInput,
-  DraftDocumentType,
-} from "./model";
+import type { Document, DocumentFilter, DocumentInput, DocumentLineInput } from "./model";
 import { DEFAULT_DOCUMENT_TIME_ZONE, formatDocumentDate, formatDocumentNumber } from "./numbering";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
 import { resolveOriginalLine } from "./returns";
 import { DOCUMENT_TYPE_CATALOG, WAREHOUSE_ROLE_LABELS } from "../../shared/document-types";
 import { warehouseIdOfRole } from "./rules";
 import { assertDocumentIsDraft } from "./state-machine";
-import { assertDraftDocumentType, assertQuantityText, validateDocumentInput } from "./validation";
+import { assertDocumentType, assertQuantityText, validateDocumentInput } from "./validation";
 
 export type DocumentService = MasterDataReferenceChecker &
   PostedItemReferenceChecker & {
@@ -82,9 +76,9 @@ export function createDocumentService(
   };
 
   const resolveOriginalLines = async (
-    input: DocumentInput & { type: DraftDocumentType },
+    input: DocumentInput,
     context: TransactionContext | undefined,
-  ): Promise<DocumentInput & { type: DraftDocumentType }> => {
+  ): Promise<DocumentInput> => {
     const rule = DOCUMENT_TYPE_CATALOG[input.type];
     if (rule.originalType === null) {
       return input;
@@ -154,7 +148,7 @@ export function createDocumentService(
   };
 
   const assertUniqueItems = async (
-    input: DocumentInput & { type: DraftDocumentType },
+    input: DocumentInput,
     context: TransactionContext | undefined,
   ): Promise<void> => {
     if (!DOCUMENT_TYPE_CATALOG[input.type].uniqueItems) {
@@ -173,11 +167,7 @@ export function createDocumentService(
     }
   };
 
-  const normalize = (
-    input: DocumentInput & { type: DraftDocumentType },
-    id: string,
-    documentNo: string,
-  ): Document => ({
+  const normalize = (input: DocumentInput, id: string, documentNo: string): Document => ({
     id,
     documentNo,
     type: input.type,
@@ -209,7 +199,7 @@ export function createDocumentService(
           ...input,
           lines: await toBaseUnitLines(input.lines, ctx),
         };
-        assertDraftDocumentType(converted);
+        assertDocumentType(converted);
         const resolved = await resolveOriginalLines(converted, ctx);
         const validated = validateDocumentInput(resolved);
         await assertUniqueItems(validated, ctx);
@@ -237,7 +227,7 @@ export function createDocumentService(
           ...input,
           lines: await toBaseUnitLines(input.lines, ctx),
         };
-        assertDraftDocumentType(converted);
+        assertDocumentType(converted);
         const resolved = await resolveOriginalLines(converted, ctx);
         const validated = validateDocumentInput(resolved);
         await assertUniqueItems(validated, ctx);

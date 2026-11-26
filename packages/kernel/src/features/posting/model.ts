@@ -1,5 +1,5 @@
 import type { TransactionContext } from "../../shared/transactions";
-import type { Document, DraftDocumentType } from "../documents";
+import type { Document, DocumentType } from "../documents";
 import type { StockLedgerEntry } from "../inventory";
 
 export const POSTING_DIRECTIONS = ["FORWARD", "REVERSE"] as const;
@@ -46,7 +46,7 @@ export type PostingPhaseHandler = {
 };
 
 export type PostingTypeHandler = {
-  type: DraftDocumentType;
+  type: DocumentType;
   validate(
     document: Document,
     direction: PostingDirection,

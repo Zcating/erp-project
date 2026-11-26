@@ -10,30 +10,21 @@ import {
 import { ValidationError } from "../../shared/errors";
 import { computeLineAmount } from "./lines";
 import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
-import {
-  isDraftDocumentType,
-  type DocumentInput,
-  type DocumentLineInput,
-  type DraftDocumentType,
-} from "./model";
+import { isDocumentType, type DocumentInput, type DocumentLineInput } from "./model";
 
 const DECIMAL_PATTERN = /^-?\d+(?:\.\d+)?$/;
 
-export function assertDraftDocumentType(
-  input: DocumentInput,
-): asserts input is DocumentInput & { type: DraftDocumentType } {
+export function assertDocumentType(input: DocumentInput): void {
   if (input.type.trim() === "") {
     throw new ValidationError("缺少单据类型");
   }
-  if (!isDraftDocumentType(input.type)) {
+  if (!isDocumentType(input.type)) {
     throw new ValidationError(`单据类型暂不支持创建草稿：${String(input.type)}`);
   }
 }
 
-export function validateDocumentInput(
-  input: DocumentInput,
-): DocumentInput & { type: DraftDocumentType } {
-  assertDraftDocumentType(input);
+export function validateDocumentInput(input: DocumentInput): DocumentInput {
+  assertDocumentType(input);
 
   const rule = DOCUMENT_TYPE_CATALOG[input.type];
 
@@ -73,7 +64,7 @@ export function validateDocumentLine(
   line: DocumentLineInput,
   lineNo: number,
 ): void {
-  if (!isDraftDocumentType(type)) {
+  if (!isDocumentType(type)) {
     throw new ValidationError(`单据类型暂不支持创建草稿：${String(type)}`);
   }
   const rule = DOCUMENT_TYPE_CATALOG[type];

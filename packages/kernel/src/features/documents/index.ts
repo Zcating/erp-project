@@ -10,10 +10,8 @@ import {
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_TYPES,
-  DRAFT_DOCUMENT_TYPES,
   isDocumentStatus,
   isDocumentType,
-  isDraftDocumentType,
 } from "./model";
 import type {
   Document,
@@ -23,7 +21,6 @@ import type {
   DocumentLineInput,
   DocumentStatus,
   DocumentType,
-  DraftDocumentType,
 } from "./model";
 import { lockOriginalDocuments } from "./lock-order";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
@@ -42,7 +39,7 @@ import {
   VOIDED_DOCUMENT_STATUS,
 } from "./state-machine";
 import {
-  assertDraftDocumentType,
+  assertDocumentType,
   assertQuantityText,
   validateDocumentInput,
   validateDocumentLine,
@@ -55,13 +52,12 @@ export const documents = {
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_TRANSITIONS,
   DOCUMENT_TYPES,
-  DRAFT_DOCUMENT_TYPES,
   POSTED_DOCUMENT_STATUS,
   VOIDED_DOCUMENT_STATUS,
   WAREHOUSE_ROLE_LABELS,
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
-  assertDraftDocumentType,
+  assertDocumentType,
   assertQuantityText,
   buildDocumentLines,
   canTransitionDocumentStatus,
@@ -72,7 +68,6 @@ export const documents = {
   formatDocumentNumber,
   isDocumentStatus,
   isDocumentType,
-  isDraftDocumentType,
   lockOriginalDocuments,
   resolveOriginalLine,
   validateDocumentInput,
@@ -87,13 +82,12 @@ export {
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_TRANSITIONS,
   DOCUMENT_TYPES,
-  DRAFT_DOCUMENT_TYPES,
   POSTED_DOCUMENT_STATUS,
   VOIDED_DOCUMENT_STATUS,
   WAREHOUSE_ROLE_LABELS,
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
-  assertDraftDocumentType,
+  assertDocumentType,
   assertQuantityText,
   buildDocumentLines,
   canTransitionDocumentStatus,
@@ -104,7 +98,6 @@ export {
   formatDocumentNumber,
   isDocumentStatus,
   isDocumentType,
-  isDraftDocumentType,
   lockOriginalDocuments,
   resolveOriginalLine,
   validateDocumentInput,
@@ -126,7 +119,6 @@ export type {
   DocumentStatus,
   DocumentType,
   DocumentWarehouseRole,
-  DraftDocumentType,
   OriginalLineWording,
   ResolvedOriginalLine,
 };

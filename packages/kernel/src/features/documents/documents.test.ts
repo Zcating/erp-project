@@ -7,6 +7,7 @@ import type { Document, DocumentInput } from "./model";
 import { formatDocumentDate, formatDocumentNumber } from "./numbering";
 import { createDocumentService } from "./service";
 import { assertDocumentStatusTransition, canTransitionDocumentStatus } from "./state-machine";
+import { assertDocumentType } from "./validation";
 
 const FIXED_CLOCK = new Date("2026-01-02T03:04:05Z");
 
@@ -93,6 +94,12 @@ describe("单据编号策略", () => {
     expect(retiredNames.filter((name) => name in documentsFeature)).toEqual([]);
   });
 
+  it("单据域公开面不再带重复的草稿类型层", () => {
+    const retiredNames = ["DRAFT_DOCUMENT_TYPES", "isDraftDocumentType", "assertDraftDocumentType"];
+
+    expect(retiredNames.filter((name) => name in documentsFeature)).toEqual([]);
+  });
+
   it("单号形如 <前缀>-<YYYYMMDD>-<当日序号>", () => {
     expect(formatDocumentNumber("PURCHASE_INBOUND", "20260102", 1)).toBe("PIN-20260102-001");
     expect(formatDocumentNumber("TRANSFER", "20260102", 42)).toBe("TRF-20260102-042");
@@ -115,6 +122,22 @@ describe("单据编号策略", () => {
 
     expect(shanghaiDocument.documentNo).toBe("PIN-20260102-001");
     expect(utcDocument.documentNo).toBe("PIN-20260101-001");
+  });
+});
+
+describe("单据类型运行时守卫", () => {
+  it("缺少类型时抛校验错误，文案是「缺少单据类型」", () => {
+    const input = baseInput({ type: "" as DocumentInput["type"] });
+
+    expect(() => assertDocumentType(input)).toThrow(ValidationError);
+    expect(() => assertDocumentType(input)).toThrow("缺少单据类型");
+  });
+
+  it("未知类型时抛校验错误，文案是「单据类型暂不支持创建草稿：X」", () => {
+    const input = baseInput({ type: "UNKNOWN" as DocumentInput["type"] });
+
+    expect(() => assertDocumentType(input)).toThrow(ValidationError);
+    expect(() => assertDocumentType(input)).toThrow("单据类型暂不支持创建草稿：UNKNOWN");
   });
 });
 

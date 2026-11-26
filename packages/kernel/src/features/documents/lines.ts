@@ -9,7 +9,7 @@ import {
 } from "@erp-project/shared";
 import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
 import {
-  isDraftDocumentType,
+  isDocumentType,
   type DocumentLine,
   type DocumentLineInput,
   type DocumentType,
@@ -24,7 +24,7 @@ export function buildDocumentLines(
   inputs: DocumentLineInput[],
   generateId: () => string,
 ): DocumentLine[] {
-  const priced = isDraftDocumentType(type) && DOCUMENT_TYPE_CATALOG[type].priced;
+  const priced = isDocumentType(type) && DOCUMENT_TYPE_CATALOG[type].priced;
   return inputs.map((line, index) => ({
     id: generateId(),
     lineNo: index + 1,

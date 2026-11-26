@@ -4,7 +4,6 @@ import type {
   DocumentRepository,
   DocumentStatus,
   DocumentType,
-  DraftDocumentType,
   MasterDataReference,
   TransactionContext,
 } from "@erp-project/kernel";
@@ -86,7 +85,7 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
   const toDomain = (row: DocumentRow, lines: DocumentLineRow[]): Document => ({
     id: row.id,
     documentNo: row.documentNo,
-    type: row.type as DraftDocumentType,
+    type: row.type as DocumentType,
     status: row.status as DocumentStatus,
     supplierId: row.supplierId,
     customerId: row.customerId,

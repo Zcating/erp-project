@@ -3,17 +3,6 @@ import type { DocumentType } from "../../shared/document-types";
 export { DOCUMENT_TYPES, isDocumentType } from "../../shared/document-types";
 export type { DocumentType } from "../../shared/document-types";
 
-export const DRAFT_DOCUMENT_TYPES = [
-  "PURCHASE_INBOUND",
-  "SALE_OUTBOUND",
-  "SALE_RETURN",
-  "PURCHASE_RETURN",
-  "STOCKTAKE",
-  "TRANSFER",
-] as const;
-
-export type DraftDocumentType = (typeof DRAFT_DOCUMENT_TYPES)[number];
-
 export const DOCUMENT_STATUSES = ["DRAFT", "POSTED", "VOIDED"] as const;
 
 export type DocumentStatus = (typeof DOCUMENT_STATUSES)[number];
@@ -37,7 +26,7 @@ export type DocumentLine = {
 export type Document = {
   id: string;
   documentNo: string;
-  type: DraftDocumentType;
+  type: DocumentType;
   status: DocumentStatus;
   supplierId: string | null;
   customerId: string | null;
@@ -70,10 +59,6 @@ export type DocumentFilter = {
   type: DocumentType | null;
   status: DocumentStatus | null;
 };
-
-export function isDraftDocumentType(value: string): value is DraftDocumentType {
-  return (DRAFT_DOCUMENT_TYPES as readonly string[]).includes(value);
-}
 
 export function isDocumentStatus(value: string): value is DocumentStatus {
   return (DOCUMENT_STATUSES as readonly string[]).includes(value);
