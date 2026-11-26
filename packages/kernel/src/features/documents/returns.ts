@@ -1,5 +1,6 @@
 import { ValidationError } from "../../shared/errors";
-import type { Document, DocumentLine, DocumentType } from "./model";
+import type { DocumentType } from "../../shared/document-types";
+import type { Document, DocumentLine } from "./model";
 
 export type OriginalLineWording = {
   prefix: string;

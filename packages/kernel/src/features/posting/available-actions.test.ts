@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { DOCUMENT_TYPES } from "../../shared/document-types";
+import type { DocumentType } from "../../shared/document-types";
 import {
   DOCUMENT_STATUS_TRANSITIONS,
-  DRAFT_DOCUMENT_TYPES,
   POSTED_DOCUMENT_STATUS,
   VOIDED_DOCUMENT_STATUS,
 } from "../documents";
-import type { Document, DocumentStatus, DraftDocumentType } from "../documents";
+import type { Document, DocumentStatus } from "../documents";
 import { availableDocumentActions } from "./actions";
 import { POSTING_PHASE_SEQUENCES } from "./phases";
 
 const documentOf = (
-  type: DraftDocumentType,
+  type: DocumentType,
   status: DocumentStatus,
   overrides: Partial<Document> = {},
 ): Document => ({
@@ -27,11 +28,11 @@ const documentOf = (
   ...overrides,
 });
 
-const singlePhaseTypes = DRAFT_DOCUMENT_TYPES.filter((type) => type !== "TRANSFER");
+const singlePhaseTypes = DOCUMENT_TYPES.filter((type) => type !== "TRANSFER");
 
 describe("可用动作判定", () => {
   it("六类单据在草稿状态下通用作废都不可用", () => {
-    for (const type of DRAFT_DOCUMENT_TYPES) {
+    for (const type of DOCUMENT_TYPES) {
       const actions = availableDocumentActions(documentOf(type, "DRAFT"), []);
 
       expect(actions.void).toEqual({
@@ -43,7 +44,7 @@ describe("可用动作判定", () => {
   });
 
   it("六类单据在已过账状态下通用作废都可用", () => {
-    for (const type of DRAFT_DOCUMENT_TYPES) {
+    for (const type of DOCUMENT_TYPES) {
       const actions = availableDocumentActions(documentOf(type, "POSTED"), []);
 
       expect(actions.void).toEqual({ label: "作废", enabled: true, reason: null });
@@ -51,7 +52,7 @@ describe("可用动作判定", () => {
   });
 
   it("六类单据在已作废状态下两个动作都不可用，作废说明原因", () => {
-    for (const type of DRAFT_DOCUMENT_TYPES) {
+    for (const type of DOCUMENT_TYPES) {
       const actions = availableDocumentActions(documentOf(type, "VOIDED"), []);
 
       expect(actions.void).toEqual({

@@ -5,24 +5,14 @@ import type { PostedItemReferenceChecker } from "../../shared/ports";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
 import { baseQuantityOf } from "../item-master";
 import { buildDocumentLines } from "./lines";
-import type {
-  Document,
-  DocumentFilter,
-  DocumentInput,
-  DocumentLineInput,
-  DraftDocumentType,
-} from "./model";
+import type { Document, DocumentFilter, DocumentInput, DocumentLineInput } from "./model";
 import { DEFAULT_DOCUMENT_TIME_ZONE, formatDocumentDate, formatDocumentNumber } from "./numbering";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
 import { resolveOriginalLine } from "./returns";
-import {
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_TYPE_RULES,
-  WAREHOUSE_ROLE_LABELS,
-  warehouseIdOfRole,
-} from "./rules";
+import { DOCUMENT_TYPE_CATALOG, WAREHOUSE_ROLE_LABELS } from "../../shared/document-types";
+import { warehouseIdOfRole } from "./warehouse-role";
 import { assertDocumentIsDraft } from "./state-machine";
-import { assertDraftDocumentType, assertQuantityText, validateDocumentInput } from "./validation";
+import { assertDocumentType, assertQuantityText, validateDocumentInput } from "./validation";
 
 export type DocumentService = MasterDataReferenceChecker &
   PostedItemReferenceChecker & {
@@ -86,14 +76,14 @@ export function createDocumentService(
   };
 
   const resolveOriginalLines = async (
-    input: DocumentInput & { type: DraftDocumentType },
+    input: DocumentInput,
     context: TransactionContext | undefined,
-  ): Promise<DocumentInput & { type: DraftDocumentType }> => {
-    const rule = DOCUMENT_TYPE_RULES[input.type];
+  ): Promise<DocumentInput> => {
+    const rule = DOCUMENT_TYPE_CATALOG[input.type];
     if (rule.originalType === null) {
       return input;
     }
-    const originalLabel = DOCUMENT_TYPE_LABELS[rule.originalType];
+    const originalLabel = DOCUMENT_TYPE_CATALOG[rule.originalType].label;
     const warehouseLabel = WAREHOUSE_ROLE_LABELS[rule.originalWarehouseRole ?? "COUNT"];
     const lines: DocumentLineInput[] = [];
     let warehouseId: string | null = null;
@@ -158,10 +148,10 @@ export function createDocumentService(
   };
 
   const assertUniqueItems = async (
-    input: DocumentInput & { type: DraftDocumentType },
+    input: DocumentInput,
     context: TransactionContext | undefined,
   ): Promise<void> => {
-    if (!DOCUMENT_TYPE_RULES[input.type].uniqueItems) {
+    if (!DOCUMENT_TYPE_CATALOG[input.type].uniqueItems) {
       return;
     }
     const firstLineOfItem = new Map<string, number>();
@@ -170,18 +160,14 @@ export function createDocumentService(
       const firstLine = firstLineOfItem.get(itemId);
       if (firstLine !== undefined) {
         throw new ValidationError(
-          `${DOCUMENT_TYPE_LABELS[input.type]}内同一商品不能重复出现：${await itemLabelOf(itemId, context)}（第 ${firstLine} 行与第 ${index + 1} 行）`,
+          `${DOCUMENT_TYPE_CATALOG[input.type].label}内同一商品不能重复出现：${await itemLabelOf(itemId, context)}（第 ${firstLine} 行与第 ${index + 1} 行）`,
         );
       }
       firstLineOfItem.set(itemId, index + 1);
     }
   };
 
-  const normalize = (
-    input: DocumentInput & { type: DraftDocumentType },
-    id: string,
-    documentNo: string,
-  ): Document => ({
+  const normalize = (input: DocumentInput, id: string, documentNo: string): Document => ({
     id,
     documentNo,
     type: input.type,
@@ -213,7 +199,7 @@ export function createDocumentService(
           ...input,
           lines: await toBaseUnitLines(input.lines, ctx),
         };
-        assertDraftDocumentType(converted);
+        assertDocumentType(converted);
         const resolved = await resolveOriginalLines(converted, ctx);
         const validated = validateDocumentInput(resolved);
         await assertUniqueItems(validated, ctx);
@@ -241,7 +227,7 @@ export function createDocumentService(
           ...input,
           lines: await toBaseUnitLines(input.lines, ctx),
         };
-        assertDraftDocumentType(converted);
+        assertDocumentType(converted);
         const resolved = await resolveOriginalLines(converted, ctx);
         const validated = validateDocumentInput(resolved);
         await assertUniqueItems(validated, ctx);

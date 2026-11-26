@@ -82,7 +82,6 @@ describe("kernel package", () => {
       "POSTING_DIRECTIONS",
       "POSTING_PHASES",
       "POSTING_PHASE_SEQUENCES",
-      "POSTING_PREREQUISITES",
       "assertPostingPrerequisites",
       "availableDocumentActions",
       "createPostingService",

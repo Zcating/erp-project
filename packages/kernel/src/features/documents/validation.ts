@@ -9,33 +9,24 @@ import {
 } from "@erp-project/shared";
 import { ValidationError } from "../../shared/errors";
 import { computeLineAmount } from "./lines";
-import {
-  isDraftDocumentType,
-  type DocumentInput,
-  type DocumentLineInput,
-  type DraftDocumentType,
-} from "./model";
-import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_RULES } from "./rules";
+import { DOCUMENT_TYPE_CATALOG, isDocumentType } from "../../shared/document-types";
+import type { DocumentInput, DocumentLineInput } from "./model";
 
 const DECIMAL_PATTERN = /^-?\d+(?:\.\d+)?$/;
 
-export function assertDraftDocumentType(
-  input: DocumentInput,
-): asserts input is DocumentInput & { type: DraftDocumentType } {
+export function assertDocumentType(input: DocumentInput): void {
   if (input.type.trim() === "") {
     throw new ValidationError("缺少单据类型");
   }
-  if (!isDraftDocumentType(input.type)) {
+  if (!isDocumentType(input.type)) {
     throw new ValidationError(`单据类型暂不支持创建草稿：${String(input.type)}`);
   }
 }
 
-export function validateDocumentInput(
-  input: DocumentInput,
-): DocumentInput & { type: DraftDocumentType } {
-  assertDraftDocumentType(input);
+export function validateDocumentInput(input: DocumentInput): DocumentInput {
+  assertDocumentType(input);
 
-  const rule = DOCUMENT_TYPE_RULES[input.type];
+  const rule = DOCUMENT_TYPE_CATALOG[input.type];
 
   if (rule.party === "SUPPLIER" && isBlank(input.supplierId)) {
     throw new ValidationError("缺少供应商");
@@ -73,10 +64,10 @@ export function validateDocumentLine(
   line: DocumentLineInput,
   lineNo: number,
 ): void {
-  if (!isDraftDocumentType(type)) {
+  if (!isDocumentType(type)) {
     throw new ValidationError(`单据类型暂不支持创建草稿：${String(type)}`);
   }
-  const rule = DOCUMENT_TYPE_RULES[type];
+  const rule = DOCUMENT_TYPE_CATALOG[type];
 
   if (isBlank(line.itemId)) {
     throw new ValidationError(`第 ${lineNo} 行缺少商品`);
@@ -95,7 +86,7 @@ export function validateDocumentLine(
   const unitPriceRaw = line.unitPrice;
   if (!rule.priced) {
     if (hasValue(unitPriceRaw) || hasValue(line.amount)) {
-      const label = type === "STOCKTAKE" ? "盘点行" : `${DOCUMENT_TYPE_LABELS[type]}行`;
+      const label = type === "STOCKTAKE" ? "盘点行" : `${DOCUMENT_TYPE_CATALOG[type].label}行`;
       throw new ValidationError(`第 ${lineNo} 行${label}不含单价与金额`);
     }
     return;

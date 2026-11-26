@@ -4,26 +4,16 @@ import type {
   DocumentRepository,
   DocumentStatus,
   DocumentType,
-  DraftDocumentType,
   MasterDataReference,
   TransactionContext,
 } from "@erp-project/kernel";
-import {
-  DRAFT_DOCUMENT_TYPES,
-  DOCUMENT_TYPE_RULES,
-  DuplicateError,
-  ValidationError,
-} from "@erp-project/kernel";
+import { DuplicateError, RETURN_DOCUMENT_TYPES, ValidationError } from "@erp-project/kernel";
 import { and, asc, desc, eq, inArray, or, sql } from "drizzle-orm";
 import type { KernelDatabase } from "../../db/client";
 import type { PgTransaction } from "../../db/transactions";
 import { documentLines, documentNumberCounters, documents } from "../../schema/documents";
 
 type DocumentExecutor = KernelDatabase | PgTransaction;
-
-const RETURN_DOCUMENT_TYPES = DRAFT_DOCUMENT_TYPES.filter(
-  (type) => DOCUMENT_TYPE_RULES[type].originalType !== null,
-);
 
 type DocumentRow = {
   id: string;
@@ -95,7 +85,7 @@ export function createDocumentRepository(db: KernelDatabase): DocumentRepository
   const toDomain = (row: DocumentRow, lines: DocumentLineRow[]): Document => ({
     id: row.id,
     documentNo: row.documentNo,
-    type: row.type as DraftDocumentType,
+    type: row.type as DocumentType,
     status: row.status as DocumentStatus,
     supplierId: row.supplierId,
     customerId: row.customerId,

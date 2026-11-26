@@ -8,6 +8,7 @@ import {
   toFixedString,
   unitPrice,
 } from "@erp-project/shared";
+import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
 import { StockNegativeError, ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";
@@ -25,11 +26,7 @@ import type {
   PostingPhase,
   PostingTypeHandler,
 } from "../posting";
-import {
-  assertPostingPrerequisites,
-  POSTING_PHASE_SEQUENCES,
-  POSTING_PREREQUISITES,
-} from "../posting";
+import { assertPostingPrerequisites, POSTING_PHASE_SEQUENCES } from "../posting";
 import { TRANSFER_POSTING_PHASES } from "./model";
 import type { TransferInTransitRecord } from "./model";
 import type { TransferInTransitRepository } from "./ports";
@@ -68,10 +65,12 @@ export function createTransferPostingHandler(
     const source = document.sourceWarehouseId;
     const target = document.targetWarehouseId;
     if (source === null || target === null) {
-      throw new ValidationError(POSTING_PREREQUISITES.TRANSFER.missingWarehouseMessage);
+      throw new ValidationError(DOCUMENT_TYPE_CATALOG.TRANSFER.missingWarehouseMessage);
     }
     if (source === target) {
-      throw new ValidationError(`调拨单 ${document.documentNo} 的源仓与目标仓必须不同`);
+      throw new ValidationError(
+        `${DOCUMENT_TYPE_CATALOG.TRANSFER.label} ${document.documentNo} 的源仓与目标仓必须不同`,
+      );
     }
     return { source, target };
   };
@@ -108,7 +107,7 @@ export function createTransferPostingHandler(
       const afterQuantity = quantity(before.quantity).minus(outbound);
       if (afterQuantity.isNegative()) {
         throw new StockNegativeError(
-          `调拨单 ${document.documentNo} 第 ${line.lineNo} 行调出后源仓账面库存将变为 ${toFixedString(afterQuantity, QUANTITY_SCALE)}，库存不足，禁止负库存`,
+          `${DOCUMENT_TYPE_CATALOG.TRANSFER.label} ${document.documentNo} 第 ${line.lineNo} 行调出后源仓账面库存将变为 ${toFixedString(afterQuantity, QUANTITY_SCALE)}，库存不足，禁止负库存`,
         );
       }
       const cost = unitPrice(before.unitCost);
@@ -259,11 +258,13 @@ export function createTransferPostingHandler(
       warehousesOf(document);
       const records = await inTransit.listByDocument(document.id, transaction);
       if (!records.some((record) => record.status === "IN_TRANSIT")) {
-        throw new ValidationError(`调拨单 ${document.documentNo} 尚未调出，不能调入过账`);
+        throw new ValidationError(
+          `${DOCUMENT_TYPE_CATALOG.TRANSFER.label} ${document.documentNo} 尚未调出，不能调入过账`,
+        );
       }
       return;
     }
-    throw new ValidationError(`调拨单不支持的过账阶段：${phase}`);
+    throw new ValidationError(`${DOCUMENT_TYPE_CATALOG.TRANSFER.label}不支持的过账阶段：${phase}`);
   };
 
   const buildLedger = async (
@@ -289,10 +290,10 @@ export function createTransferPostingHandler(
   return {
     type: "TRANSFER",
     validate: async () => {
-      throw new ValidationError("调拨单必须指定调出或调入阶段");
+      throw new ValidationError(`${DOCUMENT_TYPE_CATALOG.TRANSFER.label}必须指定调出或调入阶段`);
     },
     applyInventory: async () => {
-      throw new ValidationError("调拨单必须指定调出或调入阶段");
+      throw new ValidationError(`${DOCUMENT_TYPE_CATALOG.TRANSFER.label}必须指定调出或调入阶段`);
     },
     buildLedger: async (document, movements, direction) =>
       buildLedger(document, movements, direction),

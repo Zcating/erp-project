@@ -6,16 +6,7 @@ import {
   formatDocumentDate,
   formatDocumentNumber,
 } from "./numbering";
-import {
-  DOCUMENT_NUMBER_PREFIXES,
-  DOCUMENT_STATUSES,
-  DOCUMENT_STATUS_LABELS,
-  DOCUMENT_TYPES,
-  DRAFT_DOCUMENT_TYPES,
-  isDocumentStatus,
-  isDocumentType,
-  isDraftDocumentType,
-} from "./model";
+import { DOCUMENT_STATUSES, DOCUMENT_STATUS_LABELS, isDocumentStatus } from "./model";
 import type {
   Document,
   DocumentFilter,
@@ -23,20 +14,18 @@ import type {
   DocumentLine,
   DocumentLineInput,
   DocumentStatus,
-  DocumentType,
-  DraftDocumentType,
 } from "./model";
+import { DOCUMENT_TYPES, WAREHOUSE_ROLE_LABELS, isDocumentType } from "../../shared/document-types";
+import type {
+  DocumentPartyRole,
+  DocumentType,
+  DocumentWarehouseRole,
+} from "../../shared/document-types";
 import { lockOriginalDocuments } from "./lock-order";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
 import { resolveOriginalLine } from "./returns";
 import type { OriginalLineWording, ResolvedOriginalLine } from "./returns";
-import {
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_TYPE_RULES,
-  WAREHOUSE_ROLE_LABELS,
-  warehouseIdOfRole,
-} from "./rules";
-import type { DocumentPartyRole, DocumentTypeRule, DocumentWarehouseRole } from "./rules";
+import { warehouseIdOfRole } from "./warehouse-role";
 import { createDocumentService } from "./service";
 import type { DocumentService, DocumentServiceOptions } from "./service";
 import {
@@ -48,7 +37,7 @@ import {
   VOIDED_DOCUMENT_STATUS,
 } from "./state-machine";
 import {
-  assertDraftDocumentType,
+  assertDocumentType,
   assertQuantityText,
   validateDocumentInput,
   validateDocumentLine,
@@ -56,21 +45,17 @@ import {
 
 export const documents = {
   DEFAULT_DOCUMENT_TIME_ZONE,
-  DOCUMENT_NUMBER_PREFIXES,
   DOCUMENT_NUMBER_SEQUENCE_WIDTH,
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_TRANSITIONS,
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_TYPE_RULES,
   DOCUMENT_TYPES,
-  DRAFT_DOCUMENT_TYPES,
   POSTED_DOCUMENT_STATUS,
   VOIDED_DOCUMENT_STATUS,
   WAREHOUSE_ROLE_LABELS,
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
-  assertDraftDocumentType,
+  assertDocumentType,
   assertQuantityText,
   buildDocumentLines,
   canTransitionDocumentStatus,
@@ -81,7 +66,6 @@ export const documents = {
   formatDocumentNumber,
   isDocumentStatus,
   isDocumentType,
-  isDraftDocumentType,
   lockOriginalDocuments,
   resolveOriginalLine,
   validateDocumentInput,
@@ -91,21 +75,17 @@ export const documents = {
 
 export {
   DEFAULT_DOCUMENT_TIME_ZONE,
-  DOCUMENT_NUMBER_PREFIXES,
   DOCUMENT_NUMBER_SEQUENCE_WIDTH,
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_TRANSITIONS,
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_TYPE_RULES,
   DOCUMENT_TYPES,
-  DRAFT_DOCUMENT_TYPES,
   POSTED_DOCUMENT_STATUS,
   VOIDED_DOCUMENT_STATUS,
   WAREHOUSE_ROLE_LABELS,
   assertDocumentIsDraft,
   assertDocumentStatusTransition,
-  assertDraftDocumentType,
+  assertDocumentType,
   assertQuantityText,
   buildDocumentLines,
   canTransitionDocumentStatus,
@@ -116,7 +96,6 @@ export {
   formatDocumentNumber,
   isDocumentStatus,
   isDocumentType,
-  isDraftDocumentType,
   lockOriginalDocuments,
   resolveOriginalLine,
   validateDocumentInput,
@@ -137,9 +116,7 @@ export type {
   DocumentServiceOptions,
   DocumentStatus,
   DocumentType,
-  DocumentTypeRule,
   DocumentWarehouseRole,
-  DraftDocumentType,
   OriginalLineWording,
   ResolvedOriginalLine,
 };
