@@ -15,6 +15,8 @@ const transitionTarget = (from: DocumentStatus): DocumentStatus => {
   return target;
 };
 
+export const DRAFT_DOCUMENT_STATUS: DocumentStatus = "DRAFT";
+
 export const POSTED_DOCUMENT_STATUS = transitionTarget("DRAFT");
 
 export const VOIDED_DOCUMENT_STATUS = transitionTarget("POSTED");

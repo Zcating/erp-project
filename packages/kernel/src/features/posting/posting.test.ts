@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { StateConflictError, StockNegativeError } from "../../shared/errors";
 import type { TransactionContext, TransactionRunner } from "../../shared/transactions";
 import { createInMemoryDocumentRepository } from "../documents/in-memory-repository";
-import type { Document, DocumentInput } from "../documents/model";
+import type { DocumentInput } from "../documents/model";
 import { createDocumentService } from "../documents/service";
 import { createInMemoryStockLedgerRepository } from "../inventory/in-memory-repository";
 import type { StockLedgerRepository } from "../inventory/ports";
 import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting";
-import type { InventoryMovement, PostingTypeHandler } from "./model";
+import type { PostingTypeHandler } from "./model";
 import { createPostingService } from "./service";
 
 const FIXED_CLOCK = new Date("2026-01-02T03:04:05Z");
@@ -220,25 +220,9 @@ describe("过账框架的过账阶段语义", () => {
     const applied = new Set<string>();
     const handler: PostingTypeHandler = {
       type: "STOCKTAKE",
-      validate: async () => {},
-      applyInventory: async () => [],
-      buildLedger: async (document: Document, movements: InventoryMovement[]) =>
-        movements.map((movement) => ({
-          documentId: document.id,
-          documentNo: document.documentNo,
-          lineNo: movement.lineNo,
-          warehouseId: movement.warehouseId,
-          itemId: movement.itemId,
-          direction: "POST" as const,
-          quantityBefore: movement.quantityBefore,
-          quantityAfter: movement.quantityAfter,
-          costBefore: movement.costBefore,
-          costAfter: movement.costAfter,
-          unitPrice: movement.unitPrice,
-          amount: movement.amount,
-        })),
       phaseHandler: {
         phases: ["OUT", "IN"],
+        policy: { saveMode: "after-loop", ensureZeroBalances: false },
         isPosted: async (document, phase) => applied.has(`${document.id}:${phase}`),
         validate: async () => {},
         apply: async (document, phase) => {
