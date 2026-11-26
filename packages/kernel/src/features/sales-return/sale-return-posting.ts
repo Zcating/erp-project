@@ -8,6 +8,7 @@ import {
   unitPrice,
 } from "@erp-project/shared";
 import type { Amount, Quantity } from "@erp-project/shared";
+import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
 import { ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document, DocumentRepository } from "../documents";
@@ -27,7 +28,7 @@ const EMPTY_UNIT_COST = "0.000000";
 
 const ORIGINAL_LINE_WORDING = {
   prefix: "引用的原单据行",
-  wrongType: "不是销售出库单的行",
+  wrongType: `不是${DOCUMENT_TYPE_CATALOG.SALE_OUTBOUND.label}的行`,
 };
 
 type OriginalCostBasis = {
@@ -155,7 +156,7 @@ export function createSaleReturnPostingHandler(
       if (cumulative.greaterThan(basis.quantity)) {
         const excess = cumulative.minus(basis.quantity);
         throw new ValidationError(
-          `销售退货单 ${document.documentNo} 第 ${line.lineNo} 行超退 ${toFixedString(excess, QUANTITY_SCALE)}：` +
+          `${DOCUMENT_TYPE_CATALOG.SALE_RETURN.label} ${document.documentNo} 第 ${line.lineNo} 行超退 ${toFixedString(excess, QUANTITY_SCALE)}：` +
             `累计退货 ${toFixedString(cumulative, QUANTITY_SCALE)} 超过原单据 ${basis.documentNo} 第 ${basis.lineNo} 行已过账数量 ${toFixedString(basis.quantity, QUANTITY_SCALE)}`,
         );
       }

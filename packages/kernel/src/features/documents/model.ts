@@ -1,8 +1,5 @@
 import type { DocumentType } from "../../shared/document-types";
 
-export { DOCUMENT_TYPES, isDocumentType } from "../../shared/document-types";
-export type { DocumentType } from "../../shared/document-types";
-
 export const DOCUMENT_STATUSES = ["DRAFT", "POSTED", "VOIDED"] as const;
 
 export type DocumentStatus = (typeof DOCUMENT_STATUSES)[number];

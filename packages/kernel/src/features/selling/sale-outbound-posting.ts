@@ -7,6 +7,7 @@ import {
   toFixedString,
   unitPrice,
 } from "@erp-project/shared";
+import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
 import { StockNegativeError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document } from "../documents";
@@ -76,7 +77,7 @@ export function createSaleOutboundPostingHandler(
       const afterQuantity = quantity(before.quantity).minus(outboundQuantity);
       if (afterQuantity.isNegative()) {
         throw new StockNegativeError(
-          `销售出库单 ${document.documentNo} 第 ${line.lineNo} 行出库后账面库存将变为 ${toFixedString(afterQuantity, QUANTITY_SCALE)}，库存不足，禁止负库存`,
+          `${DOCUMENT_TYPE_CATALOG.SALE_OUTBOUND.label} ${document.documentNo} 第 ${line.lineNo} 行出库后账面库存将变为 ${toFixedString(afterQuantity, QUANTITY_SCALE)}，库存不足，禁止负库存`,
         );
       }
       const costUnitPrice = unitPrice(before.unitCost);

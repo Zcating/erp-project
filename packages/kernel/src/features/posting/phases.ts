@@ -1,4 +1,4 @@
-import type { DocumentType } from "../documents";
+import type { DocumentType } from "../../shared/document-types";
 import { POSTING_PHASES } from "./model";
 import type { PostingPhase } from "./model";
 

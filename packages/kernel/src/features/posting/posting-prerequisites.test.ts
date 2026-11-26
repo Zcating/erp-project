@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ValidationError } from "../../shared/errors";
-import type { Document, DocumentLine, DocumentType } from "../documents";
+import type { DocumentType } from "../../shared/document-types";
+import type { Document, DocumentLine } from "../documents";
 import { assertPostingPrerequisites } from "./prerequisites";
 
 const line = (overrides: Partial<DocumentLine> = {}): DocumentLine => ({
@@ -138,5 +139,14 @@ describe("过账前置条件", () => {
         "",
       );
     }
+  });
+
+  it("缺单价与数量不为正都不再拦下过账前置", () => {
+    const document = {
+      ...readyDocuments.PURCHASE_INBOUND,
+      lines: [line({ quantity: "0.000", unitPrice: null })],
+    };
+
+    expect(messageOf(document)).toBe("");
   });
 });

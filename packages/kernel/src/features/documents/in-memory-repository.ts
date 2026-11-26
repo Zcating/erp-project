@@ -1,8 +1,9 @@
 import { QUANTITY_SCALE, quantity, toFixedString } from "@erp-project/shared";
 import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
+import type { DocumentType } from "../../shared/document-types";
 import { DuplicateError } from "../../shared/errors";
 import type { MasterDataReference } from "../../shared/ports";
-import type { Document, DocumentFilter, DocumentStatus, DocumentType } from "./model";
+import type { Document, DocumentFilter, DocumentStatus } from "./model";
 import type { DocumentRepository } from "./ports";
 
 export function createInMemoryDocumentRepository(): DocumentRepository {

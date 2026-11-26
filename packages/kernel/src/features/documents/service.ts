@@ -10,7 +10,7 @@ import { DEFAULT_DOCUMENT_TIME_ZONE, formatDocumentDate, formatDocumentNumber } 
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
 import { resolveOriginalLine } from "./returns";
 import { DOCUMENT_TYPE_CATALOG, WAREHOUSE_ROLE_LABELS } from "../../shared/document-types";
-import { warehouseIdOfRole } from "./rules";
+import { warehouseIdOfRole } from "./warehouse-role";
 import { assertDocumentIsDraft } from "./state-machine";
 import { assertDocumentType, assertQuantityText, validateDocumentInput } from "./validation";
 

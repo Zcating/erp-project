@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { DOCUMENT_TYPES } from "../../shared/document-types";
+import type { DocumentType } from "../../shared/document-types";
 import {
   DOCUMENT_STATUS_TRANSITIONS,
-  DOCUMENT_TYPES,
   POSTED_DOCUMENT_STATUS,
   VOIDED_DOCUMENT_STATUS,
 } from "../documents";
-import type { Document, DocumentStatus, DocumentType } from "../documents";
+import type { Document, DocumentStatus } from "../documents";
 import { availableDocumentActions } from "./actions";
 import { POSTING_PHASE_SEQUENCES } from "./phases";
 

@@ -84,18 +84,15 @@ describe("单据编号策略", () => {
     expect(formatDocumentNumber(type, "20260102", 7)).toBe(`${prefix}-20260102-007`);
   });
 
-  it("单据域公开面不再带规则表、单号前缀表与类型标签表", () => {
+  it("单据域公开面不再带规则表、单号前缀表、类型标签表与重复的草稿类型层", () => {
     const retiredNames = [
       "DOCUMENT_TYPE_RULES",
       "DOCUMENT_NUMBER_PREFIXES",
       "DOCUMENT_TYPE_LABELS",
+      "DRAFT_DOCUMENT_TYPES",
+      "isDraftDocumentType",
+      "assertDraftDocumentType",
     ];
-
-    expect(retiredNames.filter((name) => name in documentsFeature)).toEqual([]);
-  });
-
-  it("单据域公开面不再带重复的草稿类型层", () => {
-    const retiredNames = ["DRAFT_DOCUMENT_TYPES", "isDraftDocumentType", "assertDraftDocumentType"];
 
     expect(retiredNames.filter((name) => name in documentsFeature)).toEqual([]);
   });

@@ -1,5 +1,5 @@
 import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
-import type { DocumentType } from "./model";
+import type { DocumentType } from "../../shared/document-types";
 
 export const DOCUMENT_NUMBER_SEQUENCE_WIDTH = 3;
 

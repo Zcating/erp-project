@@ -9,8 +9,8 @@ import {
 } from "@erp-project/shared";
 import { ValidationError } from "../../shared/errors";
 import { computeLineAmount } from "./lines";
-import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
-import { isDocumentType, type DocumentInput, type DocumentLineInput } from "./model";
+import { DOCUMENT_TYPE_CATALOG, isDocumentType } from "../../shared/document-types";
+import type { DocumentInput, DocumentLineInput } from "./model";
 
 const DECIMAL_PATTERN = /^-?\d+(?:\.\d+)?$/;
 

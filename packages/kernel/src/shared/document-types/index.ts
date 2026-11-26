@@ -114,3 +114,7 @@ export const DOCUMENT_TYPE_CATALOG: Record<DocumentType, DocumentTypeDescription
 export const RETURN_DOCUMENT_TYPES: readonly DocumentType[] = DOCUMENT_TYPES.filter(
   (type) => DOCUMENT_TYPE_CATALOG[type].originalType !== null,
 );
+
+export function requiresOriginalLine(type: DocumentType): boolean {
+  return DOCUMENT_TYPE_CATALOG[type].originalType !== null;
+}

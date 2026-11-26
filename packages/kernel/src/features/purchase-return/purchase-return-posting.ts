@@ -8,6 +8,7 @@ import {
   unitPrice,
 } from "@erp-project/shared";
 import type { Quantity } from "@erp-project/shared";
+import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
 import { StockNegativeError, ValidationError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document, DocumentRepository } from "../documents";
@@ -27,7 +28,7 @@ const EMPTY_UNIT_COST = "0.000000";
 
 const ORIGINAL_LINE_WORDING = {
   prefix: "引用的原单据行",
-  wrongType: "不是采购入库单的行",
+  wrongType: `不是${DOCUMENT_TYPE_CATALOG.PURCHASE_INBOUND.label}的行`,
 };
 
 type OriginalLineBasis = {
@@ -139,7 +140,7 @@ export function createPurchaseReturnPostingHandler(
       if (cumulative.greaterThan(basis.quantity)) {
         const excess = cumulative.minus(basis.quantity);
         throw new ValidationError(
-          `采购退货单 ${document.documentNo} 第 ${line.lineNo} 行超退 ${toFixedString(excess, QUANTITY_SCALE)}：` +
+          `${DOCUMENT_TYPE_CATALOG.PURCHASE_RETURN.label} ${document.documentNo} 第 ${line.lineNo} 行超退 ${toFixedString(excess, QUANTITY_SCALE)}：` +
             `累计退货 ${toFixedString(cumulative, QUANTITY_SCALE)} 超过原单据 ${basis.documentNo} 第 ${basis.lineNo} 行已过账数量 ${toFixedString(basis.quantity, QUANTITY_SCALE)}`,
         );
       }
@@ -150,7 +151,7 @@ export function createPurchaseReturnPostingHandler(
       const afterQuantity = quantity(before.quantity).minus(returned);
       if (afterQuantity.isNegative()) {
         throw new StockNegativeError(
-          `采购退货单 ${document.documentNo} 第 ${line.lineNo} 行退货后账面库存将变为 ${toFixedString(afterQuantity, QUANTITY_SCALE)}，库存不足，禁止负库存`,
+          `${DOCUMENT_TYPE_CATALOG.PURCHASE_RETURN.label} ${document.documentNo} 第 ${line.lineNo} 行退货后账面库存将变为 ${toFixedString(afterQuantity, QUANTITY_SCALE)}，库存不足，禁止负库存`,
         );
       }
       const costUnitPrice = unitPrice(before.unitCost);

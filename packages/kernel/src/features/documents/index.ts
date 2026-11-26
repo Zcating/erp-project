@@ -6,13 +6,7 @@ import {
   formatDocumentDate,
   formatDocumentNumber,
 } from "./numbering";
-import {
-  DOCUMENT_STATUSES,
-  DOCUMENT_STATUS_LABELS,
-  DOCUMENT_TYPES,
-  isDocumentStatus,
-  isDocumentType,
-} from "./model";
+import { DOCUMENT_STATUSES, DOCUMENT_STATUS_LABELS, isDocumentStatus } from "./model";
 import type {
   Document,
   DocumentFilter,
@@ -20,14 +14,18 @@ import type {
   DocumentLine,
   DocumentLineInput,
   DocumentStatus,
-  DocumentType,
 } from "./model";
+import { DOCUMENT_TYPES, WAREHOUSE_ROLE_LABELS, isDocumentType } from "../../shared/document-types";
+import type {
+  DocumentPartyRole,
+  DocumentType,
+  DocumentWarehouseRole,
+} from "../../shared/document-types";
 import { lockOriginalDocuments } from "./lock-order";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
 import { resolveOriginalLine } from "./returns";
 import type { OriginalLineWording, ResolvedOriginalLine } from "./returns";
-import { WAREHOUSE_ROLE_LABELS, warehouseIdOfRole } from "./rules";
-import type { DocumentPartyRole, DocumentWarehouseRole } from "./rules";
+import { warehouseIdOfRole } from "./warehouse-role";
 import { createDocumentService } from "./service";
 import type { DocumentService, DocumentServiceOptions } from "./service";
 import {

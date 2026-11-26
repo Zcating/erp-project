@@ -7,13 +7,9 @@ import {
   toFixedString,
   unitPrice,
 } from "@erp-project/shared";
-import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
-import {
-  isDocumentType,
-  type DocumentLine,
-  type DocumentLineInput,
-  type DocumentType,
-} from "./model";
+import { DOCUMENT_TYPE_CATALOG, isDocumentType } from "../../shared/document-types";
+import type { DocumentType } from "../../shared/document-types";
+import type { DocumentLine, DocumentLineInput } from "./model";
 
 export function computeLineAmount(quantityRaw: string, unitPriceRaw: string): string {
   return toFixedString(amountOf(quantity(quantityRaw), unitPrice(unitPriceRaw)), AMOUNT_SCALE);

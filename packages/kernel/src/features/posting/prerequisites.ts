@@ -1,4 +1,4 @@
-import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
+import { DOCUMENT_TYPE_CATALOG, requiresOriginalLine } from "../../shared/document-types";
 import { ValidationError } from "../../shared/errors";
 import { warehouseIdOfRole } from "../documents";
 import type { Document } from "../documents";
@@ -11,7 +11,7 @@ export function assertPostingPrerequisites(document: Document): void {
   if (document.lines.length === 0) {
     throw new ValidationError(`${description.label}没有单据行，不能过账`);
   }
-  if (description.originalType === null) {
+  if (!requiresOriginalLine(document.type)) {
     return;
   }
   for (const line of document.lines) {
