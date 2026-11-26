@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import {
   RETURN_QUANTITY_ROUNDING,
   assertReturnWithinLimit,
-  remainingReturnableQuantity,
   returnedCostAllocation,
 } from "./return-eligibility";
 import type { OriginalCostBasis, OriginalLineBasis } from "./return-eligibility";
@@ -36,23 +35,6 @@ const messageOf = (run: () => unknown): string => {
   }
   throw new Error("没有抛出错误");
 };
-
-describe("可退余量", () => {
-  const cases: Array<{ original: string; returned: string; remaining: string }> = [
-    { original: "5.000", returned: "0.000", remaining: "5.000" },
-    { original: "5.000", returned: "3.000", remaining: "2.000" },
-    { original: "5.000", returned: "5.000", remaining: "0.000" },
-    { original: "12.500", returned: "2.375", remaining: "10.125" },
-  ];
-
-  it.each(cases)("原行 $original 已退 $returned 时可退 $remaining", (row) => {
-    const remaining = remainingReturnableQuantity(basisOf(row.original), {
-      quantity: quantity(row.returned),
-      amount: amount("0"),
-    });
-    expect(toFixedString(remaining, 3)).toBe(row.remaining);
-  });
-});
 
 describe("应回冲金额", () => {
   const cases: Array<{

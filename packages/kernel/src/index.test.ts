@@ -4,7 +4,6 @@ import {
   itemMaster,
   parties,
   ports,
-  posting,
   purchaseReturn,
   purchasing,
   salesReturn,
@@ -12,6 +11,7 @@ import {
   stocktake,
   transfer,
 } from "./index";
+import * as postingNamespace from "./features/posting";
 
 describe("kernel package", () => {
   it("exposes its public surface", () => {
@@ -77,12 +77,13 @@ describe("kernel package", () => {
   });
 
   it("过账 feature 的公开面带过账服务与扩展点类型", () => {
-    expect(Object.keys(posting).sort()).toEqual([
+    expect(Object.keys(postingNamespace).sort()).toEqual([
       "DEFAULT_POSTING_PHASE",
       "POSTING_DIRECTIONS",
       "POSTING_PHASES",
       "POSTING_PHASE_SEQUENCES",
       "RETURN_QUANTITY_ROUNDING",
+      "assertPostingHandlerCoverage",
       "assertPostingPrerequisites",
       "assertReturnWithinLimit",
       "availableDocumentActions",
@@ -91,9 +92,9 @@ describe("kernel package", () => {
       "lockAndValidateOriginalLines",
       "originalCostBasisOf",
       "originalLineBasisOf",
-      "remainingReturnableQuantity",
       "returnedCostAllocation",
       "reverseDocumentPostings",
+      "reverseMovements",
       "summarizePostedReturns",
     ]);
   });

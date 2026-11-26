@@ -8,20 +8,12 @@ import type {
   PostingApplyHandler,
   PostingContext,
   PostingDirection,
-  PostingHandlerPolicy,
   PostingPhase,
   PostingPhaseHandler,
   PostingPhaseTypeHandler,
-  PostingSaveMode,
   PostingTypeHandler,
 } from "./model";
-import {
-  balanceKey,
-  buildLedgerEntries,
-  emptyBalance,
-  reverseMovements,
-  uniqueKeys,
-} from "./orchestration";
+import { reverseMovements } from "./orchestration";
 import { POSTING_PHASE_SEQUENCES } from "./phases";
 import { assertPostingPrerequisites } from "./prerequisites";
 import {
@@ -30,40 +22,13 @@ import {
   lockAndValidateOriginalLines,
   originalCostBasisOf,
   originalLineBasisOf,
-  remainingReturnableQuantity,
   returnedCostAllocation,
   summarizePostedReturns,
 } from "./return-eligibility";
-import type {
-  OriginalCostBasis,
-  OriginalLineBasis,
-  ReturnQuantityRounding,
-  ReturnedCostAllocation,
-  ReturnedSummary,
-} from "./return-eligibility";
+import type { OriginalCostBasis, OriginalLineBasis, ReturnedSummary } from "./return-eligibility";
 import { reverseDocumentPostings } from "./reversal";
 import { createPostingService } from "./service";
 import type { PostingService, PostingServiceOptions } from "./service";
-
-export const posting = {
-  DEFAULT_POSTING_PHASE,
-  POSTING_DIRECTIONS,
-  POSTING_PHASES,
-  POSTING_PHASE_SEQUENCES,
-  RETURN_QUANTITY_ROUNDING,
-  assertPostingPrerequisites,
-  assertReturnWithinLimit,
-  availableDocumentActions,
-  createPostingService,
-  isPostingPhase,
-  lockAndValidateOriginalLines,
-  originalCostBasisOf,
-  originalLineBasisOf,
-  remainingReturnableQuantity,
-  reverseDocumentPostings,
-  returnedCostAllocation,
-  summarizePostedReturns,
-};
 
 export {
   DEFAULT_POSTING_PHASE,
@@ -75,20 +40,15 @@ export {
   assertPostingPrerequisites,
   assertReturnWithinLimit,
   availableDocumentActions,
-  balanceKey,
-  buildLedgerEntries,
   createPostingService,
-  emptyBalance,
   isPostingPhase,
   lockAndValidateOriginalLines,
   originalCostBasisOf,
   originalLineBasisOf,
-  remainingReturnableQuantity,
   reverseDocumentPostings,
   reverseMovements,
   returnedCostAllocation,
   summarizePostedReturns,
-  uniqueKeys,
 };
 
 export type {
@@ -101,14 +61,10 @@ export type {
   PostingApplyHandler,
   PostingContext,
   PostingDirection,
-  PostingHandlerPolicy,
   PostingPhase,
   PostingPhaseHandler,
   PostingPhaseTypeHandler,
-  PostingSaveMode,
   PostingTypeHandler,
-  ReturnQuantityRounding,
-  ReturnedCostAllocation,
   ReturnedSummary,
 };
 export type { PostingService, PostingServiceOptions };

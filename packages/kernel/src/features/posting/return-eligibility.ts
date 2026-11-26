@@ -128,13 +128,6 @@ export async function originalCostBasisOf(
   return { ...basis, cost: amount(posted.amount) };
 }
 
-export function remainingReturnableQuantity(
-  basis: OriginalLineBasis,
-  returned: ReturnedSummary,
-): Quantity {
-  return quantity(toFixedString(basis.quantity.minus(returned.quantity), QUANTITY_SCALE));
-}
-
 export function assertReturnWithinLimit(
   basis: OriginalLineBasis,
   previousQuantity: Quantity,
