@@ -12,7 +12,7 @@ import { createPurchaseReturnPostingHandler } from "../purchase-return/purchase-
 import { createPurchaseInboundPostingHandler } from "../purchasing/purchase-inbound-posting";
 import { createSaleReturnPostingHandler } from "../sales-return/sale-return-posting";
 import { createSaleOutboundPostingHandler } from "../selling/sale-outbound-posting";
-import { sumReturned } from "./returns";
+import { summarizePostedReturns } from "./return-eligibility";
 import { createPostingService } from "./service";
 
 const FIXED_CLOCK = new Date("2026-01-02T03:04:05Z");
@@ -153,7 +153,7 @@ describe("超退上限的两种口径", () => {
     );
     await fixture.postingService.post(second.id);
 
-    const summary = await sumReturned(fixture.documents, fixture.ledger, originalLineId);
+    const summary = await summarizePostedReturns(fixture.documents, fixture.ledger, originalLineId);
 
     expect(toFixedString(summary.quantity, QUANTITY_SCALE)).toBe("3.000");
     expect(
@@ -176,7 +176,7 @@ describe("超退上限的两种口径", () => {
     );
     await fixture.postingService.post(second.id);
 
-    const summary = await sumReturned(fixture.documents, fixture.ledger, originalLineId);
+    const summary = await summarizePostedReturns(fixture.documents, fixture.ledger, originalLineId);
 
     expect(toFixedString(summary.quantity, QUANTITY_SCALE)).toBe("3.000");
     expect(
@@ -196,7 +196,7 @@ describe("超退上限的两种口径", () => {
     await fixture.postingService.post(voided.id);
     await fixture.postingService.void(voided.id);
 
-    const summary = await sumReturned(fixture.documents, fixture.ledger, originalLineId);
+    const summary = await summarizePostedReturns(fixture.documents, fixture.ledger, originalLineId);
 
     expect(toFixedString(summary.quantity, QUANTITY_SCALE)).toBe("0.000");
     expect(

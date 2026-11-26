@@ -82,12 +82,19 @@ describe("kernel package", () => {
       "POSTING_DIRECTIONS",
       "POSTING_PHASES",
       "POSTING_PHASE_SEQUENCES",
+      "RETURN_QUANTITY_ROUNDING",
       "assertPostingPrerequisites",
+      "assertReturnWithinLimit",
       "availableDocumentActions",
       "createPostingService",
       "isPostingPhase",
+      "lockAndValidateOriginalLines",
+      "originalCostBasisOf",
+      "originalLineBasisOf",
+      "remainingReturnableQuantity",
+      "returnedCostAllocation",
       "reverseDocumentPostings",
-      "sumReturned",
+      "summarizePostedReturns",
     ]);
   });
 

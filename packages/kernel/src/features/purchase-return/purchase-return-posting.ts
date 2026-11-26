@@ -9,31 +9,33 @@ import {
 } from "@erp-project/shared";
 import type { Quantity } from "@erp-project/shared";
 import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
-import { StockNegativeError, ValidationError } from "../../shared/errors";
+import { StockNegativeError } from "../../shared/errors";
 import type { TransactionContext } from "../../shared/transactions";
 import type { Document, DocumentRepository } from "../documents";
-import { lockOriginalDocuments, resolveOriginalLine } from "../documents";
 import type { StockBalance, StockLedgerRepository } from "../inventory";
 import {
+  RETURN_QUANTITY_ROUNDING,
   assertPostingPrerequisites,
+  assertReturnWithinLimit,
   balanceKey,
   buildLedgerEntries,
   emptyBalance,
+  lockAndValidateOriginalLines,
+  originalLineBasisOf,
   reverseMovements,
-  sumReturned,
+  summarizePostedReturns,
   uniqueKeys,
 } from "../posting";
-import type { InventoryMovement, PostingDirection, PostingTypeHandler } from "../posting";
+import type {
+  InventoryMovement,
+  OriginalLineBasis,
+  PostingDirection,
+  PostingTypeHandler,
+} from "../posting";
 
 const ORIGINAL_LINE_WORDING = {
   prefix: "引用的原单据行",
   wrongType: `不是${DOCUMENT_TYPE_CATALOG.PURCHASE_INBOUND.label}的行`,
-};
-
-type OriginalLineBasis = {
-  documentNo: string;
-  lineNo: number;
-  quantity: Quantity;
 };
 
 export function createPurchaseReturnPostingHandler(
@@ -49,37 +51,13 @@ export function createPurchaseReturnPostingHandler(
     if (direction !== "FORWARD") {
       return;
     }
-    const locked = await lockOriginalDocuments(
+    await lockAndValidateOriginalLines(
       documents,
       document.lines.map((line) => line.originalLineId as string),
-      context,
-    );
-    for (const line of document.lines) {
-      resolveOriginalLine(
-        locked.get(line.originalLineId as string) ?? null,
-        line.originalLineId as string,
-        "PURCHASE_INBOUND",
-        ORIGINAL_LINE_WORDING,
-      );
-    }
-  };
-
-  const originalLineBasisOf = async (
-    originalLineId: string,
-    context: TransactionContext | undefined,
-  ): Promise<OriginalLineBasis> => {
-    const original = await documents.findByLineId(originalLineId, context);
-    const resolved = resolveOriginalLine(
-      original,
-      originalLineId,
       "PURCHASE_INBOUND",
       ORIGINAL_LINE_WORDING,
+      context,
     );
-    return {
-      documentNo: resolved.original.documentNo,
-      lineNo: resolved.line.lineNo,
-      quantity: quantity(resolved.line.quantity),
-    };
   };
 
   const applyForward = async (
@@ -105,22 +83,29 @@ export function createPurchaseReturnPostingHandler(
       const originalLineId = line.originalLineId as string;
       let basis = bases.get(originalLineId);
       if (basis === undefined) {
-        basis = await originalLineBasisOf(originalLineId, transaction);
+        basis = await originalLineBasisOf(
+          documents,
+          originalLineId,
+          "PURCHASE_INBOUND",
+          ORIGINAL_LINE_WORDING,
+          transaction,
+        );
         bases.set(originalLineId, basis);
-        const prior = await sumReturned(documents, ledger, originalLineId, transaction);
+        const prior = await summarizePostedReturns(documents, ledger, originalLineId, transaction);
         cumulatives.set(originalLineId, prior.quantity);
       }
       const previous = cumulatives.get(originalLineId) as Quantity;
       const returned = quantity(line.quantity);
-      const cumulative = previous.plus(returned);
-      if (cumulative.greaterThan(basis.quantity)) {
-        const excess = cumulative.minus(basis.quantity);
-        throw new ValidationError(
-          `${DOCUMENT_TYPE_CATALOG.PURCHASE_RETURN.label} ${document.documentNo} 第 ${line.lineNo} 行超退 ${toFixedString(excess, QUANTITY_SCALE)}：` +
-            `累计退货 ${toFixedString(cumulative, QUANTITY_SCALE)} 超过原单据 ${basis.documentNo} 第 ${basis.lineNo} 行已过账数量 ${toFixedString(basis.quantity, QUANTITY_SCALE)}`,
-        );
-      }
-      cumulatives.set(originalLineId, quantity(toFixedString(cumulative, QUANTITY_SCALE)));
+      const cumulative = assertReturnWithinLimit(
+        basis,
+        previous,
+        returned,
+        DOCUMENT_TYPE_CATALOG.PURCHASE_RETURN.label,
+        document.documentNo,
+        line.lineNo,
+        RETURN_QUANTITY_ROUNDING.ON_WRITE,
+      );
+      cumulatives.set(originalLineId, cumulative);
 
       const key = { warehouseId, itemId: line.itemId };
       const before = balances.get(balanceKey(key)) as StockBalance;
