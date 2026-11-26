@@ -9,6 +9,7 @@ import type {
   WarehouseRepository,
 } from "@erp-project/kernel";
 import {
+  assertPostingHandlerCoverage,
   createCustomerService,
   createDocumentService,
   createInMemoryDocumentRepository,
@@ -144,17 +145,19 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     runner: transactionRunner,
     referenceChecker: documentService,
   });
+  const postingHandlers = [
+    createPurchaseInboundPostingHandler(stockLedgerRepository),
+    createSaleOutboundPostingHandler(stockLedgerRepository),
+    createSaleReturnPostingHandler(stockLedgerRepository, documentRepository),
+    createPurchaseReturnPostingHandler(stockLedgerRepository, documentRepository),
+    createStocktakePostingHandler(stockLedgerRepository),
+    createTransferPostingHandler(stockLedgerRepository, transferInTransitRepository),
+  ];
+  assertPostingHandlerCoverage(postingHandlers);
   const postingService = createPostingService({
     documents: documentRepository,
     ledger: stockLedgerRepository,
-    handlers: [
-      createPurchaseInboundPostingHandler(stockLedgerRepository),
-      createSaleOutboundPostingHandler(stockLedgerRepository),
-      createSaleReturnPostingHandler(stockLedgerRepository, documentRepository),
-      createPurchaseReturnPostingHandler(stockLedgerRepository, documentRepository),
-      createStocktakePostingHandler(stockLedgerRepository),
-      createTransferPostingHandler(stockLedgerRepository, transferInTransitRepository),
-    ],
+    handlers: postingHandlers,
     runner: transactionRunner,
   });
   registerItemMasterRoutes(app, {

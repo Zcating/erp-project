@@ -1,5 +1,6 @@
 import { availableDocumentActions } from "./actions";
 import type { AvailableDocumentActions, AvailablePostingAction } from "./actions";
+import { assertPostingHandlerCoverage } from "./handler-coverage";
 import { DEFAULT_POSTING_PHASE, isPostingPhase, POSTING_DIRECTIONS, POSTING_PHASES } from "./model";
 import type {
   InventoryMovement,
@@ -64,6 +65,7 @@ export {
   POSTING_PHASES,
   POSTING_PHASE_SEQUENCES,
   RETURN_QUANTITY_ROUNDING,
+  assertPostingHandlerCoverage,
   assertPostingPrerequisites,
   assertReturnWithinLimit,
   availableDocumentActions,
