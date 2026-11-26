@@ -24,15 +24,6 @@ export const DOCUMENT_STATUS_LABELS: Record<DocumentStatus, string> = {
   VOIDED: "已作废",
 };
 
-export const DOCUMENT_NUMBER_PREFIXES: Record<DocumentType, string> = {
-  PURCHASE_INBOUND: "PIN",
-  SALE_OUTBOUND: "SOUT",
-  SALE_RETURN: "SRET",
-  PURCHASE_RETURN: "PRET",
-  STOCKTAKE: "STK",
-  TRANSFER: "TRF",
-};
-
 export type DocumentLine = {
   id: string;
   lineNo: number;

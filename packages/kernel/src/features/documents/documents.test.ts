@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
 import { NotFoundError, StateConflictError, ValidationError } from "../../shared/errors";
+import * as documentsFeature from "./index";
 import { createInMemoryDocumentRepository } from "./in-memory-repository";
-import { DOCUMENT_NUMBER_PREFIXES, type Document, type DocumentInput } from "./model";
+import type { Document, DocumentInput } from "./model";
 import { formatDocumentDate, formatDocumentNumber } from "./numbering";
 import { createDocumentService } from "./service";
 import { assertDocumentStatusTransition, canTransitionDocumentStatus } from "./state-machine";
@@ -77,8 +79,18 @@ describe("单据编号策略", () => {
     ["STOCKTAKE", "STK"],
     ["TRANSFER", "TRF"],
   ] as const)("单据类型 %s 的单号前缀是 %s", (type, prefix) => {
-    expect(DOCUMENT_NUMBER_PREFIXES[type]).toBe(prefix);
+    expect(DOCUMENT_TYPE_CATALOG[type].numberPrefix).toBe(prefix);
     expect(formatDocumentNumber(type, "20260102", 7)).toBe(`${prefix}-20260102-007`);
+  });
+
+  it("单据域公开面不再带规则表、单号前缀表与类型标签表", () => {
+    const retiredNames = [
+      "DOCUMENT_TYPE_RULES",
+      "DOCUMENT_NUMBER_PREFIXES",
+      "DOCUMENT_TYPE_LABELS",
+    ];
+
+    expect(retiredNames.filter((name) => name in documentsFeature)).toEqual([]);
   });
 
   it("单号形如 <前缀>-<YYYYMMDD>-<当日序号>", () => {

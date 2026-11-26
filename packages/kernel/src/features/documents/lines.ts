@@ -7,13 +7,13 @@ import {
   toFixedString,
   unitPrice,
 } from "@erp-project/shared";
+import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
 import {
   isDraftDocumentType,
   type DocumentLine,
   type DocumentLineInput,
   type DocumentType,
 } from "./model";
-import { DOCUMENT_TYPE_RULES } from "./rules";
 
 export function computeLineAmount(quantityRaw: string, unitPriceRaw: string): string {
   return toFixedString(amountOf(quantity(quantityRaw), unitPrice(unitPriceRaw)), AMOUNT_SCALE);
@@ -24,7 +24,7 @@ export function buildDocumentLines(
   inputs: DocumentLineInput[],
   generateId: () => string,
 ): DocumentLine[] {
-  const priced = isDraftDocumentType(type) && DOCUMENT_TYPE_RULES[type].priced;
+  const priced = isDraftDocumentType(type) && DOCUMENT_TYPE_CATALOG[type].priced;
   return inputs.map((line, index) => ({
     id: generateId(),
     lineNo: index + 1,

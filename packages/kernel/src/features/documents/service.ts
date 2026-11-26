@@ -15,12 +15,8 @@ import type {
 import { DEFAULT_DOCUMENT_TIME_ZONE, formatDocumentDate, formatDocumentNumber } from "./numbering";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
 import { resolveOriginalLine } from "./returns";
-import {
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_TYPE_RULES,
-  WAREHOUSE_ROLE_LABELS,
-  warehouseIdOfRole,
-} from "./rules";
+import { DOCUMENT_TYPE_CATALOG, WAREHOUSE_ROLE_LABELS } from "../../shared/document-types";
+import { warehouseIdOfRole } from "./rules";
 import { assertDocumentIsDraft } from "./state-machine";
 import { assertDraftDocumentType, assertQuantityText, validateDocumentInput } from "./validation";
 
@@ -89,11 +85,11 @@ export function createDocumentService(
     input: DocumentInput & { type: DraftDocumentType },
     context: TransactionContext | undefined,
   ): Promise<DocumentInput & { type: DraftDocumentType }> => {
-    const rule = DOCUMENT_TYPE_RULES[input.type];
+    const rule = DOCUMENT_TYPE_CATALOG[input.type];
     if (rule.originalType === null) {
       return input;
     }
-    const originalLabel = DOCUMENT_TYPE_LABELS[rule.originalType];
+    const originalLabel = DOCUMENT_TYPE_CATALOG[rule.originalType].label;
     const warehouseLabel = WAREHOUSE_ROLE_LABELS[rule.originalWarehouseRole ?? "COUNT"];
     const lines: DocumentLineInput[] = [];
     let warehouseId: string | null = null;
@@ -161,7 +157,7 @@ export function createDocumentService(
     input: DocumentInput & { type: DraftDocumentType },
     context: TransactionContext | undefined,
   ): Promise<void> => {
-    if (!DOCUMENT_TYPE_RULES[input.type].uniqueItems) {
+    if (!DOCUMENT_TYPE_CATALOG[input.type].uniqueItems) {
       return;
     }
     const firstLineOfItem = new Map<string, number>();
@@ -170,7 +166,7 @@ export function createDocumentService(
       const firstLine = firstLineOfItem.get(itemId);
       if (firstLine !== undefined) {
         throw new ValidationError(
-          `${DOCUMENT_TYPE_LABELS[input.type]}内同一商品不能重复出现：${await itemLabelOf(itemId, context)}（第 ${firstLine} 行与第 ${index + 1} 行）`,
+          `${DOCUMENT_TYPE_CATALOG[input.type].label}内同一商品不能重复出现：${await itemLabelOf(itemId, context)}（第 ${firstLine} 行与第 ${index + 1} 行）`,
         );
       }
       firstLineOfItem.set(itemId, index + 1);

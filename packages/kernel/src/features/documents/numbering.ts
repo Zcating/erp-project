@@ -1,4 +1,5 @@
-import { DOCUMENT_NUMBER_PREFIXES, type DocumentType } from "./model";
+import { DOCUMENT_TYPE_CATALOG } from "../../shared/document-types";
+import type { DocumentType } from "./model";
 
 export const DOCUMENT_NUMBER_SEQUENCE_WIDTH = 3;
 
@@ -22,7 +23,7 @@ export function formatDocumentNumber(
   dateKey: string,
   sequence: number,
 ): string {
-  const prefix = DOCUMENT_NUMBER_PREFIXES[type];
+  const prefix = DOCUMENT_TYPE_CATALOG[type].numberPrefix;
   const padded = String(sequence).padStart(DOCUMENT_NUMBER_SEQUENCE_WIDTH, "0");
   return `${prefix}-${dateKey}-${padded}`;
 }

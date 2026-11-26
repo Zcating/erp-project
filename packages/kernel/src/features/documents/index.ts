@@ -7,7 +7,6 @@ import {
   formatDocumentNumber,
 } from "./numbering";
 import {
-  DOCUMENT_NUMBER_PREFIXES,
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_TYPES,
@@ -30,13 +29,8 @@ import { lockOriginalDocuments } from "./lock-order";
 import type { DocumentItemLookup, DocumentRepository } from "./ports";
 import { resolveOriginalLine } from "./returns";
 import type { OriginalLineWording, ResolvedOriginalLine } from "./returns";
-import {
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_TYPE_RULES,
-  WAREHOUSE_ROLE_LABELS,
-  warehouseIdOfRole,
-} from "./rules";
-import type { DocumentPartyRole, DocumentTypeRule, DocumentWarehouseRole } from "./rules";
+import { WAREHOUSE_ROLE_LABELS, warehouseIdOfRole } from "./rules";
+import type { DocumentPartyRole, DocumentWarehouseRole } from "./rules";
 import { createDocumentService } from "./service";
 import type { DocumentService, DocumentServiceOptions } from "./service";
 import {
@@ -56,13 +50,10 @@ import {
 
 export const documents = {
   DEFAULT_DOCUMENT_TIME_ZONE,
-  DOCUMENT_NUMBER_PREFIXES,
   DOCUMENT_NUMBER_SEQUENCE_WIDTH,
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_TRANSITIONS,
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_TYPE_RULES,
   DOCUMENT_TYPES,
   DRAFT_DOCUMENT_TYPES,
   POSTED_DOCUMENT_STATUS,
@@ -91,13 +82,10 @@ export const documents = {
 
 export {
   DEFAULT_DOCUMENT_TIME_ZONE,
-  DOCUMENT_NUMBER_PREFIXES,
   DOCUMENT_NUMBER_SEQUENCE_WIDTH,
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABELS,
   DOCUMENT_STATUS_TRANSITIONS,
-  DOCUMENT_TYPE_LABELS,
-  DOCUMENT_TYPE_RULES,
   DOCUMENT_TYPES,
   DRAFT_DOCUMENT_TYPES,
   POSTED_DOCUMENT_STATUS,
@@ -137,7 +125,6 @@ export type {
   DocumentServiceOptions,
   DocumentStatus,
   DocumentType,
-  DocumentTypeRule,
   DocumentWarehouseRole,
   DraftDocumentType,
   OriginalLineWording,
